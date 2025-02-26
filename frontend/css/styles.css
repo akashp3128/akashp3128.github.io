@@ -189,7 +189,7 @@ footer {
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.8);
-    z-index: 1000;
+    z-index: 10000;
     align-items: center;
     justify-content: center;
 }
@@ -295,6 +295,7 @@ body {
     }
 }
 
+/* Admin toggle button styles */
 .admin-toggle {
     position: fixed;
     bottom: 20px;
@@ -315,16 +316,107 @@ body {
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
     pointer-events: auto;
+    font-size: 24px;
+    will-change: transform;
+    isolation: isolate;
 }
 
-.admin-toggle:hover {
-    transform: rotate(90deg) scale(1.1);
-    cursor: pointer;
+/* Fix for Safari and Firefox */
+.admin-toggle i {
+    pointer-events: none;
+    font-style: normal;
 }
 
-.admin-toggle:active {
+/* Improves clickability on all browsers */
+.admin-toggle::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    right: -10px;
+    bottom: -10px;
+    border-radius: 50%;
+}
+
+/* Visual feedback states */
+.admin-toggle:hover, 
+.admin-toggle.hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 176, 107, 0.7);
+}
+
+.admin-toggle:active,
+.admin-toggle.active,
+.admin-toggle.clicked,
+.admin-toggle.touch-active {
     transform: scale(0.95);
-    box-shadow: 0 2px 10px rgba(0, 176, 107, 0.4);
+    box-shadow: 0 2px 8px rgba(0, 176, 107, 0.4);
+    background: linear-gradient(135deg, #0d4a39, #008c53);
+}
+
+.admin-toggle.admin-active {
+    background: linear-gradient(135deg, #ff9800, #ff5722);
+    box-shadow: 0 4px 15px rgba(255, 152, 0, 0.5);
+}
+
+.admin-toggle.admin-active:hover {
+    box-shadow: 0 6px 20px rgba(255, 152, 0, 0.7);
+}
+
+/* Desktop-specific improvements */
+@media (min-width: 769px) {
+    .admin-toggle {
+        width: 56px;
+        height: 56px;
+        font-size: 28px;
+    }
+    
+    /* Extra hit area for mouse */
+    .admin-toggle::after {
+        content: '';
+        position: absolute;
+        top: -15px;
+        left: -15px;
+        right: -15px;
+        bottom: -15px;
+        border-radius: 50%;
+        z-index: -1;
+    }
+}
+
+/* Disable default button appearance for cleaner style */
+button, 
+input[type="submit"], 
+input[type="reset"],
+.admin-toggle {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+/* Fix for Firefox outline */
+.admin-toggle::-moz-focus-inner {
+    border: 0;
+}
+
+/* Fix for various desktop browsers */
+.browser-chrome .admin-toggle,
+.browser-firefox .admin-toggle,
+.browser-safari .admin-toggle,
+.browser-edge .admin-toggle {
+    overflow: visible !important;
+}
+
+/* Safari specific fix */
+.browser-safari .admin-toggle {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+/* Platform specific fixes */
+.platform-win32 .admin-toggle, 
+.platform-linux .admin-toggle {
+    transform: translateZ(0);
 }
 
 .settings-icon {
@@ -479,6 +571,16 @@ body {
     width: 100%;
     height: 100%;
     object-fit: cover;
+}
+
+/* Custom uploaded image styling */
+.card-image img.custom-image {
+    object-fit: cover;
+    transition: all 0.3s ease;
+}
+
+.card-image:hover img.custom-image {
+    transform: scale(1.05);
 }
 
 .card-info {
@@ -819,12 +921,6 @@ body {
     font-size: 14px;
 }
 
-/* Admin active state */
-.admin-toggle.admin-active {
-    background-color: #ff9800;
-    box-shadow: 0 0 10px #ff9800;
-}
-
 /* Card has-resume state */
 .card.has-resume .card-image {
     position: relative;
@@ -1026,4 +1122,242 @@ body {
     .pwd-option.btn-accent {
         width: 100%;
     }
+}
+
+/* Emergency Mode Styles */
+.emergency-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: #ff9800;
+    color: #000;
+    z-index: 9999;
+    text-align: center;
+    padding: 8px 0;
+    font-weight: bold;
+    display: none;
+}
+
+.emergency-banner-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+}
+
+.emergency-icon {
+    font-size: 1.2rem;
+}
+
+body.emergency-mode .emergency-banner {
+    display: block;
+}
+
+.emergency-mode-toggle {
+    margin-top: 12px;
+    padding: 8px 12px;
+    background-color: #2c3e50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    width: 100%;
+}
+
+.emergency-mode-toggle:hover {
+    background-color: #1a2530;
+}
+
+.toggle-icon {
+    font-size: 1.1rem;
+}
+
+body.emergency-mode .emergency-mode-toggle {
+    background-color: #c0392b;
+}
+
+body.emergency-mode .emergency-mode-toggle:hover {
+    background-color: #a93226;
+}
+
+/* Password Modal Updates */
+.password-help {
+    margin-top: 12px;
+    color: #3498db;
+    cursor: pointer;
+    text-decoration: underline;
+    font-size: 0.9rem;
+}
+
+body.emergency-mode .password-help {
+    color: #ff9800;
+    font-weight: bold;
+}
+
+/* Close Modal Button */
+.close-modal {
+    position: absolute;
+    right: 15px;
+    top: 10px;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #7f8c8d;
+}
+
+.close-modal:hover {
+    color: #2c3e50;
+}
+
+/* Debug Console Button */
+.debug-console-btn {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    background: linear-gradient(135deg, #7b1fa2, #9c27b0);
+    color: white;
+    border: none;
+    border-radius: 30px;
+    padding: 8px 15px;
+    font-size: 14px;
+    box-shadow: 0 3px 10px rgba(156, 39, 176, 0.4);
+    z-index: 9999;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.debug-console-btn:hover {
+    background: linear-gradient(135deg, #6a1b9a, #8e24aa);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(156, 39, 176, 0.6);
+}
+
+.debug-console-btn:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 8px rgba(156, 39, 176, 0.4);
+}
+
+/* Debug Console Output */
+.debug-console {
+    position: fixed;
+    bottom: 40px;
+    right: 40px;
+    width: 400px;
+    max-height: 300px;
+    background-color: rgba(0, 0, 0, 0.85);
+    color: #0f0;
+    padding: 10px;
+    border-radius: 5px;
+    font-family: monospace;
+    font-size: 12px;
+    z-index: 9999;
+    overflow-y: auto;
+    display: none;
+    border: 1px solid #0f0;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+}
+
+.debug-console.visible {
+    display: block;
+}
+
+.debug-log {
+    margin-bottom: 5px;
+    padding: 3px 5px;
+    border-radius: 3px;
+}
+
+.debug-log.info {
+    color: #4d88ff;
+}
+
+.debug-log.success {
+    color: #00ff00;
+}
+
+.debug-log.error {
+    color: #ff3333;
+}
+
+.debug-log.warning {
+    color: #ffcc00;
+}
+
+.debug-action-btn {
+    background-color: #004400;
+    color: #00ff00;
+    border: 1px solid #00aa00;
+    border-radius: 3px;
+    padding: 5px 10px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    font-family: monospace;
+    font-size: 12px;
+}
+
+.debug-action-btn:hover {
+    background-color: #006600;
+}
+
+.debug-highlighted {
+    outline: 2px solid #00ff00 !important;
+    animation: pulse 0.5s ease-in-out;
+}
+
+@keyframes pulse {
+    0% { outline-color: rgba(0, 255, 0, 0.2); }
+    50% { outline-color: rgba(0, 255, 0, 0.8); }
+    100% { outline-color: rgba(0, 255, 0, 0.2); }
+}
+
+/* Fix z-index stacking */
+.modal {
+    z-index: 10000; /* Ensure modal is above other fixed elements */
+}
+
+/* Fix layering issues */
+.admin-toggle, .debug-console-btn {
+    will-change: transform; /* Hardware acceleration */
+    isolation: isolate; /* Create stacking context */
+}
+
+/* Ensure proper event handling */
+body .admin-toggle,
+body .debug-console-btn {
+    pointer-events: auto !important;
+}
+
+/* Debug highlighted elements */
+.debug-highlighted {
+    outline: 3px solid rgba(255, 87, 34, 0.7) !important;
+    position: relative;
+    animation: debug-pulse 0.5s ease;
+}
+
+@keyframes debug-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 87, 34, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(255, 87, 34, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 87, 34, 0);
+    }
+}
+
+/* Fix for browser inconsistencies in event handling */
+.admin-toggle, 
+.admin-toggle i,
+.admin-toggle * {
+    cursor: pointer;
 } 

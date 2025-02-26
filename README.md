@@ -1,165 +1,127 @@
-# Pokémon TCG-Inspired Interactive Resume
+# Pokemon Card Resume Website
 
-A unique and interactive resume website inspired by Pokémon Trading Card Game aesthetics. The site features a holographic resume card with interactive effects and a secure resume management system.
-
-![Pokémon Card Resume Demo](frontend/assets/demo-preview.png)
+A creative resume website styled as a Pokemon card with interactive features. The website allows for card flipping, image uploads, and resume management.
 
 ## Features
 
-- Interactive Pokémon card resume with holographic effects
-- Real-time card animations that respond to mouse movement
-- Mobile-friendly design with touch interactions
-- Secure resume upload/management system
-- JWT-based authentication for admin features
-- Proper separation of frontend and backend
+- **Interactive Pokemon Card**: Holographic effects and card flipping
+- **Admin Panel**: Secure login to manage content
+- **Resume Management**: Upload and manage your resume PDF
+- **Profile Image**: Authenticated users can upload a custom profile image
+- **Emergency Mode**: Can operate without a backend by using local storage
 
-## Project Structure
+## Quick Start
 
-```
-pokemon-card-resume/
-├── frontend/               # Frontend code (GitHub Pages)
-│   ├── assets/             # Images and static assets
-│   ├── css/                # Stylesheets
-│   │   └── styles.css      # Main CSS file
-│   ├── js/                 # JavaScript files
-│   │   ├── api.js          # API client for backend communication
-│   │   ├── app.js          # Main application logic
-│   │   └── pokemon-card.js # Pokemon card interactivity
-│   └── index.html          # Main HTML file
-│
-└── backend/                # Backend code (Express server)
-    ├── config/             # Configuration files
-    ├── middleware/         # Express middleware
-    │   └── auth.js         # Authentication middleware
-    ├── models/             # Data models
-    ├── routes/             # API routes
-    │   ├── auth.js         # Authentication routes
-    │   └── resume.js       # Resume management routes
-    ├── uploads/            # Resume upload directory
-    ├── .env.example        # Example environment variables
-    ├── package.json        # Node.js dependencies
-    └── server.js           # Main server file
-```
+### Local Development
 
-## Setup & Installation
-
-### Frontend (GitHub Pages)
-
-1. Clone the repository:
+1. Clone the repository
    ```
-   git clone https://github.com/akashp3128/pokemon-card-resume.git
+   git clone https://github.com/yourusername/pokemon-card-resume.git
    cd pokemon-card-resume
    ```
 
-2. Open the `frontend` directory:
-   ```
-   cd frontend
-   ```
-
-3. Update the API endpoint URLs in `js/api.js` to your deployed backend URL
-
-4. Host on GitHub Pages:
-   - Push the `frontend` directory to your GitHub repository
-   - Configure GitHub Pages to serve from the repository
-
-### Backend (Express Server)
-
-1. Navigate to the backend directory:
-   ```
-   cd backend
-   ```
-
-2. Install dependencies:
+2. Install dependencies
    ```
    npm install
    ```
 
-3. Create a `.env` file based on `.env.example`:
+3. Start the frontend server
    ```
-   cp .env.example .env
-   ```
-
-4. Update the `.env` file with your own configuration values:
-   ```
-   # Security
-   JWT_SECRET=your_secure_random_string
-   ADMIN_PASSWORD=your_admin_password
-   
-   # CORS
-   FRONTEND_URL=https://your-github-pages-url.github.io
+   cd frontend
+   node server.js
    ```
 
-5. Start the server:
+4. Start the backend server (optional)
    ```
-   # Development mode
-   npm run dev
-   
-   # Production mode
+   cd backend
    npm start
    ```
 
-## Deployment
+5. Open your browser and navigate to [http://localhost:8080](http://localhost:8080)
 
-### Frontend Deployment
+### Emergency Mode
 
-The frontend can be deployed to GitHub Pages:
+If the backend server is not running, the application will automatically switch to "emergency mode" on localhost, which:
 
-1. Push your code to a GitHub repository
-2. Go to Settings > Pages
-3. Set the source to your main branch and the `/frontend` directory
-4. GitHub will provide a URL for your site
+- Stores data in local storage instead of a database
+- Shows an emergency mode banner
+- Allows login with the password "localdev" or "Rosie@007"
 
-### Backend Deployment
+## Project Structure
 
-The backend can be deployed to various platforms like Heroku, Vercel, or any VPS:
+```
+/
+├── frontend/             # Frontend files
+│   ├── css/              # Stylesheets
+│   ├── js/               # JavaScript files
+│   │   ├── api.js        # API client for backend communication
+│   │   ├── app.js        # Main application logic
+│   │   ├── debug.js      # Debugging utilities
+│   │   ├── init.js       # Initialization and emergency mode
+│   │   └── pokemon-card.js # Card interactivity
+│   ├── assets/           # Images and other assets
+│   ├── index.html        # Main HTML file
+│   └── server.js         # Static file server for development
+├── backend/              # Backend API server (Node.js)
+│   ├── routes/           # API route handlers
+│   ├── middleware/       # Express middleware
+│   └── server.js         # Backend server entry point
+├── vercel.json           # Vercel deployment configuration
+└── package.json          # NPM package configuration
+```
 
-#### Heroku Deployment
+## Key Components
 
-1. Create a Heroku account and install the Heroku CLI
-2. Initialize a Git repository in the `backend` directory
-3. Create a new Heroku app:
-   ```
-   heroku create pokemon-card-resume-api
-   ```
-4. Set environment variables:
-   ```
-   heroku config:set JWT_SECRET=your_secure_random_string
-   heroku config:set ADMIN_PASSWORD=your_admin_password
-   heroku config:set FRONTEND_URL=https://your-github-pages-url.github.io
-   ```
-5. Deploy to Heroku:
-   ```
-   git push heroku main
-   ```
+### Pokemon Card
 
-## Security Features
+The Pokemon card is the centerpiece of the website. It features:
 
-- JWT-based authentication for admin access
-- Password hashing with bcrypt
-- Secure HTTP headers with helmet
-- CORS protection
-- File size and type validation for resume uploads
+- Holographic effects that respond to mouse movement
+- Front and back views that can be toggled by clicking the card
+- Real-time visual feedback
 
-## Technologies Used
+### Authentication
 
-### Frontend
-- HTML5, CSS3, JavaScript
-- Custom animation effects
-- Responsive design
+The admin panel is protected by a password:
 
-### Backend
-- Node.js & Express
-- JWT for authentication
-- bcrypt for password hashing
-- Multer for file uploads
+- Production mode: Set via the `ADMIN_PASSWORD` environment variable
+- Development mode: "admin1234" (default) or custom
+- Emergency mode: "localdev" or "Rosie@007"
+
+### File Uploads
+
+Authenticated users can:
+
+- Upload a PDF resume
+- Upload a custom profile image
+- Manage (view/delete) their uploaded files
+
+## Development
+
+### Debugging
+
+The application includes comprehensive debugging tools:
+
+- Debug console (toggle with the bug icon)
+- Emergency mode banner when backend is unavailable
+- Detailed logs in the browser console
+
+### API Client
+
+The API client (`api.js`) automatically:
+
+- Detects the environment (local/production)
+- Switches to emergency mode when needed
+- Handles authentication tokens
+
+## Production Deployment
+
+See [PRODUCTION.md](PRODUCTION.md) for detailed instructions on deploying to Vercel.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+MIT
 
-## Creator
+## Contact
 
-Akash Patel - Software Engineer
-
-- GitHub: [akashp3128](https://github.com/akashp3128)
-- Email: akashp3128@gmail.com
+Akash Patel - akashp3128@gmail.com

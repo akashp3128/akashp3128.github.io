@@ -8,6 +8,14 @@
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+    <!-- Emergency Mode Banner for local development -->
+    <div id="emergencyModeBanner" class="emergency-banner" style="display: none;">
+        <div class="emergency-banner-content">
+            <span class="emergency-icon">⚠️</span>
+            <span class="emergency-text">Emergency Mode Active - Backend not required</span>
+        </div>
+    </div>
+
     <div class="background">
         <div class="bubbles">
             <div class="bubble"></div>
@@ -139,6 +147,14 @@
                     <input type="file" id="fileInput" style="display: none" accept=".pdf">
                 </div>
                 <button id="deleteResumeBtn" class="btn btn-accent">Delete Current Resume</button>
+                
+                <h3 style="margin-top: 20px;">Upload Pokemon Card Image</h3>
+                <div class="upload-area" id="imageUploadArea">
+                    <p>Drag & drop your profile image here or click to select</p>
+                    <input type="file" id="imageFileInput" style="display: none" accept="image/*">
+                </div>
+                <button id="deleteImageBtn" class="btn btn-accent" style="display: none;">Delete Current Image</button>
+                
                 <button id="logoutBtn" class="btn">Logout</button>
             </div>
             
@@ -151,21 +167,34 @@
         </section>
     </div>
     
-    <div class="admin-toggle" id="adminToggle">
+    <!-- Settings/Admin Button -->
+    <button type="button" class="admin-toggle" id="adminToggle" aria-label="Settings">
         <i>⚙️</i>
-    </div>
+    </button>
     
-    <div class="modal" id="passwordModal">
+    <!-- Debug Console Button (only visible in development) -->
+    <button type="button" id="debugConsoleBtn" class="debug-console-btn" style="display: none;">
+        <span>🐞 Debug</span>
+    </button>
+
+    <div id="passwordModal" class="modal">
         <div class="modal-content">
-            <span class="close-btn" id="closeModal">&times;</span>
-            <h3>Admin Authentication</h3>
-            <p>Enter password to access admin features:</p>
-            <input type="password" id="passwordInput">
-            <button id="submitPassword" class="btn">Submit</button>
-            <div class="password-help">
-                <p>Having trouble with the password? Try clicking the Help button below:</p>
-                <button id="passwordHelp" class="btn btn-small">Need Help?</button>
+            <span id="closeModal" class="close-modal">&times;</span>
+            <h2>Enter Admin Password</h2>
+            <div class="form-group">
+                <label for="passwordInput">Admin Password</label>
+                <input type="password" id="passwordInput" placeholder="Enter password">
+                <div class="password-help">
+                    <p>Hint: The password is "Rosie@007"</p>
+                </div>
             </div>
+            <button id="submitPassword" class="btn">Login</button>
+            
+            <!-- Emergency mode toggle for local development -->
+            <button id="emergencyModeToggle" class="emergency-mode-toggle" style="display: none;">
+                <span class="toggle-icon">🛠️</span>
+                <span class="toggle-text">Toggle Emergency Mode</span>
+            </button>
         </div>
     </div>
     
@@ -184,8 +213,10 @@
     </footer>
     
     <!-- JavaScript files -->
+    <script src="js/init.js"></script>
     <script src="js/api.js"></script>
     <script src="js/pokemon-card.js"></script>
     <script src="js/app.js"></script>
+    <script src="js/debug.js"></script>
 </body>
 </html> 

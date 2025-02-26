@@ -6,8 +6,56 @@ const holoOverlay = document.querySelectorAll('.holo-overlay');
 const sparkles = document.querySelectorAll('.sparkles');
 
 // Card flip functionality
-card.addEventListener('click', function() {
+card.addEventListener('click', function(event) {
+    // Check if the click is on the admin toggle or within the admin panel
+    if (event.target.id === 'adminToggle' || 
+        event.target.closest('#adminToggle') || 
+        event.target.closest('#adminPanel')) {
+        // Prevent card flip when clicking on admin elements
+        event.stopPropagation();
+        return;
+    }
+    
+    // Only flip if not clicking on admin toggle
     this.classList.toggle('card-flipped');
+    
+    // Debug info
+    console.log('Card flipped:', this.classList.contains('card-flipped'));
+});
+
+// Add method to manually reset card to front
+window.resetCardToFront = function() {
+    if (card.classList.contains('card-flipped')) {
+        card.classList.remove('card-flipped');
+        console.log('Card reset to front');
+    }
+};
+
+// Make sure the card is defined in the DOM
+document.addEventListener('DOMContentLoaded', function() {
+    // Reinitialize card reference to ensure it exists
+    const card = document.getElementById('pokemonCard');
+    
+    if (card) {
+        console.log('Pokemon card element found and event listeners attached');
+        
+        // Re-attach the click event in case it was lost
+        card.addEventListener('click', function(event) {
+            // Verify target to prevent flipping when clicking admin elements
+            if (event.target.id === 'adminToggle' || 
+                event.target.closest('#adminToggle') || 
+                event.target.closest('#adminPanel')) {
+                event.stopPropagation();
+                return;
+            }
+            
+            // Toggle flip class
+            this.classList.toggle('card-flipped');
+            console.log('Card flipped from DOMContentLoaded handler');
+        });
+    } else {
+        console.error('Pokemon card element not found in the DOM');
+    }
 });
 
 // Holographic effect on mouse move
@@ -20,6 +68,11 @@ document.addEventListener('mousemove', function(e) {
         e.clientX <= cardRect.right + 100 && 
         e.clientY >= cardRect.top - 100 && 
         e.clientY <= cardRect.bottom + 100;
+    
+    // Skip if card is flipped
+    if (card.classList.contains('card-flipped')) {
+        return;
+    }
     
     if (isNearCard) {
         const cardCenterX = cardRect.left + cardRect.width / 2;
