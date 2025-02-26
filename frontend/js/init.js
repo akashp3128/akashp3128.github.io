@@ -1,41 +1,51 @@
 // Initialize the Pokemon Card Website
 console.log('Initializing Pokemon Card Website...');
 
-// Main initialization function
-function initializeWebsite() {
-    // Enable emergency mode by default for local development
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        // Only set emergency mode if it hasn't been explicitly set already
-        if (localStorage.getItem('emergencyModeEnabled') === null) {
-            console.log('Local development detected - enabling emergency mode by default');
-            localStorage.setItem('emergencyModeEnabled', 'true');
-            window.emergencyMode = true;
-            
-            // Show the emergency mode banner
-            const banner = document.getElementById('emergencyModeBanner');
-            if (banner) {
-                banner.style.display = 'block';
-            }
-            
-            // Add emergency mode class to body
-            document.body.classList.add('emergency-mode');
-        } else {
-            // Read the existing setting
-            window.emergencyMode = localStorage.getItem('emergencyModeEnabled') === 'true';
-            console.log('Using existing emergency mode setting:', window.emergencyMode);
-        }
-    }
+// Globals for the application
+window.ApiClient = {};  // Will be populated in api.js
+
+// Initialize settings and variables
+document.addEventListener('DOMContentLoaded', function() {
+    // Set API base URL 
+    window.API_BASE_URL = determineApiBaseUrl();
     
-    // Ensure global flag is set
-    window.pokemonCardInitialized = true;
+    // Check for emergency mode
+    checkEmergencyMode();
     
-    console.log('Website initialization complete');
+    // Initialize card
+    initializeCard();
+});
+
+// Determine the API base URL based on environment
+function determineApiBaseUrl() {
+    const isLocalhost = window.location.hostname === 'localhost' || 
+                      window.location.hostname === '127.0.0.1';
+    
+    return window.location.origin; // Use same origin for both local and production
 }
 
-// Run initialization when DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeWebsite);
-} else {
-    // DOM already loaded
-    initializeWebsite();
+// Initialize the Pokemon card
+function initializeCard() {
+    const card = document.getElementById('pokemonCard');
+    if (!card) {
+        console.error('Pokemon card element not found!');
+        return;
+    }
+    
+    // Use setupCardFlipping if available
+    if (typeof setupCardFlipping === 'function') {
+        setupCardFlipping();
+    }
+}
+
+// Check and initialize emergency mode
+function checkEmergencyMode() {
+    const storedMode = localStorage.getItem('emergencyModeEnabled');
+    window.emergencyMode = storedMode === 'true';
+    
+    // Show emergency banner if in emergency mode
+    const banner = document.getElementById('emergencyModeBanner');
+    if (banner && window.emergencyMode) {
+        banner.style.display = 'block';
+    }
 } 

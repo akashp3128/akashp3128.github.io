@@ -21,26 +21,95 @@ document.addEventListener('DOMContentLoaded', function() {
     const imageUploadArea = document.getElementById('imageUploadArea');
     const imageFileInput = document.getElementById('imageFileInput');
     const deleteImageBtn = document.getElementById('deleteImageBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
 
-    // Emergency mode for local development without backend
-    window.emergencyMode = localStorage.getItem('emergencyModeEnabled') === 'true';
-    
-    // Check if backend is accessible
+    // Check if elements exist
+    if (!adminToggle) console.error('Admin toggle button not found');
+    if (!passwordModal) console.error('Password modal not found');
+    if (!submitPassword) console.error('Submit password button not found');
+    if (!closeModal) console.error('Close modal button not found');
+
+    // Global variable to track emergency mode status
+    window.emergencyMode = false;
+
+    // Function to update emergency mode status based on localStorage and connectivity
+    function updateEmergencyModeStatus() {
+        const storedEmergencyMode = localStorage.getItem('emergencyModeEnabled');
+        if (storedEmergencyMode === 'true') {
+            window.emergencyMode = true;
+            console.log('Emergency mode enabled from localStorage');
+        }
+    }
+
+    // Initialize emergency mode from localStorage on page load
+    updateEmergencyModeStatus();
+
+    // Check if the backend connection is working
     async function checkBackendConnection() {
-        // Don't attempt connection check if already in emergency mode
-        if (window.emergencyMode) return false;
+        // Read emergency mode status first
+        updateEmergencyModeStatus();
+        
+        // If we're already in emergency mode, don't bother checking
+        if (window.emergencyMode) {
+            console.log('Already in emergency mode. Skipping backend connection check.');
+            return false;
+        }
         
         try {
-            // First try to validate any existing token
-            if (ApiClient.auth.isAuthenticated()) {
-                const verifyResult = await ApiClient.auth.verify();
-                if (verifyResult.success) return true;
+            // Set a timeout in case the server doesn't respond
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
+            
+            // Define the API base URL for health check
+            const API_BASE_URL = 'http://localhost:3000';
+            
+            // Attempt to connect to the backend health endpoint
+            console.log('Checking backend connection...');
+            const response = await fetch(`${API_BASE_URL}/health`, {
+                method: 'GET',
+                signal: controller.signal,
+                headers: {
+                    'Accept': 'application/json',
+                    'Origin': window.location.origin
+                }
+            });
+            
+            // Clear the timeout
+            clearTimeout(timeoutId);
+            
+            if (!response.ok) {
+                throw new Error(`Backend health check failed with status: ${response.status}`);
             }
             
-            // If that fails or no token exists, try a direct check
-            return await ApiClient.checkBackendConnection?.() || false;
+            const data = await response.json();
+            console.log('Backend connection successful:', data);
+            
+            // If we successfully connected, we're not in emergency mode
+            window.emergencyMode = false;
+            localStorage.setItem('emergencyModeEnabled', 'false');
+            
+            return true;
         } catch (error) {
-            console.warn('Backend connectivity check failed:', error);
+            console.error('Backend connection check failed:', error);
+            
+            // Handle CORS errors, timeouts, and network failures by enabling emergency mode
+            if (error.name === 'AbortError' || 
+                error.message.includes('CORS') || 
+                error.message.includes('NetworkError') ||
+                error.message.includes('Failed to fetch') ||
+                error.message.includes('Network Error') ||
+                error.message.includes('Load failed')) {
+                
+                console.warn('Network error detected. Enabling emergency mode.');
+                window.emergencyMode = true;
+                localStorage.setItem('emergencyModeEnabled', 'true');
+                
+                // Show notification about emergency mode (if function exists)
+                if (typeof showNotification === 'function') {
+                    showNotification('Network error detected. Emergency mode enabled.', 'warning');
+                }
+            }
+            
             return false;
         }
     }
@@ -83,19 +152,16 @@ document.addEventListener('DOMContentLoaded', function() {
             emergencyBanner.style.display = window.emergencyMode ? 'block' : 'none';
         }
         
-        // Show appropriate notification and update password help text
+        // Show appropriate notification
         if (window.emergencyMode) {
             showNotification('Emergency mode activated for local development', 'warning');
-            if (passwordHelp) {
-                passwordHelp.textContent = 'In emergency mode, use password: "localdev"';
-                passwordHelp.style.display = 'block';
-            }
         } else {
             showNotification('Emergency mode deactivated', 'info');
-            if (passwordHelp) {
-                passwordHelp.textContent = 'Need help with the password?';
-                passwordHelp.style.display = 'block';
-            }
+        }
+        
+        // Hide password help text regardless of mode
+        if (passwordHelp) {
+            passwordHelp.style.display = 'none';
         }
         
         // Save state to localStorage
@@ -124,7 +190,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     showNotification('Tip: You can activate emergency mode for local development', 'info', 5000);
                 }
             }
-            return;
+            return { isAuthenticated: false };
         }
         
         if (ApiClient.auth.isAuthenticated()) {
@@ -132,71 +198,132 @@ document.addEventListener('DOMContentLoaded', function() {
             if (result.success) {
                 isAuthenticated = true;
                 showNotification('You are already logged in', 'success');
-                adminPanel.style.display = 'block';
+                showAdminFeatures();
                 adminToggle.classList.add('admin-active');
+                return { isAuthenticated: true };
             }
+        }
+        return { isAuthenticated: false };
+    }
+
+    // Check for the resume and setup the preview
+    function checkForResume() {
+        const resumePreview = document.getElementById('resumePreview');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const resumeBadge = document.getElementById('resumeBadge');
+        
+        // Check if we have a resume in emergency mode
+        if (window.emergencyMode) {
+            const emergencyResume = localStorage.getItem('emergencyModeResume');
+            if (emergencyResume) {
+                console.log('Found emergency mode resume:', emergencyResume);
+                
+                // Update UI to show resume is available
+                if (resumePreview) {
+                    resumePreview.src = emergencyResume;
+                }
+                
+                if (downloadBtn) {
+                    downloadBtn.href = emergencyResume;
+                    downloadBtn.style.display = 'inline-block';
+                }
+                
+                if (resumeBadge) {
+                    resumeBadge.style.display = 'block';
+                }
+                
+                // Add resume indicator to card
+                document.getElementById('pokemonCard').classList.add('has-resume');
+            } else {
+                console.log('No emergency mode resume found');
+                // Hide resume elements
+                if (resumePreview) {
+                    resumePreview.src = '';
+                }
+                
+                if (downloadBtn) {
+                    downloadBtn.href = '#';
+                    downloadBtn.style.display = 'none';
+                }
+                
+                if (resumeBadge) {
+                    resumeBadge.style.display = 'none';
+                }
+                
+                // Remove resume indicator from card
+                document.getElementById('pokemonCard').classList.remove('has-resume');
+            }
+        } else {
+            // In normal mode, fetch resume from API
+            ApiClient.resume.get()
+                .then(result => {
+                    if (result.success && result.url) {
+                        console.log('Found resume:', result.url);
+                        
+                        // Update UI to show resume is available
+                        if (resumePreview) {
+                            resumePreview.src = result.url;
+                        }
+                        
+                        if (downloadBtn) {
+                            downloadBtn.href = result.url;
+                            downloadBtn.style.display = 'inline-block';
+                        }
+                        
+                        if (resumeBadge) {
+                            resumeBadge.style.display = 'block';
+                        }
+                        
+                        // Add resume indicator to card
+                        document.getElementById('pokemonCard').classList.add('has-resume');
+                    } else {
+                        console.log('No resume found');
+                        // Hide resume elements
+                        if (resumePreview) {
+                            resumePreview.src = '';
+                        }
+                        
+                        if (downloadBtn) {
+                            downloadBtn.href = '#';
+                            downloadBtn.style.display = 'none';
+                        }
+                        
+                        if (resumeBadge) {
+                            resumeBadge.style.display = 'none';
+                        }
+                        
+                        // Remove resume indicator from card
+                        document.getElementById('pokemonCard').classList.remove('has-resume');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking for resume:', error);
+                });
         }
     }
 
-    // Fetch and display the resume
-    async function fetchResume() {
-        // Check if we have an emergency mode local resume
-        if (window.emergencyMode) {
-            const localResume = localStorage.getItem('emergencyModeResume');
-            if (localResume) {
-                resumePreview.src = localResume;
-                downloadBtn.href = localResume;
-                downloadBtn.style.display = 'inline-block';
-                resumeBadge.style.display = 'block';
-                pokemonCard.classList.add('has-resume');
-                return;
-            } else {
-                resumePreview.src = '';
-                downloadBtn.style.display = 'none';
-                resumeBadge.style.display = 'none';
-                pokemonCard.classList.remove('has-resume');
-                return;
-            }
+    // Handle the resume upload process
+    function handleResumeUpload(file) {
+        console.log('Handling resume upload:', file);
+        if (!file) {
+            showNotification('No file selected', 'error');
+            return;
         }
         
-        // Normal mode - get from API
-        const result = await ApiClient.resume.get();
-        
-        if (result.success) {
-            resumePreview.src = result.data.url;
-            downloadBtn.href = result.data.url;
-            downloadBtn.style.display = 'inline-block';
-            
-            // Add resume badge to the Pokemon card when resume is available
-            if (resumeBadge) {
-                resumeBadge.style.display = 'block';
-            }
-            
-            // Add a "has-resume" class to the card for potential styling
-            pokemonCard.classList.add('has-resume');
-        } else {
-            if (result.notFound) {
-                showNotification('No resume uploaded yet', 'error');
-            } else if (result.networkError) {
-                showNotification('Network error: Could not connect to server', 'error');
-            } else {
-                showNotification('Error loading resume', 'error');
-            }
-            resumePreview.src = '';
-            downloadBtn.style.display = 'none';
-            
-            // Hide resume badge when no resume is available
-            if (resumeBadge) {
-                resumeBadge.style.display = 'none';
-            }
-            
-            // Remove the "has-resume" class from the card
-            pokemonCard.classList.remove('has-resume');
+        // Check file type
+        if (file.type !== 'application/pdf') {
+            showNotification('Only PDF files are allowed', 'error');
+            return;
         }
+        
+        // Upload the file
+        uploadResume(file);
     }
 
     // Upload resume
     async function uploadResume(file) {
+        console.log('Uploading resume:', file);
+        
         if (!isAuthenticated && !window.emergencyMode) {
             showNotification('You must be authenticated to upload', 'error');
             return;
@@ -205,13 +332,14 @@ document.addEventListener('DOMContentLoaded', function() {
         // Handle emergency mode upload (store in localStorage)
         if (window.emergencyMode) {
             try {
+                console.log('Emergency mode upload - saving to localStorage');
                 // Convert file to base64 for local storage
                 const reader = new FileReader();
                 reader.onloadend = function() {
                     const base64data = reader.result;
                     localStorage.setItem('emergencyModeResume', base64data);
                     showNotification('Resume saved locally in emergency mode', 'success');
-                    fetchResume(); // Refresh the display
+                    checkForResume(); // Refresh the display
                 };
                 reader.readAsDataURL(file);
                 return;
@@ -223,13 +351,19 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Regular upload via API
-        const result = await ApiClient.resume.upload(file);
-        
-        if (result.success) {
-            showNotification('Resume uploaded successfully', 'success');
-            fetchResume();
-        } else {
-            showNotification(result.error || 'Failed to upload resume', 'error');
+        try {
+            console.log('Regular upload via API');
+            const result = await ApiClient.resume.upload(file);
+            
+            if (result.success) {
+                showNotification('Resume uploaded successfully', 'success');
+                checkForResume();
+            } else {
+                showNotification(result.error || 'Failed to upload resume', 'error');
+            }
+        } catch (error) {
+            console.error('Resume upload error:', error);
+            showNotification('Failed to upload resume: ' + error.message, 'error');
         }
     }
 
@@ -244,7 +378,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (window.emergencyMode) {
             localStorage.removeItem('emergencyModeResume');
             showNotification('Local resume deleted', 'success');
-            fetchResume(); // Refresh the display
+            checkForResume(); // Refresh the display
             return;
         }
 
@@ -253,7 +387,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (result.success) {
             showNotification('Resume deleted successfully', 'success');
-            fetchResume();
+            checkForResume();
         } else {
             showNotification(result.error || 'Failed to delete resume', 'error');
         }
@@ -347,38 +481,102 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Authenticate user
     async function authenticate(password) {
-        console.log('Attempting to authenticate with password');
-        
         try {
-            // Special handling for emergency mode
-            if (window.emergencyMode && (password === 'localdev' || password === 'Rosie@007')) {
-                console.log('Emergency mode authentication successful');
-                isAuthenticated = true;
-                
-                // Store a temporary token for emergency mode
-                localStorage.setItem('authToken', 'emergency-dev-token');
-                
-                return { success: true, emergency: true };
+            console.log('Attempting authentication with:', password ? '********' : 'empty password');
+            
+            // Clear any previous login errors
+            const passwordInput = document.getElementById('passwordInput');
+            if (passwordInput) {
+                passwordInput.classList.remove('error');
             }
             
-            // Regular authentication through API
-            const result = await ApiClient.auth.login(password);
-            console.log('Authentication API response:', result);
+            // Validate password isn't empty
+            if (!password || password.trim() === '') {
+                console.error('Empty password submitted');
+                showNotification('Please enter a password', 'error');
+                if (passwordInput) {
+                    passwordInput.classList.add('error');
+                }
+                return false;
+            }
             
-            if (result.success) {
-                isAuthenticated = true;
-                return { success: true };
+            // Determine which password to accept
+            let success = false;
+            
+            if (window.emergencyMode) {
+                // In emergency mode, use a hardcoded password (not displayed in UI)
+                const validPassword = "localdev";
+                success = (password === validPassword);
+                console.log("Using emergency mode password validation, result:", success);
             } else {
-                console.error('Authentication failed:', result.error);
-                return { success: false, error: result.error || 'Invalid password' };
+                // Try to authenticate with API or use hardcoded password
+                try {
+                    console.log("Attempting login via ApiClient.auth.login");
+                    const result = await ApiClient.auth.login(password);
+                    success = result.success;
+                    console.log("API login result:", success);
+                } catch (error) {
+                    console.error('API authentication failed, using fallback password');
+                    // Fallback to hardcoded password (not displayed in UI)
+                    const validPassword = "Rosie@007";
+                    success = (password === validPassword);
+                    console.log("Fallback password authentication result:", success);
+                }
+            }
+            
+            if (success) {
+                console.log('Authentication successful');
+                
+                // Set authentication state
+                isAuthenticated = true;
+                
+                // Store auth token
+                localStorage.setItem('authToken', 'demo-token-123');
+                
+                // Hide the password modal
+                const passwordModal = document.getElementById('passwordModal');
+                if (passwordModal) {
+                    passwordModal.style.display = 'none';
+                }
+                
+                // Show admin features
+                showAdminFeatures();
+                
+                // Show success notification
+                showNotification('Authentication successful!', 'success');
+                
+                return true;
+            } else {
+                console.error('Authentication failed');
+                showNotification('Authentication failed: Invalid password', 'error');
+                
+                // Highlight password field
+                if (passwordInput) {
+                    passwordInput.classList.add('error');
+                }
+                
+                return false;
             }
         } catch (error) {
-            console.error('Authentication error:', error);
-            return { 
-                success: false, 
-                error: 'Error during authentication. Please try again.' 
-            };
+            console.error('Error during authentication:', error);
+            showNotification('Authentication error: ' + error.message, 'error');
+            return false;
         }
+    }
+
+    // Function to handle logout
+    function handleLogout() {
+        console.log('Logging out');
+        
+        // Clear authentication state
+        isAuthenticated = false;
+        localStorage.removeItem('authToken');
+        
+        // Hide admin features
+        hideAdminFeatures();
+        
+        // Show notification
+        showNotification('Logged out successfully', 'success');
     }
 
     // Show notification
@@ -395,66 +593,76 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize everything
     async function init() {
-        // Check if we're in local development
-        const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        console.log('Initializing application');
         
-        if (isLocalDev) {
-            console.log('Local development environment detected');
-            // Make emergency mode toggle available in local dev
-            if (emergencyModeToggle) {
-                emergencyModeToggle.style.display = 'block';
-            }
-            
-            // For local development, check if we need to initialize emergency mode
-            // Only if it hasn't been explicitly set already
-            if (localStorage.getItem('emergencyModeEnabled') === null) {
-                console.log('Enabling emergency mode by default for local development');
-                window.emergencyMode = true;
-                saveEmergencyModeState();
-                
-                // Update UI to reflect emergency mode
-                document.body.classList.add('emergency-mode');
-                
-                const emergencyBanner = document.getElementById('emergencyModeBanner');
-                if (emergencyBanner) {
-                    emergencyBanner.style.display = 'block';
-                }
-                
-                if (passwordHelp) {
-                    passwordHelp.textContent = 'In emergency mode, use password: "localdev"';
-                    passwordHelp.style.display = 'block';
-                }
-            }
+        // Setup admin functionality
+        setupAdminFunctionality();
+        
+        // Set up login form
+        setupLoginForm();
+        
+        // Check if user is already authenticated
+        const token = localStorage.getItem('authToken');
+        if (token) {
+            console.log('Found existing auth token');
+            isAuthenticated = true;
+            showAdminFeatures();
+        } else {
+            console.log('No auth token found, user needs to authenticate');
+            hideAdminFeatures();
         }
         
-        // Set up emergency mode banner behavior
-        const emergencyBanner = document.getElementById('emergencyModeBanner');
-        if (emergencyBanner) {
-            // Update the UI to match the current emergency mode state
-            // Don't toggle, just update
-            emergencyBanner.style.display = window.emergencyMode ? 'block' : 'none';
-            document.body.classList.toggle('emergency-mode', window.emergencyMode);
-            
-            if (window.emergencyMode && passwordHelp) {
-                passwordHelp.textContent = 'In emergency mode, use password: "localdev"';
-                passwordHelp.style.display = 'block';
-            }
+        // Check for the resume
+        checkForResume();
+        
+        // Set up event listeners for file uploads
+        setupFileUploads();
+        
+        // Check if we need to enter emergency mode
+        checkEmergencyMode();
+    }
+    
+    // Setup admin functionality including all event listeners
+    function setupAdminFunctionality() {
+        // Setup event listeners for admin toggle button
+        const adminToggle = document.getElementById('adminToggle');
+        const passwordModal = document.getElementById('passwordModal');
+        
+        if (adminToggle) {
+            adminToggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // If already authenticated, toggle admin panel
+                if (isAuthenticated) {
+                    // Toggle admin features
+                    if (document.body.classList.contains('authenticated')) {
+                        hideAdminFeatures();
+                    } else {
+                        showAdminFeatures();
+                    }
+                } else {
+                    // Show password modal
+                    if (passwordModal) {
+                        passwordModal.style.display = 'block';
+                        
+                        // Focus on password input
+                        const passwordInput = document.getElementById('passwordInput');
+                        if (passwordInput) {
+                            passwordInput.focus();
+                            passwordInput.value = '';
+                        }
+                    }
+                }
+            });
         }
         
-        // Detect browser and platform for debugging
-        detectBrowserAndPlatform();
-        
-        // Check authentication status
-        await checkAuthentication();
-        
-        // Load resume if available
-        await fetchResume();
-        
-        // Load profile image if available
-        await fetchProfileImage();
-        
-        // Set up event listeners
-        setupEventListeners();
+        // Check if already authenticated
+        const token = localStorage.getItem('authToken');
+        if (token) {
+            isAuthenticated = true;
+            showAdminFeatures();
+        }
     }
     
     // Detect browser and platform for debugging
@@ -480,7 +688,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Initialize debug console in local development
         initDebugConsole(browserInfo, platform);
         
-        return { browser: browserInfo, platform: platform };
+        return { browser: browserInfo, platform: platform, isMobile: isMobile };
     }
     
     // Initialize debug console for local development
@@ -603,265 +811,114 @@ document.addEventListener('DOMContentLoaded', function() {
     function setupEventListeners() {
         console.log('Setting up event listeners');
         
-        // Admin panel toggle - unified event handling
+        // Admin toggle button
+        const adminToggle = document.getElementById('adminToggle');
+        const passwordModal = document.getElementById('passwordModal');
+        const passwordInput = document.getElementById('passwordInput');
+        const submitPassword = document.getElementById('submitPassword');
+        const closeModal = document.getElementById('closeModal');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const adminPanel = document.getElementById('adminPanel');
+        
         if (adminToggle) {
-            const handleAdminToggleActivation = (e) => {
-                e.stopPropagation();  // Prevent event bubbling to card
+            // Clear any existing event listeners to prevent duplicates
+            const newAdminToggle = adminToggle.cloneNode(true);
+            adminToggle.parentNode.replaceChild(newAdminToggle, adminToggle);
+            
+            // Add event listener to the new button
+            newAdminToggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
                 
                 console.log('Admin toggle clicked');
                 
-                // If already authenticated, show admin panel directly
-                if (isAuthenticated || window.emergencyMode) {
-                    console.log('Showing admin panel - already authenticated');
-                    adminPanel.style.display = adminPanel.style.display === 'block' ? 'none' : 'block';
-                } else {
-                    // Otherwise show login modal
-                    console.log('Showing password modal - authentication required');
-                    passwordModal.style.display = 'block';
-                    passwordInput.focus();
+                // If already authenticated, toggle admin panel
+                if (isAuthenticated) {
+                    console.log('User is authenticated, toggling admin features visibility');
                     
-                    // Add the hint text for development
-                    const passwordHelp = document.querySelector('.password-help');
-                    if (passwordHelp) {
-                        passwordHelp.style.display = 'block';
+                    // Toggle admin features
+                    if (document.body.classList.contains('authenticated')) {
+                        hideAdminFeatures();
+                        showNotification('Admin features hidden', 'info');
+                    } else {
+                        showAdminFeatures();
+                        showNotification('Admin features visible', 'info');
                     }
+                } else {
+                    // Show password modal
+                    console.log('User not authenticated, showing password modal');
+                    passwordModal.style.display = 'block';
+                    
+                    // Focus password input
+                    setTimeout(() => {
+                        if (passwordInput) {
+                            passwordInput.focus();
+                            passwordInput.value = ''; // Clear any previous input
+                        }
+                    }, 100);
                 }
-            };
+            });
             
-            // Make sure we remove any existing event listeners first
-            adminToggle.removeEventListener('click', handleAdminToggleActivation);
-            
-            // Add the event listener
-            adminToggle.addEventListener('click', handleAdminToggleActivation);
             console.log('Admin toggle event listener attached');
         }
         
-        // Close modal
+        // Close modal button
         if (closeModal) {
             closeModal.addEventListener('click', function() {
                 passwordModal.style.display = 'none';
             });
         }
         
-        // Submit password
+        // Submit password button
         if (submitPassword) {
-            submitPassword.addEventListener('click', async function() {
+            // Clear any existing event listeners to prevent duplicates
+            const newSubmitPassword = submitPassword.cloneNode(true);
+            submitPassword.parentNode.replaceChild(newSubmitPassword, submitPassword);
+            
+            // Add event listener to the new button
+            newSubmitPassword.addEventListener('click', async function() {
+                console.log('Submit password button clicked');
                 const password = passwordInput.value;
-                if (!password) {
-                    showNotification('Please enter a password', 'error');
-                    return;
-                }
+                const success = await authenticate(password);
                 
-                console.log('Attempting authentication...');
-                const result = await authenticate(password);
-                
-                if (result.success) {
-                    console.log('Authentication successful!');
+                if (success) {
+                    console.log('Authentication successful, hiding modal');
                     passwordModal.style.display = 'none';
-                    adminPanel.style.display = 'block';
-                    isAuthenticated = true;
-                    showNotification('Successfully authenticated', 'success');
-                    
-                    // Refresh data after successful login
-                    await fetchResume();
-                    await fetchProfileImage();
-                } else {
-                    console.log('Authentication failed:', result.error);
-                    showNotification(result.error || 'Authentication failed', 'error');
+                    passwordInput.value = '';
                 }
             });
             
-            // Add keypress event for enter key
-            passwordInput.addEventListener('keypress', function(e) {
+            console.log('Submit password event listener attached');
+        }
+        
+        // Password input keydown event
+        if (passwordInput) {
+            // Clear any existing event listeners to prevent duplicates
+            const newPasswordInput = passwordInput.cloneNode(true);
+            passwordInput.parentNode.replaceChild(newPasswordInput, passwordInput);
+            
+            // Add event listener to the new input field
+            newPasswordInput.addEventListener('keydown', async function(e) {
                 if (e.key === 'Enter') {
-                    submitPassword.click();
+                    console.log('Enter key pressed in password input');
+                    const password = newPasswordInput.value;
+                    const success = await authenticate(password);
+                    
+                    if (success) {
+                        console.log('Authentication successful from keydown, hiding modal');
+                        passwordModal.style.display = 'none';
+                        newPasswordInput.value = '';
+                    }
                 }
             });
-        }
-
-        // ... other event listeners ...
-        
-        // Password help functionality
-        if (passwordHelp) {
-            passwordHelp.addEventListener('click', function() {
-                // Show a menu with multiple password options
-                const commonPasswords = [
-                    'admin1234',         // Default development password
-                    'akash1234',         // Common personalized pattern
-                    'resume1234',        // Topic-based pattern
-                    'pokemon1234',       // Theme-based pattern
-                    'akashpatel',        // Name-based option
-                    'adminpassword',     // Simple admin password
-                    'password'           // Very basic password
-                ];
-                
-                // Build a temporary selection menu
-                let menu = document.createElement('div');
-                menu.className = 'password-options';
-                menu.innerHTML = '<p>Try one of these common passwords:</p>';
-                
-                commonPasswords.forEach(pwd => {
-                    let btn = document.createElement('button');
-                    btn.className = 'pwd-option btn-small';
-                    btn.textContent = pwd;
-                    btn.onclick = function() {
-                        passwordInput.value = pwd;
-                        menu.remove();
-                        showNotification(`Password field set to "${pwd}"`, 'success');
-                    };
-                    menu.appendChild(btn);
-                });
-                
-                // Add a direct authentication override option (emergency access)
-                let emergencyBtn = document.createElement('button');
-                emergencyBtn.className = 'pwd-option btn-accent';
-                emergencyBtn.textContent = 'Emergency Override';
-                emergencyBtn.style.marginTop = '15px';
-                emergencyBtn.onclick = function() {
-                    // This is a special case: directly set authentication state
-                    // bypassing the server check (only for troubleshooting)
-                    isAuthenticated = true;
-                    localStorage.setItem('authToken', 'emergency-override-token');
-                    showNotification('Emergency override activated', 'success');
-                    passwordModal.style.display = 'none';
-                    adminPanel.style.display = 'block';
-                    adminToggle.classList.add('admin-active');
-                    menu.remove();
-                };
-                menu.appendChild(emergencyBtn);
-                
-                // Add close button
-                let closeBtn = document.createElement('button');
-                closeBtn.className = 'pwd-option btn-small';
-                closeBtn.textContent = 'Close';
-                closeBtn.style.marginTop = '10px';
-                closeBtn.onclick = function() {
-                    menu.remove();
-                };
-                menu.appendChild(closeBtn);
-                
-                // Add to modal
-                passwordHelp.appendChild(menu);
-            });
+            
+            console.log('Password input keydown event listener attached');
         }
         
-        // Close modal when clicking outside of it
-        window.addEventListener('click', function(e) {
-            if (e.target === passwordModal) {
-                passwordModal.style.display = 'none';
-            }
-        });
-        
-        // Logout functionality
-        const logoutBtn = document.getElementById('logoutBtn');
+        // Logout button
         if (logoutBtn) {
             logoutBtn.addEventListener('click', function() {
-                ApiClient.auth.logout();
-                isAuthenticated = false;
-                adminPanel.style.display = 'none';
-                adminToggle.classList.remove('admin-active');
-                showNotification('Logged out successfully', 'success');
-            });
-        }
-        
-        // File upload event listeners
-        if (fileInput) {
-            fileInput.addEventListener('change', function() {
-                if (this.files && this.files[0]) {
-                    uploadResume(this.files[0]);
-                }
-            });
-            
-            uploadArea.addEventListener('click', function() {
-                if (isAuthenticated || window.emergencyMode) {
-                    fileInput.click();
-                } else {
-                    showNotification('You must be authenticated to upload a resume', 'error');
-                }
-            });
-            
-            // Drag and drop functionality
-            uploadArea.addEventListener('dragover', function(e) {
-                e.preventDefault();
-                if (isAuthenticated || window.emergencyMode) {
-                    this.classList.add('highlight');
-                }
-            });
-
-            uploadArea.addEventListener('dragleave', function() {
-                this.classList.remove('highlight');
-            });
-
-            uploadArea.addEventListener('drop', function(e) {
-                e.preventDefault();
-                this.classList.remove('highlight');
-                
-                if (!isAuthenticated && !window.emergencyMode) {
-                    showNotification('You must be authenticated to upload a resume', 'error');
-                    return;
-                }
-                
-                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                    uploadResume(e.dataTransfer.files[0]);
-                }
-            });
-        }
-        
-        // Profile image upload event listeners
-        if (imageFileInput) {
-            imageFileInput.addEventListener('change', function() {
-                if (this.files && this.files[0]) {
-                    uploadProfileImage(this.files[0]);
-                }
-            });
-            
-            if (imageUploadArea) {
-                imageUploadArea.addEventListener('click', function() {
-                    if (isAuthenticated || window.emergencyMode) {
-                        imageFileInput.click();
-                    } else {
-                        showNotification('You must be authenticated to upload an image', 'error');
-                    }
-                });
-                
-                // Add drag and drop for images too
-                imageUploadArea.addEventListener('dragover', function(e) {
-                    e.preventDefault();
-                    if (isAuthenticated || window.emergencyMode) {
-                        this.classList.add('highlight');
-                    }
-                });
-    
-                imageUploadArea.addEventListener('dragleave', function() {
-                    this.classList.remove('highlight');
-                });
-    
-                imageUploadArea.addEventListener('drop', function(e) {
-                    e.preventDefault();
-                    this.classList.remove('highlight');
-                    
-                    if (!isAuthenticated && !window.emergencyMode) {
-                        showNotification('You must be authenticated to upload an image', 'error');
-                        return;
-                    }
-                    
-                    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                        uploadProfileImage(e.dataTransfer.files[0]);
-                    }
-                });
-            }
-        }
-        
-        // Delete buttons
-        if (deleteResumeBtn) {
-            deleteResumeBtn.addEventListener('click', function() {
-                deleteResume();
-            });
-        }
-        
-        if (deleteImageBtn) {
-            deleteImageBtn.addEventListener('click', function() {
-                deleteProfileImage();
+                handleLogout();
             });
         }
     }
@@ -869,6 +926,309 @@ document.addEventListener('DOMContentLoaded', function() {
     // Save emergency mode state to localStorage
     function saveEmergencyModeState() {
         localStorage.setItem('emergencyModeEnabled', window.emergencyMode ? 'true' : 'false');
+    }
+
+    // Hide all admin-only features (upload sections, delete buttons)
+    function hideAdminFeatures() {
+        console.log('Hiding admin features');
+        
+        // Remove authenticated class from body
+        document.body.classList.remove('authenticated');
+        
+        // Update admin toggle button
+        if (adminToggle) {
+            adminToggle.classList.remove('admin-active');
+            adminToggle.setAttribute('aria-expanded', 'false');
+        }
+        
+        // Hide admin-only elements
+        const adminElements = document.querySelectorAll('.admin-only');
+        adminElements.forEach(element => {
+            element.style.display = 'none';
+        });
+        
+        // Clear authentication state
+        isAuthenticated = false;
+        localStorage.removeItem('authToken');
+    }
+    
+    // Show admin features when user is authenticated
+    function showAdminFeatures() {
+        console.log('Showing admin features');
+        
+        // Add authenticated class to body
+        document.body.classList.add('authenticated');
+        
+        // Update admin toggle button
+        if (adminToggle) {
+            adminToggle.classList.add('admin-active');
+            adminToggle.setAttribute('aria-expanded', 'true');
+        }
+        
+        // Show admin-only elements
+        const adminElements = document.querySelectorAll('.admin-only');
+        adminElements.forEach(element => {
+            element.style.display = element.tagName === 'BUTTON' || element.tagName === 'A' ? 'inline-block' : 'block';
+        });
+
+        // Show admin panel
+        const adminPanel = document.getElementById('adminPanel');
+        if (adminPanel) {
+            adminPanel.style.display = 'block';
+        }
+    }
+
+    // Setup login form
+    function setupLoginForm() {
+        const passwordModal = document.getElementById('passwordModal');
+        const passwordInput = document.getElementById('passwordInput');
+        const submitButton = document.getElementById('submitPassword');
+        const closeModal = document.getElementById('closeModal');
+        const logoutBtn = document.getElementById('logoutBtn');
+        
+        // COMPLETELY Remove password help element from DOM if it exists
+        const passwordHelp = document.getElementById('passwordHelp');
+        if (passwordHelp && passwordHelp.parentNode) {
+            passwordHelp.parentNode.removeChild(passwordHelp);
+        }
+        
+        // Also remove any other password hints or help elements
+        const passwordOptionsContainer = document.querySelector('.password-options');
+        if (passwordOptionsContainer && passwordOptionsContainer.parentNode) {
+            passwordOptionsContainer.parentNode.removeChild(passwordOptionsContainer);
+        }
+        
+        if (submitButton) {
+            // Clear any previous event listeners by cloning and replacing
+            const newSubmitButton = submitButton.cloneNode(true);
+            submitButton.parentNode.replaceChild(newSubmitButton, submitButton);
+            
+            // Add new event listener
+            newSubmitButton.addEventListener('click', async () => {
+                console.log('Submit password button clicked');
+                const password = passwordInput.value;
+                const success = await authenticate(password);
+                
+                if (success) {
+                    // If authentication successful, hide the modal
+                    passwordModal.style.display = 'none';
+                    
+                    // Clear the password field
+                    passwordInput.value = '';
+                    passwordInput.classList.remove('error');
+                    
+                    // Refresh emergency mode toggle visibility after authentication
+                    checkEmergencyMode();
+                }
+            });
+        }
+        
+        if (passwordInput) {
+            passwordInput.addEventListener('keydown', async (e) => {
+                if (e.key === 'Enter') {
+                    console.log('Enter key pressed in password input');
+                    const password = passwordInput.value;
+                    const success = await authenticate(password);
+                    
+                    if (success) {
+                        // If authentication successful, hide the modal
+                        passwordModal.style.display = 'none';
+                        
+                        // Clear the password field
+                        passwordInput.value = '';
+                        passwordInput.classList.remove('error');
+                    }
+                }
+            });
+            
+            // Clear error class when typing
+            passwordInput.addEventListener('input', () => {
+                passwordInput.classList.remove('error');
+            });
+        }
+        
+        // Make sure close button works
+        if (closeModal) {
+            // Clear any previous event listeners
+            const newCloseModal = closeModal.cloneNode(true);
+            closeModal.parentNode.replaceChild(newCloseModal, closeModal);
+            
+            newCloseModal.addEventListener('click', () => {
+                console.log('Close modal button clicked');
+                passwordModal.style.display = 'none';
+                // Reset any error state
+                if (passwordInput) {
+                    passwordInput.classList.remove('error');
+                    passwordInput.value = '';
+                }
+            });
+        }
+        
+        // Close modal when clicking outside of it
+        window.addEventListener('click', (e) => {
+            if (e.target === passwordModal) {
+                passwordModal.style.display = 'none';
+                // Reset any error state
+                if (passwordInput) {
+                    passwordInput.classList.remove('error');
+                    passwordInput.value = '';
+                }
+            }
+        });
+        
+        // Setup logout button
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', handleLogout);
+        }
+        
+        console.log('Login form event listeners setup complete');
+    }
+
+    // Check if we need to enable emergency mode
+    function checkEmergencyMode() {
+        const storedMode = localStorage.getItem('emergencyModeEnabled');
+        window.emergencyMode = storedMode === 'true';
+        
+        // Show emergency banner if in emergency mode
+        const banner = document.getElementById('emergencyModeBanner');
+        if (banner && window.emergencyMode) {
+            banner.style.display = 'block';
+        }
+        
+        // Setup emergency mode toggle for local development - RESTRICT ACCESS
+        const emergencyModeToggle = document.getElementById('emergencyModeToggle');
+        if (emergencyModeToggle) {
+            // Only show toggle if user is authenticated (admin) AND on localhost
+            const isLocalDev = window.location.hostname === 'localhost' || 
+                               window.location.hostname === '127.0.0.1';
+            
+            // Restrict emergency mode toggle to authenticated admins only
+            emergencyModeToggle.style.display = (isLocalDev && isAuthenticated) ? 'block' : 'none';
+            
+            emergencyModeToggle.addEventListener('click', function() {
+                // Double-check authentication before allowing toggle
+                if (!isAuthenticated) {
+                    showNotification('You must be authenticated to use emergency mode', 'error');
+                    return;
+                }
+                
+                window.emergencyMode = !window.emergencyMode;
+                localStorage.setItem('emergencyModeEnabled', window.emergencyMode ? 'true' : 'false');
+                
+                // Update UI to reflect emergency mode state
+                if (banner) {
+                    banner.style.display = window.emergencyMode ? 'block' : 'none';
+                }
+                
+                // Reload the page to apply changes
+                window.location.reload();
+            });
+        }
+    }
+
+    // Setup file uploads
+    function setupFileUploads() {
+        // Only allow uploads if user is authenticated
+        if (!isAuthenticated) {
+            console.log('Not setting up file uploads because user is not authenticated');
+            return;
+        }
+        
+        console.log('Setting up file uploads for authenticated user');
+        
+        // Resume upload area
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        
+        if (uploadArea && fileInput) {
+            // Drag & drop functionality
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.classList.add('highlight');
+            });
+            
+            uploadArea.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.classList.remove('highlight');
+            });
+            
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.classList.remove('highlight');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    fileInput.files = files;
+                    handleResumeUpload(files[0]);
+                }
+            });
+            
+            uploadArea.addEventListener('click', function() {
+                fileInput.click();
+            });
+            
+            fileInput.addEventListener('change', function() {
+                if (this.files.length > 0) {
+                    handleResumeUpload(this.files[0]);
+                }
+            });
+        }
+        
+        // Image upload area
+        const imageUploadArea = document.getElementById('imageUploadArea');
+        const imageFileInput = document.getElementById('imageFileInput');
+        
+        if (imageUploadArea && imageFileInput) {
+            // Drag & drop functionality
+            imageUploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.classList.add('highlight');
+            });
+            
+            imageUploadArea.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.classList.remove('highlight');
+            });
+            
+            imageUploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.classList.remove('highlight');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    imageFileInput.files = files;
+                    handleImageUpload(files[0]);
+                }
+            });
+            
+            imageUploadArea.addEventListener('click', function() {
+                imageFileInput.click();
+            });
+            
+            imageFileInput.addEventListener('change', function() {
+                if (this.files.length > 0) {
+                    handleImageUpload(this.files[0]);
+                }
+            });
+        }
+        
+        // Delete resume button
+        const deleteResumeBtn = document.getElementById('deleteResumeBtn');
+        if (deleteResumeBtn) {
+            deleteResumeBtn.addEventListener('click', handleDeleteResume);
+        }
+        
+        // Delete image button
+        const deleteImageBtn = document.getElementById('deleteImageBtn');
+        if (deleteImageBtn) {
+            deleteImageBtn.addEventListener('click', handleDeleteImage);
+        }
     }
 
     // Start everything

@@ -16,38 +16,39 @@ const PORT = process.env.PORT || 3000;
 // Set up middleware
 app.use(helmet()); // Security headers
 
-// More permissive CORS configuration for development and production
-const allowedOrigins = [
-    'http://localhost:8080',
-    'http://localhost:3000',
-    'https://akashpatelresume.us', 
-    'https://www.akashpatelresume.us'
-];
+// CORS middleware
+const allowedOrigins = process.env.NODE_ENV === 'production' 
+    ? [process.env.FRONTEND_URL, 'https://akashp3128.github.io'] 
+    : ['http://localhost:8080', 'http://localhost:3000', 'http://127.0.0.1:8080', 'http://127.0.0.1:3000', 'null'];
 
 app.use(cors({
-    origin: function(origin, callback) {
-        // Allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
-        
-        if (allowedOrigins.indexOf(origin) === -1) {
-            console.log('CORS request from unauthorized origin:', origin);
-        }
-        
-        // In development, allow all origins
-        if (process.env.NODE_ENV === 'development') {
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps, curl requests, etc.)
+        if (!origin) {
+            console.log('Request with no origin');
             return callback(null, true);
         }
         
-        // In production, check against allowed origins
-        if (allowedOrigins.indexOf(origin) !== -1) {
+        console.log('Request from origin:', origin);
+        
+        if (process.env.NODE_ENV !== 'production') {
+            // In development mode, allow any origin
             return callback(null, true);
         }
         
-        // Still allow the request to proceed to avoid breaking functionality
-        return callback(null, true);
+        // Check if the origin is allowed
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        } else {
+            console.warn(`Origin not allowed: ${origin}`);
+            return callback(null, true); // Still allow for now, but log a warning
+        }
     },
-    credentials: true
-})); 
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev')); // Logging
@@ -71,6 +72,25 @@ app.get('/', (req, res) => {
         message: 'Pokemon Card Resume API is running',
         status: 'OK'
     });
+});
+
+// Add an explicit health endpoint for connectivity checks
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok', message: 'Server is healthy' });
+});
+
+// Add CORS headers to all responses as a fallback
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    
+    // Handle preflight OPTIONS requests
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+    
+    next();
 });
 
 // Error handling middleware

@@ -140,22 +140,22 @@
             <h2>Resume Manager</h2>
             <p>View, download, or update your official resume PDF below.</p>
             
-            <div class="admin-panel" id="adminPanel">
+            <div class="admin-panel admin-only" id="adminPanel">
                 <h3>Upload New Resume</h3>
-                <div class="upload-area" id="uploadArea">
+                <div class="upload-area admin-only" id="uploadArea">
                     <p>Drag & drop your resume PDF file here or click to select</p>
                     <input type="file" id="fileInput" style="display: none" accept=".pdf">
                 </div>
-                <button id="deleteResumeBtn" class="btn btn-accent">Delete Current Resume</button>
+                <button id="deleteResumeBtn" class="btn btn-accent admin-only">Delete Current Resume</button>
                 
                 <h3 style="margin-top: 20px;">Upload Pokemon Card Image</h3>
-                <div class="upload-area" id="imageUploadArea">
+                <div class="upload-area admin-only" id="imageUploadArea">
                     <p>Drag & drop your profile image here or click to select</p>
                     <input type="file" id="imageFileInput" style="display: none" accept="image/*">
                 </div>
-                <button id="deleteImageBtn" class="btn btn-accent" style="display: none;">Delete Current Image</button>
+                <button id="deleteImageBtn" class="btn btn-accent admin-only" style="display: none;">Delete Current Image</button>
                 
-                <button id="logoutBtn" class="btn">Logout</button>
+                <button id="logoutBtn" class="btn admin-only">Logout</button>
             </div>
             
             <div id="resumeDisplay">
@@ -184,9 +184,6 @@
             <div class="form-group">
                 <label for="passwordInput">Admin Password</label>
                 <input type="password" id="passwordInput" placeholder="Enter password">
-                <div class="password-help">
-                    <p>Hint: The password is "Rosie@007"</p>
-                </div>
             </div>
             <button id="submitPassword" class="btn">Login</button>
             
@@ -213,6 +210,7 @@
     </footer>
     
     <!-- JavaScript files -->
+    <script src="js/emergency-data.js"></script>
     <script src="js/init.js"></script>
     <script src="js/api.js"></script>
     <script src="js/pokemon-card.js"></script>

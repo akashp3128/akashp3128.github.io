@@ -6,26 +6,36 @@ const holoOverlay = document.querySelectorAll('.holo-overlay');
 const sparkles = document.querySelectorAll('.sparkles');
 
 // Card flip functionality
-card.addEventListener('click', function(event) {
-    // Check if the click is on the admin toggle or within the admin panel
-    if (event.target.id === 'adminToggle' || 
-        event.target.closest('#adminToggle') || 
-        event.target.closest('#adminPanel')) {
-        // Prevent card flip when clicking on admin elements
-        event.stopPropagation();
+function setupCardFlipping() {
+    const pokemonCard = document.getElementById('pokemonCard');
+    
+    if (!pokemonCard) {
+        console.error('Pokemon card element not found');
         return;
     }
     
-    // Only flip if not clicking on admin toggle
-    this.classList.toggle('card-flipped');
-    
-    // Debug info
-    console.log('Card flipped:', this.classList.contains('card-flipped'));
-});
+    // Simple click handler for card flipping
+    pokemonCard.addEventListener('click', function(event) {
+        // Check if the click is on the admin toggle or within the admin panel
+        if (event.target.id === 'adminToggle' || 
+            event.target.closest('#adminToggle') || 
+            event.target.closest('#adminPanel') ||
+            event.target.closest('.modal') ||
+            event.target.closest('.admin-only')) {
+            // Prevent card flip when clicking on admin elements
+            event.stopPropagation();
+            return;
+        }
+        
+        // Toggle the card-flipped class
+        this.classList.toggle('card-flipped');
+    });
+}
 
 // Add method to manually reset card to front
 window.resetCardToFront = function() {
-    if (card.classList.contains('card-flipped')) {
+    const card = document.getElementById('pokemonCard');
+    if (card && card.classList.contains('card-flipped')) {
         card.classList.remove('card-flipped');
         console.log('Card reset to front');
     }
@@ -33,29 +43,10 @@ window.resetCardToFront = function() {
 
 // Make sure the card is defined in the DOM
 document.addEventListener('DOMContentLoaded', function() {
-    // Reinitialize card reference to ensure it exists
-    const card = document.getElementById('pokemonCard');
+    setupCardFlipping();
     
-    if (card) {
-        console.log('Pokemon card element found and event listeners attached');
-        
-        // Re-attach the click event in case it was lost
-        card.addEventListener('click', function(event) {
-            // Verify target to prevent flipping when clicking admin elements
-            if (event.target.id === 'adminToggle' || 
-                event.target.closest('#adminToggle') || 
-                event.target.closest('#adminPanel')) {
-                event.stopPropagation();
-                return;
-            }
-            
-            // Toggle flip class
-            this.classList.toggle('card-flipped');
-            console.log('Card flipped from DOMContentLoaded handler');
-        });
-    } else {
-        console.error('Pokemon card element not found in the DOM');
-    }
+    // Initialize the pulse effect
+    pulseEffect();
 });
 
 // Holographic effect on mouse move
@@ -207,9 +198,4 @@ function pulseEffect() {
             });
         }
     }, 50);
-}
-
-// Initialize the pulse effect when the DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    pulseEffect();
-}); 
+} 

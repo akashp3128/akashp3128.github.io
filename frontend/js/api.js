@@ -42,11 +42,7 @@ const ApiClient = (function() {
         
         if (isLocalhost) {
             // For local development without emergency mode
-            const frontendPort = window.location.port;
-            const backendPort = frontendPort.startsWith('808') ? '3000' : frontendPort;
-            const apiUrl = `http://localhost:${backendPort}`;
-            debugLog('Using local API URL:', apiUrl);
-            return apiUrl;
+            return 'http://localhost:3000';
         } else {
             // In production, use the same domain
             debugLog('Using production API URL:', window.location.origin);
@@ -60,7 +56,8 @@ const ApiClient = (function() {
     const API_ENDPOINTS = {
         RESUME: `${API_URL}/api/resume`,
         AUTH: `${API_URL}/api/auth`,
-        IMAGE: `${API_URL}/api/image`
+        IMAGE: `${API_URL}/api/image`,
+        PLACEHOLDER: `${API_URL}/api/placeholder`
     };
 
     // Check if a backend connection is available
@@ -72,7 +69,7 @@ const ApiClient = (function() {
         
         try {
             debugLog('Checking backend connection...');
-            const response = await fetch(`${API_URL}/api/health`, { 
+            const response = await fetch(`${API_URL}/health`, { 
                 method: 'GET',
                 headers: { 'Accept': 'application/json' },
                 // Set a timeout to prevent long waiting
@@ -91,9 +88,6 @@ const ApiClient = (function() {
     // Get the authentication token from localStorage
     function getAuthToken() {
         const token = localStorage.getItem('authToken');
-        if (window.emergencyMode && !token) {
-            return 'emergency-override-token';
-        }
         return token;
     }
 
@@ -112,101 +106,48 @@ const ApiClient = (function() {
     const auth = {
         // Login with password
         login: async function(password) {
-            console.log('Attempting login with API endpoint:', API_ENDPOINTS.AUTH + '/login');
+            console.log('Attempting login with ApiClient', password ? '********' : 'empty password');
             
-            // First check if backend is reachable
-            const isBackendAvailable = await checkBackendConnection();
-            if (!isBackendAvailable) {
-                console.warn('Backend server appears to be unreachable');
-                // If we detect we're in development mode and local backend is unavailable
-                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                    // Check if in emergency mode
-                    if (window.emergencyMode && (password === 'localdev' || password === 'Rosie@007')) {
-                        // Allow "localdev" or permanent password in emergency mode for local development
-                        const mockToken = 'emergency-dev-token';
-                        setAuthToken(mockToken);
-                        return { success: true, token: mockToken, emergency: true };
-                    }
+            // Emergency mode login bypass
+            if (window.emergencyMode) {
+                debugLog('Emergency mode login bypass - success');
+                
+                // Create and store a mock token
+                const mockToken = 'emergency-mode-token-' + Date.now();
+                setAuthToken(mockToken);
+                
+                return { success: true, token: mockToken };
+            }
+            
+            try {
+                // Simple localStorage direct authentication (for demo)
+                if (password === 'Rosie@007') {
+                    console.log('Password matched, authentication successful');
+                    const token = 'demo-token-' + Date.now();
+                    setAuthToken(token);
+                    return { success: true, token: token };
                 }
                 
+                console.log('Password did not match');
                 return { 
-                    success: false,
-                    error: 'Could not connect to the authentication server. Is your backend running?',
-                    networkError: true
+                    success: false, 
+                    error: 'Invalid password'
+                };
+            } catch (error) {
+                console.error('Login error:', error);
+                return { 
+                    success: false, 
+                    error: error.message || 'Authentication failed' 
                 };
             }
-            
-            try {
-                const response = await fetch(`${API_ENDPOINTS.AUTH}/login`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ password })
-                });
-
-                console.log('Login response status:', response.status);
-                
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('Login error response:', errorText);
-                    throw new Error(`Authentication failed: ${response.status} ${errorText}`);
-                }
-
-                const data = await response.json();
-                setAuthToken(data.token);
-                return { success: true, token: data.token };
-            } catch (error) {
-                console.error('Login error details:', error);
-                
-                // If it's a network error, provide clearer message
-                if (error.message.includes('Failed to fetch') || error.message.includes('Network Error')) {
-                    return { 
-                        success: false, 
-                        error: 'Could not connect to the authentication server. Is your backend running?',
-                        details: error.message,
-                        networkError: true
-                    };
-                }
-                
-                return { success: false, error: error.message };
-            }
         },
-
-        // Verify the token
-        verify: async function() {
-            const token = getAuthToken();
-            if (!token) {
-                return { success: false, error: 'No token found' };
-            }
-
-            try {
-                const response = await fetch(`${API_ENDPOINTS.AUTH}/verify`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                if (!response.ok) {
-                    setAuthToken(null);
-                    throw new Error('Token verification failed');
-                }
-
-                return { success: true };
-            } catch (error) {
-                console.error('Token verification error:', error);
-                return { success: false, error: error.message };
-            }
-        },
-
-        // Logout
+        
+        // Logout - clear the token
         logout: function() {
             setAuthToken(null);
             return { success: true };
         },
-
+        
         // Check if user is authenticated
         isAuthenticated: function() {
             return !!getAuthToken();
@@ -215,85 +156,80 @@ const ApiClient = (function() {
 
     // Resume API
     const resume = {
-        // Get the resume
+        // Get the resume PDF
         get: async function() {
+            // First check if we're in emergency mode
+            updateEmergencyModeStatus();
+            
+            if (window.emergencyMode) {
+                const resumeBase64 = localStorage.getItem('emergencyModeResume');
+                if (resumeBase64) {
+                    return { 
+                        success: true, 
+                        data: { url: resumeBase64 },
+                        isEmergencyMode: true
+                    };
+                } else {
+                    return { 
+                        success: false, 
+                        error: 'No resume available in emergency mode' 
+                    };
+                }
+            }
+            
+            // Otherwise make API request
             try {
-                // Check for emergency override mode
-                const token = getAuthToken();
-                if (token === 'emergency-override-token') {
-                    console.log('Using emergency mode for resume retrieval');
-                    const fileUrl = localStorage.getItem('resumeFileUrl');
-                    
-                    if (fileUrl) {
-                        return { 
-                            success: true, 
-                            data: {
-                                url: fileUrl,
-                                filename: localStorage.getItem('resumeFileName') || 'resume.pdf'
-                            }
-                        };
-                    } else {
-                        return { success: false, error: 'No resume found in emergency mode', notFound: true };
-                    }
+                debugLog('Getting resume from API');
+                const response = await fetch(API_ENDPOINTS.RESUME, {
+                    method: 'GET'
+                });
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = URL.createObjectURL(blob);
+                    return { success: true, data: { url, filename: 'resume.pdf' } };
+                } else {
+                    return { success: false, error: 'Resume not found' };
                 }
-                
-                // Normal server fetch
-                const response = await fetch(API_ENDPOINTS.RESUME);
-                
-                if (response.status === 404) {
-                    return { success: false, error: 'No resume found', notFound: true };
-                }
-                
-                if (!response.ok) {
-                    throw new Error('Failed to fetch resume');
-                }
-                
-                const blob = await response.blob();
-                return { 
-                    success: true, 
-                    data: {
-                        blob,
-                        url: URL.createObjectURL(blob)
-                    }
-                };
             } catch (error) {
-                console.error('Error fetching resume:', error);
+                debugLog('Error getting resume:', error);
                 return { success: false, error: error.message };
             }
         },
-
+        
         // Upload a new resume
         upload: async function(file) {
+            debugLog('Uploading resume...');
+            updateEmergencyModeStatus();
+            
+            // In emergency mode, save to localStorage
+            if (window.emergencyMode) {
+                debugLog('In emergency mode, saving resume to localStorage');
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = function() {
+                        localStorage.setItem('emergencyModeResume', reader.result);
+                        resolve({ 
+                            success: true, 
+                            message: 'Resume saved in local storage for emergency mode',
+                            isEmergencyMode: true
+                        });
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+            
+            // Regular API upload
             const token = getAuthToken();
             if (!token) {
                 return { success: false, error: 'Authentication required' };
             }
-
-            if (!file || file.type !== 'application/pdf') {
-                return { success: false, error: 'Invalid file type. Please upload a PDF.' };
-            }
-
-            const formData = new FormData();
-            formData.append('resume', file);
-
+            
             try {
-                // For emergency override token, create a local file URL instead
-                if (token === 'emergency-override-token') {
-                    console.log('Using emergency mode for file upload');
-                    // Create a temporary object URL for the file
-                    const fileUrl = URL.createObjectURL(file);
-                    
-                    // Store filename in localStorage for reference
-                    localStorage.setItem('resumeFileName', file.name);
-                    localStorage.setItem('resumeFileUrl', fileUrl);
-                    
-                    return { 
-                        success: true, 
-                        message: 'Resume uploaded in emergency mode (locally only)' 
-                    };
-                }
+                debugLog('Uploading resume via API');
+                const formData = new FormData();
+                formData.append('resume', file);
                 
-                // Normal upload to server
                 const response = await fetch(API_ENDPOINTS.RESUME, {
                     method: 'POST',
                     headers: {
@@ -301,14 +237,16 @@ const ApiClient = (function() {
                     },
                     body: formData
                 });
-
-                if (!response.ok) {
-                    throw new Error('Failed to upload resume');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    return { success: true, data };
+                } else {
+                    const error = await response.json();
+                    return { success: false, error: error.message || 'Upload failed' };
                 }
-
-                return { success: true };
             } catch (error) {
-                console.error('Upload error:', error);
+                debugLog('Resume upload error:', error);
                 return { success: false, error: error.message };
             }
         },
@@ -441,15 +379,32 @@ const ApiClient = (function() {
         }
     };
 
+    // Initialize the ApiClient module
+    function initialize() {
+        console.log('ApiClient initialized');
+        updateEmergencyModeStatus();
+        checkBackendConnection();
+    }
+
+    // Run initialization
+    initialize();
+
     // Return the public API
     return {
-        auth,
-        resume,
-        image,
-        getApiUrl: () => API_URL,
-        updateEmergencyModeStatus: updateEmergencyModeStatus
+        auth: auth,
+        pokemon: pokemon,
+        resume: resume,
+        profiles: profiles,
+        debug: {
+            getDebugInfo
+        }
     };
 })();
+
+// Expose the API client to the window for use by other scripts
+window.ApiClient = ApiClient;
+
+console.log('API client loaded and initialized');
 
 // Export the API client for use in other files
 if (typeof module !== 'undefined') {
