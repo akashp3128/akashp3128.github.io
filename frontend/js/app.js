@@ -150,6 +150,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // Add mouse-specific event for desktop
+    adminToggle.addEventListener('mouseenter', function() {
+        this.style.cursor = 'pointer';
+    });
+
+    // For iOS Safari and other mobile browsers
+    adminToggle.addEventListener('touchstart', function(e) {
+        e.preventDefault(); // Prevent default touch behavior
+    }, { passive: false });
+
     closeModal.addEventListener('click', function() {
         passwordModal.style.display = 'none';
     });

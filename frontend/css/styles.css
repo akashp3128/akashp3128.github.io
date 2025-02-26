@@ -231,9 +231,9 @@ footer {
     right: 20px;
     background: linear-gradient(135deg, #1e6b52, #00b06b);
     color: white;
-    width: 120px;
+    width: 50px;
     height: 50px;
-    border-radius: 25px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -244,10 +244,10 @@ footer {
     user-select: none;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
-    border: 2px solid white;
-    font-size: 16px;
-    gap: 8px;
-    padding: 0 15px;
+}
+
+.admin-toggle:hover {
+    transform: rotate(90deg) scale(1.1);
 }
 
 .settings-icon {
@@ -257,11 +257,6 @@ footer {
 .settings-text {
     font-weight: bold;
     display: inline-block;
-}
-
-.admin-toggle:hover {
-    transform: scale(1.05);
-    box-shadow: 0 6px 20px rgba(0, 176, 107, 0.7);
 }
 
 .admin-panel {
