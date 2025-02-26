@@ -138,7 +138,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Event listeners
-    adminToggle.addEventListener('click', function() {
+    adminToggle.addEventListener('click', function(e) {
+        // Stop event propagation to make sure the click is captured
+        e.preventDefault();
+        e.stopPropagation();
+        
         if (isAuthenticated) {
             adminPanel.style.display = adminPanel.style.display === 'block' ? 'none' : 'block';
         } else {
