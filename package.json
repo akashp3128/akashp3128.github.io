@@ -1,0 +1,33 @@
+{
+  "name": "pokemon-card-resume",
+  "version": "1.0.0",
+  "description": "Pokemon Card Inspired Interactive Resume with secure backend",
+  "main": "index.js",
+  "scripts": {
+    "start": "cd backend && npm start",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:setup": "npm run setup:backend",
+    "setup:backend": "cd backend && npm install",
+    "setup": "npm install && npm run setup:backend",
+    "test": "echo \"No tests configured yet\" && exit 0",
+    "build": "npm run setup:backend"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/akashp3128/akashp3128.github.io.git"
+  },
+  "keywords": [
+    "pokemon",
+    "resume",
+    "portfolio",
+    "interactive",
+    "card",
+    "holographic"
+  ],
+  "author": "Akash Patel",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/akashp3128/akashp3128.github.io/issues"
+  },
+  "homepage": "https://github.com/akashp3128/akashp3128.github.io#readme"
+} 

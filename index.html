@@ -308,11 +308,11 @@
             width: var(--card-width);
             height: var(--card-height);
             position: relative;
-            transition: transform 0.6s;
             transform-style: preserve-3d;
             display: flex;
             justify-content: center;
             align-items: center;
+            z-index: 100;
         }
         
         .card {
@@ -322,8 +322,19 @@
             transform-style: preserve-3d;
             border-radius: var(--card-border-radius);
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-            transition: transform 0.6s;
+            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             cursor: pointer;
+            will-change: transform;
+            animation: cardPulse 2s infinite alternate;
+        }
+        
+        @keyframes cardPulse {
+            0% {
+                box-shadow: 0 0 20px rgba(0, 176, 107, 0.3);
+            }
+            100% {
+                box-shadow: 0 0 30px rgba(0, 176, 107, 0.6);
+            }
         }
         
         .card-inner {
@@ -331,10 +342,11 @@
             width: 100%;
             height: 100%;
             text-align: center;
-            transition: transform 0.6s;
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             transform-style: preserve-3d;
             border-radius: var(--card-border-radius);
             box-shadow: 0 0 30px rgba(0, 176, 107, 0.5);
+            will-change: transform;
         }
         
         .card-front,
@@ -470,7 +482,7 @@
             z-index: 5;
             pointer-events: none;
             border-radius: var(--card-border-radius);
-            transition: all 0.3s;
+            transition: all 0.3s ease;
         }
         
         .holo-effect {
@@ -496,10 +508,10 @@
             mix-blend-mode: color-dodge;
             pointer-events: none;
             border-radius: var(--card-border-radius);
-            opacity: 0.7;
+            opacity: 0.3;
             transform: translateZ(0);
-            filter: brightness(1.5) contrast(1.5);
-            transition: all 0.3s;
+            filter: brightness(1.0) contrast(1.0);
+            transition: all 0.3s ease;
         }
         
         .sparkles {
@@ -513,7 +525,7 @@
             pointer-events: none;
             mix-blend-mode: overlay;
             border-radius: var(--card-border-radius);
-            transition: all 0.3s;
+            transition: all 0.3s ease;
         }
         
         /* Add light glint effect */
@@ -564,7 +576,7 @@
             }
         }
         
-        .card-flipped .card-inner {
+        .card-inner.flipped {
             transform: rotateY(180deg);
         }
         
@@ -708,6 +720,28 @@
                 bottom: 100vh;
                 transform: translateX(-200px);
             }
+        }
+        
+        /* Add a small indicator that shows the card is clickable */
+        .card::after {
+            content: 'Click to flip';
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 10px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            z-index: 100;
+        }
+        
+        .card:hover::after {
+            opacity: 0.8;
         }
     </style>
 </head>
@@ -878,84 +912,200 @@
     </footer>
     
     <script>
-        // Pokemon card interactivity
-        const card = document.getElementById('pokemonCard');
-        const cardInner = document.querySelector('.card-inner');
-        const holoEffect = document.querySelectorAll('.holo-effect');
-        const holoOverlay = document.querySelectorAll('.holo-overlay');
-        const sparkles = document.querySelectorAll('.sparkles');
-        
-        // Card flip functionality
-        card.addEventListener('click', function() {
-            this.classList.toggle('card-flipped');
-        });
-        
-        // Holographic effect on mouse move
-        document.addEventListener('mousemove', function(e) {
-            const cardRect = card.getBoundingClientRect();
+        document.addEventListener('DOMContentLoaded', function() {
+            // Pokemon card interactivity
+            const card = document.getElementById('pokemonCard');
+            const cardInner = document.querySelector('.card-inner');
+            const holoEffect = document.querySelectorAll('.holo-effect');
+            const holoOverlay = document.querySelectorAll('.holo-overlay');
+            const sparkles = document.querySelectorAll('.sparkles');
             
-            // Check if mouse is over or near the card
-            const isNearCard = 
-                e.clientX >= cardRect.left - 100 && 
-                e.clientX <= cardRect.right + 100 && 
-                e.clientY >= cardRect.top - 100 && 
-                e.clientY <= cardRect.bottom + 100;
+            console.log('Card elements:', { 
+                card: card, 
+                cardInner: cardInner, 
+                holoEffect: holoEffect.length, 
+                holoOverlay: holoOverlay.length, 
+                sparkles: sparkles.length 
+            });
             
-            if (isNearCard) {
-                const cardCenterX = cardRect.left + cardRect.width / 2;
-                const cardCenterY = cardRect.top + cardRect.height / 2;
+            // Card flip functionality - using event delegation for better handling
+            document.addEventListener('click', function(e) {
+                // Find if the click was on the card or any of its children
+                const isCardClicked = e.target === card || card.contains(e.target);
                 
-                // Calculate mouse position relative to card center (-1 to 1)
-                const mouseX = ((e.clientX - cardCenterX) / (cardRect.width / 2));
-                const mouseY = ((e.clientY - cardCenterY) / (cardRect.height / 2));
-                
-                // Calculate rotation based on mouse position (max ±15 degrees)
-                const rotateY = mouseX * 15;
-                const rotateX = -mouseY * 15;
-                
-                // Apply the transform to the card
-                card.style.transform = `perspective(1000px) rotateY(${rotateY}deg) rotateX(${rotateX}deg) scale3d(1.03, 1.03, 1.03)`;
-                
-                // Apply rainbow effect based on mouse position
-                holoEffect.forEach(effect => {
-                    // Shift the linear gradient based on mouse position
-                    const gradientX = 50 + (mouseX * 30);
-                    const gradientY = 50 + (mouseY * 30);
+                if (isCardClicked) {
+                    console.log('Card clicked!');
                     
-                    effect.style.background = `
-                      linear-gradient(
-                        ${135 + mouseX * 30}deg, 
-                        rgba(255, 0, 0, 0.5) 0%, 
-                        rgba(255, 255, 0, 0.5) 10%, 
-                        rgba(0, 255, 0, 0.5) 20%, 
-                        rgba(0, 255, 255, 0.5) 30%, 
-                        rgba(0, 0, 255, 0.5) 40%, 
-                        rgba(255, 0, 255, 0.5) 50%, 
-                        rgba(255, 0, 0, 0.5) 60%, 
-                        rgba(255, 255, 0, 0.5) 70%, 
-                        rgba(0, 255, 0, 0.5) 80%, 
-                        rgba(0, 255, 255, 0.5) 90%, 
-                        rgba(0, 0, 255, 0.5) 100%
-                      )
-                    `;
-                    effect.style.backgroundPosition = `${gradientX}% ${gradientY}%`;
-                    effect.style.opacity = '0.7';
-                    effect.style.filter = 'contrast(150%) brightness(110%)';
+                    // Add a temporary class to prevent hover effects during flip
+                    cardInner.classList.add('flipping');
+                    
+                    // Toggle the flipped state
+                    cardInner.classList.toggle('flipped');
+                    console.log('Card flipped state:', cardInner.classList.contains('flipped'));
+                    
+                    // Remove the flipping class after animation completes
+                    setTimeout(() => {
+                        cardInner.classList.remove('flipping');
+                    }, 800); // Match the animation duration
+                }
+            });
+            
+            // Direct click handler for the card as fallback
+            card.onclick = function(e) {
+                console.log('Direct card click!');
+                e.stopPropagation(); // Prevent double toggling
+                
+                // Add a temporary class to prevent hover effects during flip
+                cardInner.classList.add('flipping');
+                
+                // Toggle the flipped state
+                cardInner.classList.toggle('flipped');
+                
+                // Remove the flipping class after animation completes
+                setTimeout(() => {
+                    cardInner.classList.remove('flipping');
+                }, 800); // Match the animation duration
+            };
+            
+            // Holographic effect on mouse move
+            document.addEventListener('mousemove', function(e) {
+                // Don't apply hover effects during flip animation
+                if (cardInner.classList.contains('flipping')) return;
+                
+                const cardRect = card.getBoundingClientRect();
+                
+                // Check if mouse is over the card (with a bit of padding)
+                const isNearCard = 
+                    e.clientX >= cardRect.left - 50 && 
+                    e.clientX <= cardRect.right + 50 && 
+                    e.clientY >= cardRect.top - 50 && 
+                    e.clientY <= cardRect.bottom + 50;
+                
+                if (isNearCard) {
+                    // Get card center
+                    const cardCenterX = cardRect.left + cardRect.width / 2;
+                    const cardCenterY = cardRect.top + cardRect.height / 2;
+                    
+                    // Calculate mouse position relative to card center (-1 to 1)
+                    const mouseX = ((e.clientX - cardCenterX) / (cardRect.width / 2));
+                    const mouseY = ((e.clientY - cardCenterY) / (cardRect.height / 2));
+                    
+                    // Calculate rotation based on mouse position (max ±15 degrees)
+                    const rotateY = mouseX * 15;
+                    const rotateX = -mouseY * 15;
+                    
+                    // Apply the transform to the card
+                    card.style.transform = `perspective(1000px) rotateY(${rotateY}deg) rotateX(${rotateX}deg) scale3d(1.05, 1.05, 1.05)`;
+                    
+                    // Apply rainbow effect based on mouse position
+                    holoEffect.forEach(effect => {
+                        // Shift the linear gradient based on mouse position
+                        const gradientX = 50 + (mouseX * 30);
+                        const gradientY = 50 + (mouseY * 30);
+                        
+                        effect.style.background = `
+                          linear-gradient(
+                            ${135 + mouseX * 30}deg, 
+                            rgba(255, 0, 0, 0.5) 0%, 
+                            rgba(255, 255, 0, 0.5) 10%, 
+                            rgba(0, 255, 0, 0.5) 20%, 
+                            rgba(0, 255, 255, 0.5) 30%, 
+                            rgba(0, 0, 255, 0.5) 40%, 
+                            rgba(255, 0, 255, 0.5) 50%, 
+                            rgba(255, 0, 0, 0.5) 60%, 
+                            rgba(255, 255, 0, 0.5) 70%, 
+                            rgba(0, 255, 0, 0.5) 80%, 
+                            rgba(0, 255, 255, 0.5) 90%, 
+                            rgba(0, 0, 255, 0.5) 100%
+                          )
+                        `;
+                        effect.style.backgroundPosition = `${gradientX}% ${gradientY}%`;
+                        effect.style.opacity = '0.5';
+                        effect.style.filter = 'contrast(140%) brightness(120%)';
+                    });
+                    
+                    // Show sparkles with mouse movement
+                    sparkles.forEach(sparkle => {
+                        sparkle.style.opacity = '0.3';
+                        sparkle.style.backgroundPosition = `${50 + mouseX * 50}% ${50 + mouseY * 50}%`;
+                    });
+                    
+                    // Enhance holographic overlay
+                    holoOverlay.forEach(overlay => {
+                        overlay.style.opacity = '0.4';
+                        overlay.style.backgroundPosition = `${-mouseX * 20}px ${-mouseY * 20}px`;
+                    });
+                } else {
+                    // Reset card when mouse is far away
+                    card.style.transform = 'perspective(1000px) rotateY(0deg) rotateX(0deg) scale3d(1, 1, 1)';
+                    
+                    holoEffect.forEach(effect => {
+                        effect.style.opacity = '0.3';
+                    });
+                    
+                    sparkles.forEach(sparkle => {
+                        sparkle.style.opacity = '0';
+                    });
+                    
+                    holoOverlay.forEach(overlay => {
+                        overlay.style.opacity = '0.2';
+                    });
+                }
+            });
+            
+            // Reset when mouse leaves the window
+            document.addEventListener('mouseleave', function() {
+                card.style.transform = 'perspective(1000px) rotateY(0deg) rotateX(0deg)';
+                
+                holoEffect.forEach(effect => {
+                    effect.style.opacity = '0.3';
                 });
                 
-                // Show sparkles with mouse movement
+                sparkles.forEach(sparkle => {
+                    sparkle.style.opacity = '0';
+                });
+            });
+            
+            // For mobile - add touch events to simulate hover and flip
+            let touchStartX, touchStartY, touchStartTime;
+            
+            card.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+                touchStartTime = new Date().getTime();
+                
+                // Apply immediate effect on touch
+                holoEffect.forEach(effect => {
+                    effect.style.opacity = '0.5';
+                    effect.style.filter = 'contrast(140%) brightness(120%)';
+                });
+                
                 sparkles.forEach(sparkle => {
                     sparkle.style.opacity = '0.3';
-                    sparkle.style.backgroundPosition = `${50 + mouseX * 50}% ${50 + mouseY * 50}%`;
                 });
                 
-                // Enhance holographic overlay
                 holoOverlay.forEach(overlay => {
-                    overlay.style.opacity = '0.5';
-                    overlay.style.backgroundPosition = `${-mouseX * 20}px ${-mouseY * 20}px`;
+                    overlay.style.opacity = '0.4';
                 });
-            } else {
-                // Reset card when mouse is far away
+            });
+            
+            card.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                const touch = e.changedTouches[0];
+                
+                // Check if it was a tap (not much movement and not too long)
+                const deltaX = Math.abs(touch.clientX - touchStartX);
+                const deltaY = Math.abs(touch.clientY - touchStartY);
+                const deltaTime = new Date().getTime() - touchStartTime;
+                
+                if (deltaX < 20 && deltaY < 20 && deltaTime < 300) {
+                    // It was a tap, flip the card
+                    console.log('Touch tap detected - flipping card');
+                    cardInner.classList.toggle('flipped');
+                }
+                
+                // Reset card transform
                 card.style.transform = 'perspective(1000px) rotateY(0deg) rotateX(0deg) scale3d(1, 1, 1)';
                 
                 holoEffect.forEach(effect => {
@@ -969,71 +1119,40 @@
                 holoOverlay.forEach(overlay => {
                     overlay.style.opacity = '0.2';
                 });
-            }
-        });
-        
-        // Reset when mouse leaves the window
-        document.addEventListener('mouseleave', function() {
-            card.style.transform = 'perspective(1000px) rotateY(0deg) rotateX(0deg)';
-            
-            holoEffect.forEach(effect => {
-                effect.style.opacity = '0.3';
             });
             
-            sparkles.forEach(sparkle => {
-                sparkle.style.opacity = '0';
-            });
-        });
-        
-        // For mobile - add touch events to simulate hover
-        card.addEventListener('touchmove', function(e) {
-            e.preventDefault();
-            const touch = e.touches[0];
-            const cardRect = card.getBoundingClientRect();
-            const cardCenterX = cardRect.left + cardRect.width / 2;
-            const cardCenterY = cardRect.top + cardRect.height / 2;
-            
-            const touchX = ((touch.clientX - cardCenterX) / (cardRect.width / 2));
-            const touchY = ((touch.clientY - cardCenterY) / (cardRect.height / 2));
-            
-            holoEffect.forEach(effect => {
-                effect.style.opacity = '0.7';
-                effect.style.filter = 'contrast(150%) brightness(110%)';
-            });
-            
-            sparkles.forEach(sparkle => {
-                sparkle.style.opacity = '0.3';
-            });
-        });
-        
-        // Add fallback animation for non-interactive environments
-        function pulseEffect() {
-            let angle = 0;
-            
-            setInterval(() => {
-                angle = (angle + 1) % 360;
+            // Add a subtle animation for inactive cards
+            function pulseEffect() {
+                let angle = 0;
                 
-                if (!card.matches(':hover')) {
-                    holoEffect.forEach(effect => {
-                        effect.style.background = `
-                          linear-gradient(
-                            ${angle}deg, 
-                            rgba(255, 0, 0, 0.3) 0%, 
-                            rgba(255, 255, 0, 0.3) 10%, 
-                            rgba(0, 255, 0, 0.3) 20%, 
-                            rgba(0, 255, 255, 0.3) 30%, 
-                            rgba(0, 0, 255, 0.3) 40%, 
-                            rgba(255, 0, 255, 0.3) 50%, 
-                            rgba(255, 0, 0, 0.3) 60%, 
-                            rgba(255, 255, 0, 0.3) 70%, 
-                            rgba(0, 255, 0, 0.3) 80%, 
-                            rgba(0, 255, 255, 0.3) 90%, 
-                            rgba(0, 0, 255, 0.3) 100%
-                          )
-                        `;
-                    });
-                }
-            }, 50);
-        }
-        
-        pulseEffect();
+                setInterval(() => {
+                    angle = (angle + 1) % 360;
+                    
+                    if (!card.matches(':hover')) {
+                        holoEffect.forEach(effect => {
+                            effect.style.background = `
+                              linear-gradient(
+                                ${angle}deg, 
+                                rgba(255, 0, 0, 0.3) 0%, 
+                                rgba(255, 255, 0, 0.3) 10%, 
+                                rgba(0, 255, 0, 0.3) 20%, 
+                                rgba(0, 255, 255, 0.3) 30%, 
+                                rgba(0, 0, 255, 0.3) 40%, 
+                                rgba(255, 0, 255, 0.3) 50%, 
+                                rgba(255, 0, 0, 0.3) 60%, 
+                                rgba(255, 255, 0, 0.3) 70%, 
+                                rgba(0, 255, 0, 0.3) 80%, 
+                                rgba(0, 255, 255, 0.3) 90%, 
+                                rgba(0, 0, 255, 0.3) 100%
+                              )
+                            `;
+                        });
+                    }
+                }, 50);
+            }
+            
+            pulseEffect();
+        });
+    </script>
+</body>
+</html>
