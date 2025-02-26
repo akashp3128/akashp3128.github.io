@@ -239,8 +239,11 @@ footer {
     justify-content: center;
     cursor: pointer;
     box-shadow: 0 4px 15px rgba(0, 176, 107, 0.5);
-    z-index: 100;
+    z-index: 9999;
     transition: all 0.3s ease;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
 .admin-toggle:hover {
