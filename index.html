@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Akash Patel - Pokémon Card Resume</title>
+    <style>
+        :root {
+            --card-width: 350px;
+            --card-height: 490px;
+            --card-border-radius: 14px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #121212;
+            color: #fff;
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        header {
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 1rem 0;
+            text-align: center;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 0;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #1e6b52, #00b06b);
+            color: white;
+            padding: 0.6rem 1.5rem;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to bottom right,
+                rgba(255, 255, 255, 0.3) 0%,
+                rgba(255, 255, 255, 0) 30%,
+                rgba(255, 255, 255, 0) 50%,
+                rgba(255, 255, 255, 0.3) 70%,
+                rgba(255, 255, 255, 0) 100%
+            );
+            transform: rotate(45deg);
+            z-index: 1;
+            transition: all 0.5s ease;
+            opacity: 0;
+        }
+        
+        .btn:hover::before {
+            opacity: 1;
+            animation: shine 1.5s infinite;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 176, 107, 0.4);
+        }
+        
+        @keyframes shine {
+            0% {
+                left: -100%;
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.5;
+            }
+            50% {
+                left: 100%;
+                opacity: 0.5;
+            }
+            100% {
+                left: 100%;
+                opacity: 0;
+            }
+        }
+        
+        .btn-accent {
+            background: linear-gradient(135deg, #ff9966, #ff5e62);
+        }
+        
+        footer {
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            text-align: center;
+            padding: 1rem 0;
+            margin-top: auto;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin: 1rem 0;
+        }
+        
+        .social-links a {
+            color: white;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        
+        .social-links a:hover {
+            color: #00b06b;
+            transform: translateY(-2px);
+        }
+        
+        .resume-manager {
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 176, 107, 0.3);
+            margin: 2rem 0;
+            backdrop-filter: blur(5px);
+        }
+        
+        .resume-preview {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #333;
+            margin: 1.5rem 0;
+            background-color: #222;
+        }
+        
+        .resume-buttons {
+            display: flex;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .upload-area {
+            border: 2px dashed #00b06b;
+            padding: 2rem;
+            text-align: center;
+            margin: 1.5rem 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: rgba(0, 176, 107, 0.1);
+        }
+        
+        .upload-area:hover {
+            border-color: #00c985;
+            background-color: rgba(0, 176, 107, 0.2);
+        }
+        
+        .upload-area.highlight {
+            border-color: #00c985;
+            background-color: rgba(0, 176, 107, 0.3);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background-color: #222;
+            padding: 2rem;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid #00b06b;
+            box-shadow: 0 0 20px rgba(0, 176, 107, 0.5);
+        }
+        
+        .close-btn {
+            font-size: 1.5rem;
+            cursor: pointer;
+            float: right;
+            color: #00b06b;
+        }
+        
+        /* Responsive adjustments */
+        @media screen and (max-width: 768px) {
+            .resume-buttons {
+                flex-direction: column;
+            }
+            .modal-content {
+                width: 95%;
+            }
+            .card-container {
+                transform: scale(0.8);
+                margin-top: -50px;
+            }
+        }
+        
+        .admin-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #1e6b52, #00b06b);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 176, 107, 0.5);
+            z-index: 100;
+            transition: all 0.3s ease;
+        }
+        
+        .admin-toggle:hover {
+            transform: rotate(90deg) scale(1.1);
+        }
+        
+        .admin-panel {
+            display: none;
+            background-color: rgba(30, 30, 30, 0.9);
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 176, 107, 0.3);
+            margin-top: 2rem;
+            border: 1px solid #00b06b;
+        }
+        
+        /* Notification styles */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .notification.success {
+            background: linear-gradient(135deg, #1e6b52, #00b06b);
+        }
+        
+        .notification.error {
+            background: linear-gradient(135deg, #ff5e62, #ff9966);
+        }
+        
+        .notification.show {
+            opacity: 1;
+        }
+        
+        #passwordInput {
+            background-color: #333;
+            color: white;
+            border: 1px solid #00b06b;
+            padding: 0.8rem;
+            border-radius: 4px;
+            width: 100%;
+            margin: 1rem 0;
+        }
+        
+        /* Pokemon Card Styling */
+        .card-container {
+            perspective: 1000px;
+            margin: 0 auto;
+            width: var(--card-width);
+            height: var(--card-height);
+            position: relative;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .card {
+            width: var(--card-width);
+            height: var(--card-height);
+            position: relative;
+            transform-style: preserve-3d;
+            border-radius: var(--card-border-radius);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+            transition: transform 0.6s;
+            cursor: pointer;
+        }
+        
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            border-radius: var(--card-border-radius);
+            box-shadow: 0 0 30px rgba(0, 176, 107, 0.5);
+        }
+        
+        .card-front,
+        .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: var(--card-border-radius);
+            overflow: hidden;
+        }
+        
+        .card-front {
+            background-color: #1a1a1a;
+            color: white;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .card-back {
+            background-color: #1a1a1a;
+            color: white;
+            transform: rotateY(180deg);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, #1e6b52, #00b06b);
+            padding: 10px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            position: relative;
+        }
+        
+        .card-energy {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-weight: bold;
+            color: #fff;
+        }
+        
+        .card-image {
+            width: 90%;
+            height: 155px;
+            margin: 10px auto;
+            background-color: #333;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .card-info {
+            border: 2px solid #00b06b;
+            margin: 0 10px;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: left;
+            font-size: 12px;
+            background-color: rgba(0, 176, 107, 0.1);
+            position: relative;
+        }
+        
+        .card-abilities {
+            margin: 10px;
+            padding: 10px;
+            text-align: left;
+            background-color: rgba(30, 107, 82, 0.2);
+            border-radius: 8px;
+        }
+        
+        .ability-name {
+            font-weight: bold;
+            color: #00c985;
+            margin-right: 5px;
+        }
+        
+        .ability-cost {
+            font-weight: bold;
+            margin-right: 10px;
+            color: gold;
+        }
+        
+        .ability-description {
+            font-size: 12px;
+            color: #ddd;
+        }
+        
+        .card-footer {
+            margin: 0 10px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .card-type {
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .card-stats {
+            font-weight: bold;
+        }
+        
+        /* Holographic effect */
+        .holo-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: repeating-linear-gradient(
+                45deg,
+                rgba(255, 255, 255, 0.1) 0px,
+                rgba(255, 255, 255, 0.1) 1px,
+                rgba(0, 0, 0, 0) 1px,
+                rgba(0, 0, 0, 0) 4px
+            );
+            mix-blend-mode: overlay;
+            opacity: 0.2;
+            z-index: 5;
+            pointer-events: none;
+            border-radius: var(--card-border-radius);
+            transition: all 0.3s;
+        }
+        
+        .holo-effect {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(125deg, 
+                rgba(255, 0, 0, 0.4) 0%, 
+                rgba(255, 255, 0, 0.4) 10%, 
+                rgba(0, 255, 0, 0.4) 20%, 
+                rgba(0, 255, 255, 0.4) 30%, 
+                rgba(0, 0, 255, 0.4) 40%, 
+                rgba(255, 0, 255, 0.4) 50%, 
+                rgba(255, 0, 0, 0.4) 60%, 
+                rgba(255, 255, 0, 0.4) 70%, 
+                rgba(0, 255, 0, 0.4) 80%, 
+                rgba(0, 255, 255, 0.4) 90%, 
+                rgba(0, 0, 255, 0.4) 100%);
+            background-size: 200% 200%;
+            z-index: 4;
+            mix-blend-mode: color-dodge;
+            pointer-events: none;
+            border-radius: var(--card-border-radius);
+            opacity: 0.7;
+            transform: translateZ(0);
+            filter: brightness(1.5) contrast(1.5);
+            transition: all 0.3s;
+        }
+        
+        .sparkles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: radial-gradient(circle, white 1px, transparent 1px);
+            background-size: 20px 20px;
+            z-index: 6;
+            opacity: 0;
+            pointer-events: none;
+            mix-blend-mode: overlay;
+            border-radius: var(--card-border-radius);
+            transition: all 0.3s;
+        }
+        
+        /* Add light glint effect */
+        .card::before {
+            content: '';
+            position: absolute;
+            top: -150%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to bottom right,
+                rgba(255, 255, 255, 0) 0%,
+                rgba(255, 255, 255, 0.1) 45%,
+                rgba(255, 255, 255, 0.5) 50%,
+                rgba(255, 255, 255, 0.1) 55%,
+                rgba(255, 255, 255, 0) 100%
+            );
+            transform: rotate(45deg);
+            z-index: 10;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            animation: shineEffect 4s infinite;
+        }
+        
+        @keyframes shineEffect {
+            0% {
+                top: -150%;
+                opacity: 0;
+            }
+            30% {
+                opacity: 0;
+            }
+            40% {
+                opacity: 0.3;
+            }
+            50% {
+                top: 150%;
+                opacity: 0.3;
+            }
+            60% {
+                opacity: 0;
+            }
+            100% {
+                top: 150%;
+                opacity: 0;
+            }
+        }
+        
+        .card-flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+        
+        .skill-tag {
+            background: linear-gradient(135deg, #1e6b52, #00b06b);
+            color: white;
+            padding: 3px 6px;
+            border-radius: 50px;
+            font-size: 10px;
+            margin: 2px;
+            display: inline-block;
+        }
+        
+        .skills-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 10px;
+        }
+        
+        /* Background animation */
+        .background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            overflow: hidden;
+        }
+        
+        .bubbles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+            top: 0;
+            left: 0;
+        }
+        
+        .bubble {
+            position: absolute;
+            bottom: -100px;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(45deg, #1e6b52, #00b06b);
+            border-radius: 50%;
+            opacity: 0.5;
+            animation: rise 15s infinite ease-in;
+        }
+        
+        .bubble:nth-child(1) {
+            width: 40px;
+            height: 40px;
+            left: 10%;
+            animation-duration: 8s;
+        }
+        
+        .bubble:nth-child(2) {
+            width: 20px;
+            height: 20px;
+            left: 20%;
+            animation-duration: 12s;
+            animation-delay: 1s;
+        }
+        
+        .bubble:nth-child(3) {
+            width: 50px;
+            height: 50px;
+            left: 35%;
+            animation-duration: 10s;
+            animation-delay: 2s;
+        }
+        
+        .bubble:nth-child(4) {
+            width: 80px;
+            height: 80px;
+            left: 50%;
+            animation-duration: 14s;
+            animation-delay: 0s;
+        }
+        
+        .bubble:nth-child(5) {
+            width: 35px;
+            height: 35px;
+            left: 55%;
+            animation-duration: 9s;
+            animation-delay: 4s;
+        }
+        
+        .bubble:nth-child(6) {
+            width: 45px;
+            height: 45px;
+            left: 65%;
+            animation-duration: 11s;
+            animation-delay: 3s;
+        }
+        
+        .bubble:nth-child(7) {
+            width: 25px;
+            height: 25px;
+            left: 75%;
+            animation-duration: 13s;
+            animation-delay: 2s;
+        }
+        
+        .bubble:nth-child(8) {
+            width: 30px;
+            height: 30px;
+            left: 80%;
+            animation-duration: 9s;
+            animation-delay: 1s;
+        }
+        
+        .bubble:nth-child(9) {
+            width: 15px;
+            height: 15px;
+            left: 70%;
+            animation-duration: 7s;
+            animation-delay: 0s;
+        }
+        
+        .bubble:nth-child(10) {
+            width: 55px;
+            height: 55px;
+            left: 40%;
+            animation-duration: 11s;
+            animation-delay: 5s;
+        }
+        
+        @keyframes rise {
+            0% {
+                bottom: -100px;
+                transform: translateX(0);
+            }
+            50% {
+                transform: translateX(100px);
+            }
+            100% {
+                bottom: 100vh;
+                transform: translateX(-200px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background">
+        <div class="bubbles">
+            <div class="bubble"></div>
+            <div class="bubble"></div>
+            <div class="bubble"></div>
+            <div class="bubble"></div>
+            <div class="bubble"></div>
+            <div class="bubble"></div>
+            <div class="bubble"></div>
+            <div class="bubble"></div>
+            <div class="bubble"></div>
+            <div class="bubble"></div>
+        </div>
+    </div>
+    
+    <header>
+        <h1>Akash Patel</h1>
+        <p>Software Engineer // Secret Clearance</p>
+    </header>
+    
+    <div class="container">
+        <div class="card-container">
+            <div class="card" id="pokemonCard">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <div class="holo-overlay"></div>
+                        <div class="holo-effect"></div>
+                        <div class="sparkles"></div>
+                        
+                        <div class="card-header">
+                            Akash Patel
+                            <div class="card-energy">★★★</div>
+                        </div>
+                        
+                        <div class="card-image">
+                            <img src="/api/placeholder/300/155" alt="Akash Patel">
+                        </div>
+                        
+                        <div class="card-info">
+                            Software Engineer with a strong background in embedded systems, C++, and real-time applications. Former U.S. Navy Hull Maintenance Tech with Secret Clearance.
+                        </div>
+                        
+                        <div class="card-abilities">
+                            <div>
+                                <span class="ability-name">Algorithm Development</span>
+                                <span class="ability-cost">★★</span>
+                                <div class="ability-description">Optimized real-time systems by 30% using advanced scheduling algorithms.</div>
+                            </div>
+                            <br>
+                            <div>
+                                <span class="ability-name">Systems Integration</span>
+                                <span class="ability-cost">★★★</span>
+                                <div class="ability-description">Engineered seamless hardware-software integration with real-time data synchronization.</div>
+                            </div>
+                        </div>
+                        
+                        <div class="card-footer">
+                            <div class="card-type">Software Engineer</div>
+                            <div class="card-stats">HP 130 ⚡</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card-back">
+                        <div class="holo-overlay"></div>
+                        <div class="holo-effect"></div>
+                        <div class="sparkles"></div>
+                        
+                        <h3>Technical Skills</h3>
+                        <div class="skills-list">
+                            <span class="skill-tag">C++ 11</span>
+                            <span class="skill-tag">C</span>
+                            <span class="skill-tag">Python</span>
+                            <span class="skill-tag">Linux</span>
+                            <span class="skill-tag">Embedded Software</span>
+                            <span class="skill-tag">Software Architecture</span>
+                            <span class="skill-tag">Algorithm Development</span>
+                            <span class="skill-tag">CI/CD</span>
+                            <span class="skill-tag">Operating Systems</span>
+                            <span class="skill-tag">DBMS</span>
+                            <span class="skill-tag">NDT</span>
+                        </div>
+                        
+                        <h3 style="margin-top: 15px;">Experience</h3>
+                        <p><strong>U.S. Navy</strong> - Hull Maintenance Tech 2nd Class (2015-2023)</p>
+                        <ul style="font-size: 12px; margin-left: 15px;">
+                            <li>Performed NDT on submarine systems across three vessels</li>
+                            <li>Implemented complex inspection protocols</li>
+                            <li>Streamlined fabrication processes for support vessels</li>
+                        </ul>
+                        
+                        <h3 style="margin-top: 10px;">Projects</h3>
+                        <p><strong>Trigger Interactive</strong> - Adaptive laser detection system</p>
+                        <p><strong>Roomba</strong> - Real-time navigation system with C++ and Arduino</p>
+                        <p><strong>Game Engine</strong> - Raycasting engine with optimized rendering</p>
+                        
+                        <h3 style="margin-top: 10px;">Education</h3>
+                        <p>Bachelor of Science, Software Engineering<br>Iowa State University (2018-2023)</p>
+                        
+                        <div style="margin-top: 15px; text-align: center; font-size: 11px; color: #999;">
+                            <p>Click or tap to view front of card</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px;">
+            <p>Interactive resume card - move your mouse over the card to see the holographic effect!</p>
+            <p>Click or tap to flip the card and see more details.</p>
+            <div class="resume-buttons" style="justify-content: center; margin-top: 20px;">
+                <a href="#resume-section" class="btn">Upload/Manage Resume</a>
+                <a href="mailto:akashp3128@gmail.com" class="btn btn-accent">Contact Me</a>
+            </div>
+        </div>
+        
+        <section id="resume-section" class="resume-manager">
+            <h2>Resume Manager</h2>
+            <p>View, download, or update your official resume PDF below.</p>
+            
+            <div class="admin-panel" id="adminPanel">
+                <h3>Upload New Resume</h3>
+                <div class="upload-area" id="uploadArea">
+                    <p>Drag & drop your resume PDF file here or click to select</p>
+                    <input type="file" id="fileInput" style="display: none" accept=".pdf">
+                </div>
+                <button id="deleteResumeBtn" class="btn btn-accent">Delete Current Resume</button>
+            </div>
+            
+            <div id="resumeDisplay">
+                <iframe src="" class="resume-preview" id="resumePreview"></iframe>
+                <div class="resume-buttons">
+                    <a href="#" id="downloadBtn" class="btn" download>Download Resume</a>
+                </div>
+            </div>
+        </section>
+    </div>
+    
+    <div class="admin-toggle" id="adminToggle">
+        <i>⚙️</i>
+    </div>
+    
+    <div class="modal" id="passwordModal">
+        <div class="modal-content">
+            <span class="close-btn" id="closeModal">&times;</span>
+            <h3>Admin Authentication</h3>
+            <p>Enter password to access admin features:</p>
+            <input type="password" id="passwordInput">
+            <button id="submitPassword" class="btn">Submit</button>
+        </div>
+    </div>
+    
+    <div class="notification" id="notification"></div>
+    
+    <footer>
+        <div class="container">
+            <p>Akash Patel &copy; 2025</p>
+            <p>Addison, IL, 60101 • akashp3128@gmail.com • (630)506-2942</p>
+            <div class="social-links">
+                <a href="#" target="_blank">LinkedIn</a>
+                <a href="#" target="_blank">GitHub</a>
+                <a href="#" target="_blank">Twitter</a>
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        // Pokemon card interactivity
+        const card = document.getElementById('pokemonCard');
+        const cardInner = document.querySelector('.card-inner');
+        const holoEffect = document.querySelectorAll('.holo-effect');
+        const holoOverlay = document.querySelectorAll('.holo-overlay');
+        const sparkles = document.querySelectorAll('.sparkles');
+        
+        // Card flip functionality
+        card.addEventListener('click', function() {
+            this.classList.toggle('card-flipped');
+        });
+        
+        // Holographic effect on mouse move
+        document.addEventListener('mousemove', function(e) {
+            const cardRect = card.getBoundingClientRect();
+            
+            // Check if mouse is over or near the card
+            const isNearCard = 
+                e.clientX >= cardRect.left - 100 && 
+                e.clientX <= cardRect.right + 100 && 
+                e.clientY >= cardRect.top - 100 && 
+                e.clientY <= cardRect.bottom + 100;
+            
+            if (isNearCard) {
+                const cardCenterX = cardRect.left + cardRect.width / 2;
+                const cardCenterY = cardRect.top + cardRect.height / 2;
+                
+                // Calculate mouse position relative to card center (-1 to 1)
+                const mouseX = ((e.clientX - cardCenterX) / (cardRect.width / 2));
+                const mouseY = ((e.clientY - cardCenterY) / (cardRect.height / 2));
+                
+                // Calculate rotation based on mouse position (max ±15 degrees)
+                const rotateY = mouseX * 15;
+                const rotateX = -mouseY * 15;
+                
+                // Apply the transform to the card
+                card.style.transform = `perspective(1000px) rotateY(${rotateY}deg) rotateX(${rotateX}deg) scale3d(1.03, 1.03, 1.03)`;
+                
+                // Apply rainbow effect based on mouse position
+                holoEffect.forEach(effect => {
+                    // Shift the linear gradient based on mouse position
+                    const gradientX = 50 + (mouseX * 30);
+                    const gradientY = 50 + (mouseY * 30);
+                    
+                    effect.style.background = `
+                      linear-gradient(
+                        ${135 + mouseX * 30}deg, 
+                        rgba(255, 0, 0, 0.5) 0%, 
+                        rgba(255, 255, 0, 0.5) 10%, 
+                        rgba(0, 255, 0, 0.5) 20%, 
+                        rgba(0, 255, 255, 0.5) 30%, 
+                        rgba(0, 0, 255, 0.5) 40%, 
+                        rgba(255, 0, 255, 0.5) 50%, 
+                        rgba(255, 0, 0, 0.5) 60%, 
+                        rgba(255, 255, 0, 0.5) 70%, 
+                        rgba(0, 255, 0, 0.5) 80%, 
+                        rgba(0, 255, 255, 0.5) 90%, 
+                        rgba(0, 0, 255, 0.5) 100%
+                      )
+                    `;
+                    effect.style.backgroundPosition = `${gradientX}% ${gradientY}%`;
+                    effect.style.opacity = '0.7';
+                    effect.style.filter = 'contrast(150%) brightness(110%)';
+                });
+                
+                // Show sparkles with mouse movement
+                sparkles.forEach(sparkle => {
+                    sparkle.style.opacity = '0.3';
+                    sparkle.style.backgroundPosition = `${50 + mouseX * 50}% ${50 + mouseY * 50}%`;
+                });
+                
+                // Enhance holographic overlay
+                holoOverlay.forEach(overlay => {
+                    overlay.style.opacity = '0.5';
+                    overlay.style.backgroundPosition = `${-mouseX * 20}px ${-mouseY * 20}px`;
+                });
+            } else {
+                // Reset card when mouse is far away
+                card.style.transform = 'perspective(1000px) rotateY(0deg) rotateX(0deg) scale3d(1, 1, 1)';
+                
+                holoEffect.forEach(effect => {
+                    effect.style.opacity = '0.3';
+                });
+                
+                sparkles.forEach(sparkle => {
+                    sparkle.style.opacity = '0';
+                });
+                
+                holoOverlay.forEach(overlay => {
+                    overlay.style.opacity = '0.2';
+                });
+            }
+        });
+        
+        // Reset when mouse leaves the window
+        document.addEventListener('mouseleave', function() {
+            card.style.transform = 'perspective(1000px) rotateY(0deg) rotateX(0deg)';
+            
+            holoEffect.forEach(effect => {
+                effect.style.opacity = '0.3';
+            });
+            
+            sparkles.forEach(sparkle => {
+                sparkle.style.opacity = '0';
+            });
+        });
+        
+        // For mobile - add touch events to simulate hover
+        card.addEventListener('touchmove', function(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const cardRect = card.getBoundingClientRect();
+            const cardCenterX = cardRect.left + cardRect.width / 2;
+            const cardCenterY = cardRect.top + cardRect.height / 2;
+            
+            const touchX = ((touch.clientX - cardCenterX) / (cardRect.width / 2));
+            const touchY = ((touch.clientY - cardCenterY) / (cardRect.height / 2));
+            
+            holoEffect.forEach(effect => {
+                effect.style.opacity = '0.7';
+                effect.style.filter = 'contrast(150%) brightness(110%)';
+            });
+            
+            sparkles.forEach(sparkle => {
+                sparkle.style.opacity = '0.3';
+            });
+        });
+        
+        // Add fallback animation for non-interactive environments
+        function pulseEffect() {
+            let angle = 0;
+            
+            setInterval(() => {
+                angle = (angle + 1) % 360;
+                
+                if (!card.matches(':hover')) {
+                    holoEffect.forEach(effect => {
+                        effect.style.background = `
+                          linear-gradient(
+                            ${angle}deg, 
+                            rgba(255, 0, 0, 0.3) 0%, 
+                            rgba(255, 255, 0, 0.3) 10%, 
+                            rgba(0, 255, 0, 0.3) 20%, 
+                            rgba(0, 255, 255, 0.3) 30%, 
+                            rgba(0, 0, 255, 0.3) 40%, 
+                            rgba(255, 0, 255, 0.3) 50%, 
+                            rgba(255, 0, 0, 0.3) 60%, 
+                            rgba(255, 255, 0, 0.3) 70%, 
+                            rgba(0, 255, 0, 0.3) 80%, 
+                            rgba(0, 255, 255, 0.3) 90%, 
+                            rgba(0, 0, 255, 0.3) 100%
+                          )
+                        `;
+                    });
+                }
+            }, 50);
+        }
+        
+        pulseEffect();
