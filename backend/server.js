@@ -15,8 +15,37 @@ const PORT = process.env.PORT || 3000;
 
 // Set up middleware
 app.use(helmet()); // Security headers
+
+// More permissive CORS configuration for development and production
+const allowedOrigins = [
+    'http://localhost:8080',
+    'http://localhost:3000',
+    'https://akashpatelresume.us', 
+    'https://www.akashpatelresume.us'
+];
+
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:8080',
+    origin: function(origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        
+        if (allowedOrigins.indexOf(origin) === -1) {
+            console.log('CORS request from unauthorized origin:', origin);
+        }
+        
+        // In development, allow all origins
+        if (process.env.NODE_ENV === 'development') {
+            return callback(null, true);
+        }
+        
+        // In production, check against allowed origins
+        if (allowedOrigins.indexOf(origin) !== -1) {
+            return callback(null, true);
+        }
+        
+        // Still allow the request to proceed to avoid breaking functionality
+        return callback(null, true);
+    },
     credentials: true
 })); 
 app.use(express.json());

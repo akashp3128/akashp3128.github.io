@@ -112,4 +112,28 @@ router.post('/change-password', authenticateToken, async (req, res) => {
     }
 });
 
+/**
+ * @route POST /api/auth/reset-password
+ * @desc Reset the admin password to default (development only)
+ * @access Public
+ */
+router.post('/reset-password', async (req, res) => {
+    // Only allow password reset in development mode for security
+    if (process.env.NODE_ENV !== 'development') {
+        console.warn('Attempted password reset in production mode');
+        return res.status(403).json({ 
+            message: 'Password reset is only available in development mode',
+            tip: 'Default password is usually "admin1234" unless customized' 
+        });
+    }
+    
+    // Reset to default password
+    const defaultPassword = 'admin1234';
+    const salt = bcrypt.genSaltSync(10);
+    adminPasswordHash = bcrypt.hashSync(defaultPassword, salt);
+    
+    console.log('Password has been reset to default');
+    res.json({ message: 'Password has been reset to default "admin1234"' });
+});
+
 module.exports = router; 

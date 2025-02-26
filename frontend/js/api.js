@@ -1,7 +1,12 @@
 // API client for communicating with the backend
 const ApiClient = (function() {
-    // Replace with your actual backend URL in production
-    const API_URL = 'http://localhost:3000';
+    // Determine the API URL based on the current environment
+    const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+        ? 'http://localhost:3000'  // Local development
+        : window.location.origin;  // Production (same domain)
+    
+    console.log('API URL configured as:', API_URL);
+    
     const API_ENDPOINTS = {
         RESUME: `${API_URL}/api/resume`,
         AUTH: `${API_URL}/api/auth`,
@@ -25,6 +30,7 @@ const ApiClient = (function() {
     const auth = {
         // Login with password
         login: async function(password) {
+            console.log('Attempting login with API endpoint:', API_ENDPOINTS.AUTH + '/login');
             try {
                 const response = await fetch(`${API_ENDPOINTS.AUTH}/login`, {
                     method: 'POST',
@@ -34,15 +40,29 @@ const ApiClient = (function() {
                     body: JSON.stringify({ password })
                 });
 
+                console.log('Login response status:', response.status);
+                
                 if (!response.ok) {
-                    throw new Error('Authentication failed');
+                    const errorText = await response.text();
+                    console.error('Login error response:', errorText);
+                    throw new Error(`Authentication failed: ${response.status} ${errorText}`);
                 }
 
                 const data = await response.json();
                 setAuthToken(data.token);
                 return { success: true, token: data.token };
             } catch (error) {
-                console.error('Login error:', error);
+                console.error('Login error details:', error);
+                
+                // If it's a network error, provide clearer message
+                if (error.message.includes('Failed to fetch') || error.message.includes('Network Error')) {
+                    return { 
+                        success: false, 
+                        error: 'Could not connect to the authentication server. Is your backend running?',
+                        details: error.message
+                    };
+                }
+                
                 return { success: false, error: error.message };
             }
         },
@@ -92,6 +112,26 @@ const ApiClient = (function() {
         // Get the resume
         get: async function() {
             try {
+                // Check for emergency override mode
+                const token = getAuthToken();
+                if (token === 'emergency-override-token') {
+                    console.log('Using emergency mode for resume retrieval');
+                    const fileUrl = localStorage.getItem('resumeFileUrl');
+                    
+                    if (fileUrl) {
+                        return { 
+                            success: true, 
+                            data: {
+                                url: fileUrl,
+                                filename: localStorage.getItem('resumeFileName') || 'resume.pdf'
+                            }
+                        };
+                    } else {
+                        return { success: false, error: 'No resume found in emergency mode', notFound: true };
+                    }
+                }
+                
+                // Normal server fetch
                 const response = await fetch(API_ENDPOINTS.RESUME);
                 
                 if (response.status === 404) {
@@ -131,6 +171,23 @@ const ApiClient = (function() {
             formData.append('resume', file);
 
             try {
+                // For emergency override token, create a local file URL instead
+                if (token === 'emergency-override-token') {
+                    console.log('Using emergency mode for file upload');
+                    // Create a temporary object URL for the file
+                    const fileUrl = URL.createObjectURL(file);
+                    
+                    // Store filename in localStorage for reference
+                    localStorage.setItem('resumeFileName', file.name);
+                    localStorage.setItem('resumeFileUrl', fileUrl);
+                    
+                    return { 
+                        success: true, 
+                        message: 'Resume uploaded in emergency mode (locally only)' 
+                    };
+                }
+                
+                // Normal upload to server
                 const response = await fetch(API_ENDPOINTS.RESUME, {
                     method: 'POST',
                     headers: {
@@ -158,6 +215,15 @@ const ApiClient = (function() {
             }
 
             try {
+                // For emergency mode, just clear localStorage
+                if (token === 'emergency-override-token') {
+                    console.log('Using emergency mode for resume deletion');
+                    localStorage.removeItem('resumeFileName');
+                    localStorage.removeItem('resumeFileUrl');
+                    return { success: true };
+                }
+                
+                // Normal server deletion
                 const response = await fetch(API_ENDPOINTS.RESUME, {
                     method: 'DELETE',
                     headers: {

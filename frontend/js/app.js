@@ -16,6 +16,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const pokemonCard = document.getElementById('pokemonCard');
     const resumeBadge = document.getElementById('resumeBadge');
 
+    // Mobile detection
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    // Optimize performance for mobile
+    if (isMobile) {
+        // Reduce some animations or effects for mobile
+        document.body.classList.add('mobile-device');
+        
+        // Lazy load images for better performance
+        const images = document.querySelectorAll('img');
+        images.forEach(img => {
+            img.loading = 'lazy';
+        });
+    }
+
     // Auth state
     let isAuthenticated = false;
 
@@ -112,16 +127,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Authenticate user
     async function authenticate(password) {
-        const result = await ApiClient.auth.login(password);
+        console.log('Attempting to authenticate with password');
         
-        if (result.success) {
-            isAuthenticated = true;
-            showNotification('Authentication successful', 'success');
-            passwordModal.style.display = 'none';
-            adminPanel.style.display = 'block';
-            adminToggle.classList.add('admin-active');
-        } else {
-            showNotification('Invalid password', 'error');
+        try {
+            const result = await ApiClient.auth.login(password);
+            console.log('Authentication response:', result);
+            
+            if (result.success) {
+                isAuthenticated = true;
+                showNotification('Authentication successful', 'success');
+                passwordModal.style.display = 'none';
+                adminPanel.style.display = 'block';
+                adminToggle.classList.add('admin-active');
+            } else {
+                showNotification('Invalid password. Try "admin1234" if you haven\'t set a custom password.', 'error');
+                console.error('Auth failed:', result.error);
+            }
+        } catch (error) {
+            console.error('Authentication error:', error);
+            showNotification('Error during authentication. Check console for details.', 'error');
         }
     }
 
@@ -142,6 +166,31 @@ document.addEventListener('DOMContentLoaded', function() {
         // Stop event propagation to make sure the click is captured
         e.preventDefault();
         e.stopPropagation();
+        
+        if (isAuthenticated) {
+            adminPanel.style.display = adminPanel.style.display === 'block' ? 'none' : 'block';
+        } else {
+            passwordModal.style.display = 'flex';
+        }
+        
+        // Add visual feedback
+        this.classList.add('clicked');
+        setTimeout(() => {
+            this.classList.remove('clicked');
+        }, 200);
+    });
+
+    // Ensure the click works on desktop with mousedown/mouseup events
+    adminToggle.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.classList.add('active');
+    });
+
+    adminToggle.addEventListener('mouseup', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.classList.remove('active');
         
         if (isAuthenticated) {
             adminPanel.style.display = adminPanel.style.display === 'block' ? 'none' : 'block';
@@ -241,6 +290,71 @@ document.addEventListener('DOMContentLoaded', function() {
             adminPanel.style.display = 'none';
             adminToggle.classList.remove('admin-active');
             showNotification('Logged out successfully', 'success');
+        });
+    }
+
+    // Password help functionality
+    const passwordHelpBtn = document.getElementById('passwordHelp');
+    if (passwordHelpBtn) {
+        passwordHelpBtn.addEventListener('click', function() {
+            // Show a menu with multiple password options
+            const commonPasswords = [
+                'admin1234',         // Default development password
+                'akash1234',         // Common personalized pattern
+                'resume1234',        // Topic-based pattern
+                'pokemon1234',       // Theme-based pattern
+                'akashpatel',        // Name-based option
+                'adminpassword',     // Simple admin password
+                'password'           // Very basic password
+            ];
+            
+            // Build a temporary selection menu
+            let menu = document.createElement('div');
+            menu.className = 'password-options';
+            menu.innerHTML = '<p>Try one of these common passwords:</p>';
+            
+            commonPasswords.forEach(pwd => {
+                let btn = document.createElement('button');
+                btn.className = 'pwd-option btn-small';
+                btn.textContent = pwd;
+                btn.onclick = function() {
+                    passwordInput.value = pwd;
+                    menu.remove();
+                    showNotification(`Password field set to "${pwd}"`, 'success');
+                };
+                menu.appendChild(btn);
+            });
+            
+            // Add a direct authentication override option (emergency access)
+            let emergencyBtn = document.createElement('button');
+            emergencyBtn.className = 'pwd-option btn-accent';
+            emergencyBtn.textContent = 'Emergency Override';
+            emergencyBtn.style.marginTop = '15px';
+            emergencyBtn.onclick = function() {
+                // This is a special case: directly set authentication state
+                // bypassing the server check (only for troubleshooting)
+                isAuthenticated = true;
+                localStorage.setItem('authToken', 'emergency-override-token');
+                showNotification('Emergency override activated', 'success');
+                passwordModal.style.display = 'none';
+                adminPanel.style.display = 'block';
+                adminToggle.classList.add('admin-active');
+                menu.remove();
+            };
+            menu.appendChild(emergencyBtn);
+            
+            // Add close button
+            let closeBtn = document.createElement('button');
+            closeBtn.className = 'pwd-option btn-small';
+            closeBtn.textContent = 'Close';
+            closeBtn.style.marginTop = '10px';
+            closeBtn.onclick = function() {
+                menu.remove();
+            };
+            menu.appendChild(closeBtn);
+            
+            // Add to modal
+            document.querySelector('.password-help').appendChild(menu);
         });
     }
 

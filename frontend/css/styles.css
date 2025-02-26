@@ -19,6 +19,8 @@ body {
     flex-direction: column;
     min-height: 100vh;
     overflow-x: hidden;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
 }
 
 header {
@@ -220,8 +222,76 @@ footer {
         width: 95%;
     }
     .card-container {
-        transform: scale(0.8);
-        margin-top: -50px;
+        transform: scale(0.9);
+        margin: 0 auto;
+        width: 100%;
+    }
+    
+    /* Optimize for mobile */
+    .admin-toggle {
+        width: 60px;
+        height: 60px;
+        bottom: 30px;
+        right: 30px;
+    }
+    
+    .settings-icon {
+        font-size: 24px;
+    }
+    
+    /* Improve tap targets */
+    .btn {
+        padding: 0.8rem 1.8rem;
+        margin: 0.5rem 0;
+    }
+    
+    /* Optimize bubbles for mobile performance */
+    .bubbles {
+        opacity: 0.7;
+    }
+    
+    /* Reduce animations for better performance */
+    .holo-effect, .sparkles {
+        animation-duration: 8s;
+    }
+}
+
+/* Small phone optimization */
+@media screen and (max-width: 480px) {
+    .card-container {
+        transform: scale(0.7);
+        margin-top: -30px;
+    }
+    
+    header h1 {
+        font-size: 1.8rem;
+    }
+    
+    header p {
+        font-size: 0.9rem;
+    }
+    
+    .admin-toggle {
+        width: 55px;
+        height: 55px;
+        bottom: 25px;
+        right: 25px;
+    }
+}
+
+/* General performance optimizations */
+body {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+}
+
+/* Optimize animations */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
     }
 }
 
@@ -244,10 +314,17 @@ footer {
     user-select: none;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
+    pointer-events: auto;
 }
 
 .admin-toggle:hover {
     transform: rotate(90deg) scale(1.1);
+    cursor: pointer;
+}
+
+.admin-toggle:active {
+    transform: scale(0.95);
+    box-shadow: 0 2px 10px rgba(0, 176, 107, 0.4);
 }
 
 .settings-icon {
@@ -829,4 +906,124 @@ footer {
 .notification.error {
     background-color: #f44336;
     color: white;
+}
+
+/* Mobile specific optimizations */
+.mobile-device .bubbles {
+    opacity: 0.6; /* Reduce opacity of bubbles on mobile for better performance */
+}
+
+.mobile-device .holo-effect {
+    animation-duration: 10s; /* Slow down animations on mobile for better performance */
+}
+
+.mobile-device .card-container {
+    will-change: transform; /* Hardware acceleration for card container */
+}
+
+.mobile-device .admin-toggle {
+    will-change: transform; /* Hardware acceleration for settings button */
+}
+
+/* Improve touch area for settings button */
+.mobile-device .admin-toggle::before {
+    content: '';
+    position: absolute;
+    width: 70px;
+    height: 70px;
+    background: transparent;
+    border-radius: 50%;
+    z-index: -1;
+}
+
+/* Password help styles */
+.password-help {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #444;
+}
+
+.password-help p {
+    font-size: 0.85rem;
+    color: #999;
+    margin-bottom: 10px;
+}
+
+.btn-small {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+    background: linear-gradient(135deg, #555, #777);
+}
+
+/* Make password modal more visible on mobile */
+@media (max-width: 768px) {
+    .modal-content {
+        padding: 2.5rem;
+    }
+    
+    #passwordInput {
+        font-size: 16px; /* Prevents iOS zoom on focus */
+        padding: 12px;
+    }
+    
+    #submitPassword {
+        margin-top: 10px;
+        width: 100%;
+        padding: 12px;
+    }
+}
+
+/* Password options menu */
+.password-options {
+    margin-top: 15px;
+    padding: 15px;
+    background-color: #2a2a2a;
+    border-radius: 8px;
+    border: 1px solid #444;
+}
+
+.password-options p {
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+    color: #ccc;
+}
+
+.pwd-option {
+    margin: 5px;
+    background: linear-gradient(135deg, #394a3c, #2a423a);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pwd-option:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Emergency override button */
+.pwd-option.btn-accent {
+    background: linear-gradient(135deg, #a83232, #c64646);
+    font-weight: bold;
+}
+
+/* Make password modal more visible on mobile - additional tweaks */
+@media (max-width: 768px) {
+    .password-options {
+        margin-bottom: 15px;
+    }
+    
+    .pwd-option {
+        width: calc(50% - 10px);
+        margin: 5px;
+        font-size: 14px;
+        padding: 10px 5px;
+    }
+    
+    .pwd-option.btn-accent {
+        width: 100%;
+    }
 } 
