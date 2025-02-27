@@ -9,7 +9,8 @@ const {
     fileExists, 
     deleteFile, 
     getFileUrl,
-    isProduction 
+    isProduction,
+    uploadToBlob
 } = require('../utils/storage');
 
 // File filter to only allow images
@@ -41,16 +42,17 @@ const upload = multer({
 // Helper function to get the profile image filename
 const getProfileImageFilename = async () => {
     if (isProduction) {
-        // In production, we store profile with extension in S3
-        // Try common extensions
-        const extensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
-        for (const ext of extensions) {
-            const filename = 'profile' + ext;
-            if (await fileExists(filename)) {
-                return filename;
-            }
+        try {
+            // In production, look for any profile image in Vercel Blob
+            const blobs = await list();
+            const profileImage = blobs.blobs.find(blob => 
+                blob.pathname.startsWith('profile')
+            );
+            return profileImage ? profileImage.pathname : null;
+        } catch (error) {
+            console.error('Error getting profile image from Blob:', error);
+            return null;
         }
-        return null;
     } else {
         // In development, check the local filesystem
         const uploadsDir = path.join(__dirname, '../uploads');
@@ -75,7 +77,7 @@ router.get('/', async (req, res) => {
         
         if (profileFilename) {
             if (isProduction) {
-                // In production, redirect to the S3 URL
+                // In production, redirect to the Blob URL
                 const imageUrl = getFileUrl(profileFilename);
                 return res.redirect(imageUrl);
             } else {
@@ -97,31 +99,51 @@ router.get('/', async (req, res) => {
  * @desc Upload a new profile image
  * @access Private
  */
-router.post('/', authenticateToken, upload.single('image'), (req, res) => {
+router.post('/', authenticateToken, upload.single('image'), async (req, res) => {
     if (!req.file) {
         return res.status(400).json({ message: 'No file uploaded or invalid file type' });
     }
     
-    console.log('Image upload successful:', req.file);
-    
-    // For S3 uploads, the response format is different
-    if (isProduction) {
-        return res.status(201).json({ 
-            message: 'Profile image uploaded successfully',
-            file: {
-                location: req.file.location,
-                key: req.file.key,
-                size: req.file.size
-            }
-        });
-    } else {
-        // For local uploads
-        return res.status(201).json({ 
-            message: 'Profile image uploaded successfully',
-            file: {
-                filename: req.file.filename,
-                size: req.file.size
-            }
+    try {
+        if (isProduction) {
+            // In production, upload to Vercel Blob
+            const file = req.file;
+            const fileExtension = path.extname(file.originalname).toLowerCase();
+            const filename = `profile${fileExtension}`;
+            
+            // Upload to Vercel Blob
+            const blob = await uploadToBlob(
+                file.buffer,
+                filename,
+                file.mimetype
+            );
+            
+            console.log('Image upload successful:', blob);
+            
+            return res.status(201).json({ 
+                message: 'Profile image uploaded successfully',
+                file: {
+                    url: blob.url,
+                    size: file.size
+                }
+            });
+        } else {
+            // For local uploads
+            console.log('Image upload successful:', req.file);
+            
+            return res.status(201).json({ 
+                message: 'Profile image uploaded successfully',
+                file: {
+                    filename: req.file.filename,
+                    size: req.file.size
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Error in image upload:', error);
+        return res.status(500).json({ 
+            message: 'Error uploading image',
+            error: error.message
         });
     }
 });

@@ -9,7 +9,8 @@ const {
     fileExists, 
     deleteFile, 
     getFileUrl,
-    isProduction 
+    isProduction,
+    uploadToBlob
 } = require('../utils/storage');
 
 // File filter to only allow PDFs
@@ -47,7 +48,7 @@ router.get('/', async (req, res) => {
         
         if (resumeExists) {
             if (isProduction) {
-                // In production, redirect to the S3 URL
+                // In production, redirect to the Blob URL
                 const resumeUrl = getFileUrl('resume.pdf');
                 return res.redirect(resumeUrl);
             } else {
@@ -69,31 +70,49 @@ router.get('/', async (req, res) => {
  * @desc Upload a new resume
  * @access Private
  */
-router.post('/', authenticateToken, upload.single('resume'), (req, res) => {
+router.post('/', authenticateToken, upload.single('resume'), async (req, res) => {
     if (!req.file) {
         return res.status(400).json({ message: 'No file uploaded or invalid file type' });
     }
     
-    console.log('Resume upload successful:', req.file);
-    
-    // For S3 uploads, the response format is different
-    if (isProduction) {
-        return res.status(201).json({ 
-            message: 'Resume uploaded successfully',
-            file: {
-                location: req.file.location,
-                key: req.file.key,
-                size: req.file.size
-            }
-        });
-    } else {
-        // For local uploads
-        return res.status(201).json({ 
-            message: 'Resume uploaded successfully',
-            file: {
-                filename: req.file.filename,
-                size: req.file.size
-            }
+    try {
+        if (isProduction) {
+            // In production, upload to Vercel Blob
+            const file = req.file;
+            
+            // Upload to Vercel Blob
+            const blob = await uploadToBlob(
+                file.buffer,
+                'resume.pdf',
+                'application/pdf'
+            );
+            
+            console.log('Resume upload successful:', blob);
+            
+            return res.status(201).json({ 
+                message: 'Resume uploaded successfully',
+                file: {
+                    url: blob.url,
+                    size: file.size
+                }
+            });
+        } else {
+            // For local uploads
+            console.log('Resume upload successful:', req.file);
+            
+            return res.status(201).json({ 
+                message: 'Resume uploaded successfully',
+                file: {
+                    filename: req.file.filename,
+                    size: req.file.size
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Error in resume upload:', error);
+        return res.status(500).json({ 
+            message: 'Error uploading resume',
+            error: error.message
         });
     }
 });

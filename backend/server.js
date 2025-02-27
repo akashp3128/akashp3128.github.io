@@ -5,6 +5,7 @@ const morgan = require('morgan');
 const path = require('path');
 const fs = require('fs');
 const helmet = require('helmet');
+const { list } = require('@vercel/blob');
 const { 
     ensureUploadDirExists, 
     isProduction, 
@@ -97,6 +98,29 @@ if (isProduction) {
             readStream.pipe(res);
         } catch (error) {
             console.error('Error streaming file from GridFS:', error);
+            res.status(500).json({ message: 'Error retrieving file', error: error.message });
+        }
+    });
+}
+
+// Add a route to serve files from Vercel Blob in production
+if (isProduction) {
+    app.get('/api/blob/:filename', async (req, res) => {
+        try {
+            const filename = req.params.filename;
+            
+            // Check if the file exists in Vercel Blob
+            const blobs = await list();
+            const blobFile = blobs.blobs.find(blob => blob.pathname === filename);
+            
+            if (!blobFile) {
+                return res.status(404).json({ message: 'File not found' });
+            }
+            
+            // Redirect to the blob URL
+            res.redirect(blobFile.url);
+        } catch (error) {
+            console.error('Error serving file from Vercel Blob:', error);
             res.status(500).json({ message: 'Error retrieving file', error: error.message });
         }
     });

@@ -1,40 +1,10 @@
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
-const { GridFsStorage } = require('multer-gridfs-storage');
-const mongoose = require('mongoose');
-const Grid = require('gridfs-stream');
+const { put, list, del, head } = require('@vercel/blob');
 
 // Check if we're in production or development
 const isProduction = process.env.NODE_ENV === 'production';
-
-// MongoDB connection
-let gfs;
-const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/pokemon-card-resume';
-
-// Initialize MongoDB connection and GridFS
-const connectMongoDB = () => {
-    if (mongoose.connection.readyState === 0) {
-        mongoose.connect(mongoURI)
-        .then(() => {
-            console.log('MongoDB connected successfully');
-        })
-        .catch(err => {
-            console.error('MongoDB connection error:', err);
-        });
-    }
-
-    // Initialize GridFS
-    const conn = mongoose.connection;
-    conn.once('open', () => {
-        gfs = Grid(conn.db, mongoose.mongo);
-        gfs.collection('uploads'); // Set the collection name
-        console.log('GridFS initialized');
-    });
-};
-
-// Connect to MongoDB when the module is imported
-connectMongoDB();
 
 // Helper to ensure upload directory exists for local development
 const ensureUploadDirExists = () => {
@@ -54,61 +24,79 @@ const ensureUploadDirExists = () => {
     return true;
 };
 
-// Create storage engine for file uploads (used for both resumes and images)
-const createGridFsStorage = (fileType) => {
+// Create a disk storage engine for local development
+const createLocalDiskStorage = (fileType) => {
+    console.log(`Using local storage for ${fileType} uploads`);
+    ensureUploadDirExists();
+    
+    return multer.diskStorage({
+        destination: function (req, file, cb) {
+            const uploadDir = path.join(__dirname, '../uploads');
+            cb(null, uploadDir);
+        },
+        filename: function (req, file, cb) {
+            if (fileType === 'resume') {
+                cb(null, 'resume.pdf');
+            } else if (fileType === 'image') {
+                const ext = path.extname(file.originalname).toLowerCase();
+                cb(null, 'profile' + ext);
+            } else {
+                cb(null, file.originalname);
+            }
+        }
+    });
+};
+
+// Create memory storage for production (we'll upload to Vercel Blob after multer processes the file)
+const createMemoryStorage = () => {
+    return multer.memoryStorage();
+};
+
+// Create storage engine for file uploads
+const createStorage = (fileType) => {
     if (isProduction) {
-        // Use GridFS in production
-        console.log(`Using GridFS storage for ${fileType} uploads`);
-        return new GridFsStorage({
-            url: mongoURI,
-            file: (req, file) => {
-                const filename = fileType === 'resume' ? 'resume.pdf' : 
-                                (fileType === 'image' ? `profile${path.extname(file.originalname).toLowerCase()}` : file.originalname);
-                
-                return {
-                    filename: filename,
-                    bucketName: 'uploads' // Collection name
-                };
-            }
-        });
+        // In production, use memory storage and then upload to Vercel Blob
+        console.log(`Using Vercel Blob storage for ${fileType} uploads`);
+        return createMemoryStorage();
     } else {
-        // Use local storage in development
-        console.log(`Using local storage for ${fileType} uploads`);
-        ensureUploadDirExists();
-        return multer.diskStorage({
-            destination: function (req, file, cb) {
-                const uploadDir = path.join(__dirname, '../uploads');
-                cb(null, uploadDir);
-            },
-            filename: function (req, file, cb) {
-                if (fileType === 'resume') {
-                    cb(null, 'resume.pdf');
-                } else if (fileType === 'image') {
-                    const ext = path.extname(file.originalname).toLowerCase();
-                    cb(null, 'profile' + ext);
-                } else {
-                    cb(null, file.originalname);
-                }
-            }
-        });
+        // In development, use local disk storage
+        return createLocalDiskStorage(fileType);
     }
 };
 
 // Create storage engine for resume uploads
 const createResumeStorage = () => {
-    return createGridFsStorage('resume');
+    return createStorage('resume');
 };
 
 // Create storage engine for image uploads
 const createImageStorage = () => {
-    return createGridFsStorage('image');
+    return createStorage('image');
+};
+
+// Upload file to Vercel Blob
+const uploadToBlob = async (buffer, filename, contentType) => {
+    try {
+        // Upload to Vercel Blob
+        const blob = await put(filename, buffer, {
+            contentType: contentType,
+            access: 'public' // Make files publicly accessible
+        });
+        
+        console.log(`File uploaded to Vercel Blob: ${blob.url}`);
+        return blob;
+    } catch (error) {
+        console.error('Error uploading to Vercel Blob:', error);
+        throw error;
+    }
 };
 
 // Get URL for a file
 const getFileUrl = (filename) => {
     if (isProduction) {
-        // Use a route that will stream the file from GridFS
-        return `/api/file/${filename}`;
+        // For production, we'll have to check if the file exists in Vercel Blob first
+        // But for now, return the pattern
+        return `/api/blob/${filename}`;
     } else {
         // Local URL
         return `/api/uploads/${filename}`;
@@ -119,12 +107,12 @@ const getFileUrl = (filename) => {
 const fileExists = async (filename) => {
     if (isProduction) {
         try {
-            // Check if file exists in GridFS
-            const files = await getGridFSFiles({ filename: filename });
-            return files && files.length > 0;
+            // Check if file exists in Vercel Blob
+            const blobs = await list();
+            return blobs.blobs.some(blob => blob.pathname === filename);
         } catch (error) {
-            console.error('Error checking if file exists in GridFS:', error);
-            throw error;
+            console.error('Error checking if file exists in Vercel Blob:', error);
+            return false;
         }
     } else {
         const filePath = path.join(__dirname, '../uploads', filename);
@@ -132,59 +120,16 @@ const fileExists = async (filename) => {
     }
 };
 
-// Helper function to get files from GridFS
-const getGridFSFiles = (filter = {}) => {
-    return new Promise((resolve, reject) => {
-        if (!gfs) {
-            return reject(new Error('GridFS not initialized'));
-        }
-        
-        gfs.files.find(filter).toArray((err, files) => {
-            if (err) {
-                return reject(err);
-            }
-            resolve(files);
-        });
-    });
-};
-
-// Helper function to get a file stream from GridFS
-const getGridFSReadStream = (filename) => {
-    if (!gfs) {
-        throw new Error('GridFS not initialized');
-    }
-    return gfs.createReadStream({ filename });
-};
-
 // Delete a file
 const deleteFile = async (filename) => {
     if (isProduction) {
         try {
-            if (!gfs) {
-                throw new Error('GridFS not initialized');
-            }
-            
-            // Find the file first to get its ID
-            const files = await getGridFSFiles({ filename: filename });
-            if (!files || files.length === 0) {
-                console.warn(`File ${filename} not found in GridFS`);
-                return true;
-            }
-            
-            // Delete the file chunks
-            await new Promise((resolve, reject) => {
-                gfs.remove({ _id: files[0]._id, root: 'uploads' }, (err) => {
-                    if (err) {
-                        return reject(err);
-                    }
-                    resolve();
-                });
-            });
-            
-            console.log(`File ${filename} deleted from GridFS`);
+            // Delete from Vercel Blob
+            await del(filename);
+            console.log(`File ${filename} deleted from Vercel Blob`);
             return true;
         } catch (error) {
-            console.error('Error deleting file from GridFS:', error);
+            console.error('Error deleting file from Vercel Blob:', error);
             throw error;
         }
     } else {
@@ -209,6 +154,5 @@ module.exports = {
     deleteFile,
     ensureUploadDirExists,
     isProduction,
-    getGridFSReadStream,
-    getGridFSFiles
+    uploadToBlob
 }; 
