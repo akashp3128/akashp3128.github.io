@@ -313,22 +313,20 @@ body {
 /* Admin toggle button styling */
 .admin-toggle {
     position: fixed;
-    right: 20px;
     top: 20px;
+    right: 20px;
+    z-index: 1000; /* Ensure always on top */
     width: 50px;
     height: 50px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #1e6b52, #00b06b);
-    border: none;
-    color: white;
-    font-size: 24px;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    z-index: 1000;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
     transition: all 0.3s ease;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    border: none;
 }
 
 .admin-toggle:hover {
@@ -359,6 +357,8 @@ body {
     backdrop-filter: blur(5px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     display: none; /* Hidden by default */
+    position: relative;
+    z-index: 100; /* Ensure admin panel is above the card */
 }
 
 .admin-panel.visible {
@@ -368,6 +368,8 @@ body {
 .admin-panel button {
     margin-top: 15px;
     margin-right: 10px;
+    position: relative;
+    z-index: 101; /* Ensure buttons are clickable */
 }
 
 #logoutBtn {
@@ -382,6 +384,8 @@ body {
 /* Admin and Authentication related styles */
 .admin-only {
     display: none !important;
+    position: relative;
+    z-index: 100; /* Ensure admin elements are above other content */
 }
 
 body.authenticated .admin-only {
