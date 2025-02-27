@@ -8,7 +8,17 @@ const { authenticateToken } = require('../middleware/auth');
 // Set up multer storage
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, path.join(__dirname, '../uploads'));
+        // Make sure upload dir exists
+        const uploadDir = path.join(__dirname, '../uploads');
+        if (!fs.existsSync(uploadDir)) {
+            try {
+                fs.mkdirSync(uploadDir, { recursive: true, mode: 0o777 });
+                console.log('Created uploads directory for image:', uploadDir);
+            } catch (error) {
+                console.error('Failed to create uploads directory for image:', error);
+            }
+        }
+        cb(null, uploadDir);
     },
     filename: function (req, file, cb) {
         // Always save with the same name to ensure only one profile image exists

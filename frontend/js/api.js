@@ -180,6 +180,12 @@ const ApiClient = (function() {
                 const formData = new FormData();
                 formData.append('resume', file);
                 
+                debugLog('Resume form data:', {
+                    fileName: file.name,
+                    fileType: file.type,
+                    fileSize: file.size
+                });
+                
                 const response = await fetch(API_ENDPOINTS.RESUME, {
                     method: 'POST',
                     headers: {
@@ -188,12 +194,33 @@ const ApiClient = (function() {
                     body: formData
                 });
                 
-                if (response.ok) {
-                    const data = await response.json();
-                    return { success: true, data };
-                } else {
-                    const error = await response.json();
-                    return { success: false, error: error.message || 'Upload failed' };
+                let responseText;
+                try {
+                    responseText = await response.text();
+                    const data = responseText ? JSON.parse(responseText) : {};
+                    
+                    if (response.ok) {
+                        return { success: true, data };
+                    } else {
+                        debugLog('Resume upload failed with response:', { 
+                            status: response.status, 
+                            statusText: response.statusText,
+                            data
+                        });
+                        return { 
+                            success: false, 
+                            error: data.message || 'Upload failed',
+                            status: response.status,
+                            statusText: response.statusText
+                        };
+                    }
+                } catch (parseError) {
+                    debugLog('Failed to parse response:', responseText);
+                    return { 
+                        success: false, 
+                        error: `Upload failed: ${response.status} ${response.statusText}`,
+                        responseText: responseText
+                    };
                 }
             } catch (error) {
                 debugLog('Resume upload error:', error);
@@ -239,8 +266,15 @@ const ApiClient = (function() {
             }
             
             try {
+                debugLog('Uploading image via API');
                 const formData = new FormData();
                 formData.append('image', file);
+                
+                debugLog('Image form data:', {
+                    fileName: file.name,
+                    fileType: file.type,
+                    fileSize: file.size
+                });
                 
                 const response = await fetch(API_ENDPOINTS.IMAGE, {
                     method: 'POST',
@@ -250,12 +284,33 @@ const ApiClient = (function() {
                     body: formData
                 });
                 
-                if (response.ok) {
-                    const data = await response.json();
-                    return { success: true, data };
-                } else {
-                    const error = await response.json();
-                    return { success: false, error: error.message || 'Upload failed' };
+                let responseText;
+                try {
+                    responseText = await response.text();
+                    const data = responseText ? JSON.parse(responseText) : {};
+                    
+                    if (response.ok) {
+                        return { success: true, data };
+                    } else {
+                        debugLog('Image upload failed with response:', { 
+                            status: response.status, 
+                            statusText: response.statusText,
+                            data
+                        });
+                        return { 
+                            success: false, 
+                            error: data.message || 'Upload failed',
+                            status: response.status,
+                            statusText: response.statusText
+                        };
+                    }
+                } catch (parseError) {
+                    debugLog('Failed to parse response:', responseText);
+                    return { 
+                        success: false, 
+                        error: `Upload failed: ${response.status} ${response.statusText}`,
+                        responseText: responseText
+                    };
                 }
             } catch (error) {
                 debugLog('Image upload error:', error);

@@ -307,9 +307,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const file = e.target.files[0];
         if (!file) return;
         
+        console.log('Attempting to upload resume file:', {
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            lastModified: new Date(file.lastModified).toISOString()
+        });
+        
         // Validate file - check both MIME type and extension
         const isPdfMimeType = file.type === 'application/pdf';
         const isPdfExtension = file.name.toLowerCase().endsWith('.pdf');
+        
+        console.log('Resume validation:', { isPdfMimeType, isPdfExtension });
         
         if (!isPdfMimeType && !isPdfExtension) {
             showError('Please upload a PDF file');
@@ -319,6 +328,7 @@ document.addEventListener('DOMContentLoaded', function() {
         showMessage('Uploading resume...');
         
         ApiClient.resume.upload(file).then(response => {
+            console.log('Resume upload response:', response);
             if (response.success) {
                 showMessage('Resume uploaded successfully');
                 // Reload resume preview
@@ -359,10 +369,19 @@ document.addEventListener('DOMContentLoaded', function() {
         const file = e.target.files[0];
         if (!file) return;
         
+        console.log('Attempting to upload image file:', {
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            lastModified: new Date(file.lastModified).toISOString()
+        });
+        
         // Validate file - check both MIME type and extension
         const isImageMimeType = file.type.startsWith('image/');
         const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
         const hasImageExtension = imageExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
+        
+        console.log('Image validation:', { isImageMimeType, hasImageExtension });
         
         if (!isImageMimeType && !hasImageExtension) {
             showError('Please upload a valid image file (JPG, PNG, GIF, etc.)');
@@ -372,6 +391,7 @@ document.addEventListener('DOMContentLoaded', function() {
         showMessage('Uploading image...');
         
         ApiClient.image.upload(file).then(response => {
+            console.log('Image upload response:', response);
             if (response.success) {
                 showMessage('Image uploaded successfully');
                 loadProfileImage(); // Reload the profile image

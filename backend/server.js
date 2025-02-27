@@ -56,7 +56,14 @@ app.use(morgan('dev')); // Logging
 // Create uploads directory if it doesn't exist
 const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
+    try {
+        fs.mkdirSync(uploadDir, { recursive: true, mode: 0o777 });
+        console.log('Created uploads directory:', uploadDir);
+    } catch (error) {
+        console.error('Failed to create uploads directory:', error);
+        // In Vercel's serverless environment, we might need a different approach
+        // Log the issue but continue execution
+    }
 }
 
 // API routes
