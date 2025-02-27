@@ -4,29 +4,13 @@ const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
 const { authenticateToken } = require('../middleware/auth');
-
-// Set up multer storage
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        // Make sure upload dir exists
-        const uploadDir = path.join(__dirname, '../uploads');
-        if (!fs.existsSync(uploadDir)) {
-            try {
-                fs.mkdirSync(uploadDir, { recursive: true, mode: 0o777 });
-                console.log('Created uploads directory for image:', uploadDir);
-            } catch (error) {
-                console.error('Failed to create uploads directory for image:', error);
-            }
-        }
-        cb(null, uploadDir);
-    },
-    filename: function (req, file, cb) {
-        // Always save with the same name to ensure only one profile image exists
-        // Extract extension from original file
-        const ext = path.extname(file.originalname).toLowerCase();
-        cb(null, 'profile' + ext);
-    }
-});
+const { 
+    createImageStorage, 
+    fileExists, 
+    deleteFile, 
+    getFileUrl,
+    isProduction 
+} = require('../utils/storage');
 
 // File filter to only allow images
 const fileFilter = (req, file, cb) => {
@@ -44,7 +28,8 @@ const fileFilter = (req, file, cb) => {
     }
 };
 
-// Set up upload middleware
+// Set up storage and upload middleware
+const storage = createImageStorage();
 const upload = multer({
     storage: storage,
     limits: {
@@ -53,14 +38,30 @@ const upload = multer({
     fileFilter: fileFilter
 });
 
-// Helper function to find the profile image
-const findProfileImage = () => {
-    const uploadsDir = path.join(__dirname, '../uploads');
-    const files = fs.readdirSync(uploadsDir);
-    
-    // Look for any file that starts with 'profile'
-    const profileImage = files.find(file => file.startsWith('profile'));
-    return profileImage ? path.join(uploadsDir, profileImage) : null;
+// Helper function to get the profile image filename
+const getProfileImageFilename = async () => {
+    if (isProduction) {
+        // In production, we store profile with extension in S3
+        // Try common extensions
+        const extensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
+        for (const ext of extensions) {
+            const filename = 'profile' + ext;
+            if (await fileExists(filename)) {
+                return filename;
+            }
+        }
+        return null;
+    } else {
+        // In development, check the local filesystem
+        const uploadsDir = path.join(__dirname, '../uploads');
+        if (fs.existsSync(uploadsDir)) {
+            const files = fs.readdirSync(uploadsDir);
+            // Look for any file that starts with 'profile'
+            const profileImage = files.find(file => file.startsWith('profile'));
+            return profileImage || null;
+        }
+        return null;
+    }
 };
 
 /**
@@ -68,13 +69,26 @@ const findProfileImage = () => {
  * @desc Get the profile image
  * @access Public
  */
-router.get('/', (req, res) => {
-    const imagePath = findProfileImage();
-    
-    if (imagePath && fs.existsSync(imagePath)) {
-        res.sendFile(imagePath);
-    } else {
-        res.status(404).json({ message: 'No profile image found' });
+router.get('/', async (req, res) => {
+    try {
+        const profileFilename = await getProfileImageFilename();
+        
+        if (profileFilename) {
+            if (isProduction) {
+                // In production, redirect to the S3 URL
+                const imageUrl = getFileUrl(profileFilename);
+                return res.redirect(imageUrl);
+            } else {
+                // In development, send the file
+                const imagePath = path.join(__dirname, '../uploads', profileFilename);
+                return res.sendFile(imagePath);
+            }
+        } else {
+            return res.status(404).json({ message: 'No profile image found' });
+        }
+    } catch (error) {
+        console.error('Error getting profile image:', error);
+        return res.status(500).json({ message: 'Server error getting image' });
     }
 });
 
@@ -88,13 +102,28 @@ router.post('/', authenticateToken, upload.single('image'), (req, res) => {
         return res.status(400).json({ message: 'No file uploaded or invalid file type' });
     }
     
-    res.status(201).json({ 
-        message: 'Profile image uploaded successfully',
-        file: {
-            filename: req.file.filename,
-            size: req.file.size
-        }
-    });
+    console.log('Image upload successful:', req.file);
+    
+    // For S3 uploads, the response format is different
+    if (isProduction) {
+        return res.status(201).json({ 
+            message: 'Profile image uploaded successfully',
+            file: {
+                location: req.file.location,
+                key: req.file.key,
+                size: req.file.size
+            }
+        });
+    } else {
+        // For local uploads
+        return res.status(201).json({ 
+            message: 'Profile image uploaded successfully',
+            file: {
+                filename: req.file.filename,
+                size: req.file.size
+            }
+        });
+    }
 });
 
 /**
@@ -102,24 +131,25 @@ router.post('/', authenticateToken, upload.single('image'), (req, res) => {
  * @desc Delete the profile image
  * @access Private
  */
-router.delete('/', authenticateToken, (req, res) => {
-    const imagePath = findProfileImage();
-    
-    if (imagePath && fs.existsSync(imagePath)) {
-        try {
-            fs.unlinkSync(imagePath);
-            res.status(200).json({ message: 'Profile image deleted successfully' });
-        } catch (error) {
-            console.error('Error deleting profile image:', error);
-            res.status(500).json({ message: 'Error deleting profile image file' });
+router.delete('/', authenticateToken, async (req, res) => {
+    try {
+        const profileFilename = await getProfileImageFilename();
+        
+        if (profileFilename) {
+            await deleteFile(profileFilename);
+            return res.status(200).json({ message: 'Profile image deleted successfully' });
+        } else {
+            return res.status(404).json({ message: 'No profile image found' });
         }
-    } else {
-        res.status(404).json({ message: 'No profile image found' });
+    } catch (error) {
+        console.error('Error deleting profile image:', error);
+        return res.status(500).json({ message: 'Error deleting profile image file' });
     }
 });
 
 // Error handling middleware for multer errors
 router.use((err, req, res, next) => {
+    console.error('Image route error:', err);
     if (err instanceof multer.MulterError) {
         if (err.code === 'LIMIT_FILE_SIZE') {
             return res.status(400).json({ message: 'File size too large. Maximum size is 5MB.' });

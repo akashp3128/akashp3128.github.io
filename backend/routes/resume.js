@@ -4,27 +4,13 @@ const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
 const { authenticateToken } = require('../middleware/auth');
-
-// Set up multer storage
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        // Make sure upload dir exists
-        const uploadDir = path.join(__dirname, '../uploads');
-        if (!fs.existsSync(uploadDir)) {
-            try {
-                fs.mkdirSync(uploadDir, { recursive: true, mode: 0o777 });
-                console.log('Created uploads directory for resume:', uploadDir);
-            } catch (error) {
-                console.error('Failed to create uploads directory for resume:', error);
-            }
-        }
-        cb(null, uploadDir);
-    },
-    filename: function (req, file, cb) {
-        // Always save with the same name to ensure only one resume exists
-        cb(null, 'resume.pdf');
-    }
-});
+const { 
+    createResumeStorage, 
+    fileExists, 
+    deleteFile, 
+    getFileUrl,
+    isProduction 
+} = require('../utils/storage');
 
 // File filter to only allow PDFs
 const fileFilter = (req, file, cb) => {
@@ -39,7 +25,8 @@ const fileFilter = (req, file, cb) => {
     }
 };
 
-// Set up upload middleware
+// Set up storage and upload middleware
+const storage = createResumeStorage();
 const upload = multer({
     storage: storage,
     limits: {
@@ -48,20 +35,32 @@ const upload = multer({
     fileFilter: fileFilter
 });
 
-// Path to the resume file
-const resumePath = path.join(__dirname, '../uploads/resume.pdf');
-
 /**
  * @route GET /api/resume
  * @desc Get the resume file
  * @access Public
  */
-router.get('/', (req, res) => {
-    // Check if resume file exists
-    if (fs.existsSync(resumePath)) {
-        res.sendFile(resumePath);
-    } else {
-        res.status(404).json({ message: 'No resume file found' });
+router.get('/', async (req, res) => {
+    try {
+        // Check if resume file exists
+        const resumeExists = await fileExists('resume.pdf');
+        
+        if (resumeExists) {
+            if (isProduction) {
+                // In production, redirect to the S3 URL
+                const resumeUrl = getFileUrl('resume.pdf');
+                return res.redirect(resumeUrl);
+            } else {
+                // In development, send the file
+                const resumePath = path.join(__dirname, '../uploads/resume.pdf');
+                return res.sendFile(resumePath);
+            }
+        } else {
+            return res.status(404).json({ message: 'No resume file found' });
+        }
+    } catch (error) {
+        console.error('Error getting resume:', error);
+        return res.status(500).json({ message: 'Server error getting resume' });
     }
 });
 
@@ -75,13 +74,28 @@ router.post('/', authenticateToken, upload.single('resume'), (req, res) => {
         return res.status(400).json({ message: 'No file uploaded or invalid file type' });
     }
     
-    res.status(201).json({ 
-        message: 'Resume uploaded successfully',
-        file: {
-            filename: req.file.filename,
-            size: req.file.size
-        }
-    });
+    console.log('Resume upload successful:', req.file);
+    
+    // For S3 uploads, the response format is different
+    if (isProduction) {
+        return res.status(201).json({ 
+            message: 'Resume uploaded successfully',
+            file: {
+                location: req.file.location,
+                key: req.file.key,
+                size: req.file.size
+            }
+        });
+    } else {
+        // For local uploads
+        return res.status(201).json({ 
+            message: 'Resume uploaded successfully',
+            file: {
+                filename: req.file.filename,
+                size: req.file.size
+            }
+        });
+    }
 });
 
 /**
@@ -89,23 +103,26 @@ router.post('/', authenticateToken, upload.single('resume'), (req, res) => {
  * @desc Delete the resume
  * @access Private
  */
-router.delete('/', authenticateToken, (req, res) => {
-    // Check if resume file exists
-    if (fs.existsSync(resumePath)) {
-        try {
-            fs.unlinkSync(resumePath);
-            res.status(200).json({ message: 'Resume deleted successfully' });
-        } catch (error) {
-            console.error('Error deleting resume:', error);
-            res.status(500).json({ message: 'Error deleting resume file' });
+router.delete('/', authenticateToken, async (req, res) => {
+    try {
+        // Check if resume file exists
+        const resumeExists = await fileExists('resume.pdf');
+        
+        if (resumeExists) {
+            await deleteFile('resume.pdf');
+            return res.status(200).json({ message: 'Resume deleted successfully' });
+        } else {
+            return res.status(404).json({ message: 'No resume file found' });
         }
-    } else {
-        res.status(404).json({ message: 'No resume file found' });
+    } catch (error) {
+        console.error('Error deleting resume:', error);
+        return res.status(500).json({ message: 'Error deleting resume file' });
     }
 });
 
 // Error handling middleware for multer errors
 router.use((err, req, res, next) => {
+    console.error('Resume route error:', err);
     if (err instanceof multer.MulterError) {
         if (err.code === 'LIMIT_FILE_SIZE') {
             return res.status(400).json({ message: 'File size too large. Maximum size is 5MB.' });

@@ -5,6 +5,7 @@ const morgan = require('morgan');
 const path = require('path');
 const fs = require('fs');
 const helmet = require('helmet');
+const { ensureUploadDirExists, isProduction } = require('./utils/storage');
 
 // Load environment variables
 dotenv.config();
@@ -53,17 +54,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev')); // Logging
 
-// Create uploads directory if it doesn't exist
-const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)) {
-    try {
-        fs.mkdirSync(uploadDir, { recursive: true, mode: 0o777 });
-        console.log('Created uploads directory:', uploadDir);
-    } catch (error) {
-        console.error('Failed to create uploads directory:', error);
-        // In Vercel's serverless environment, we might need a different approach
-        // Log the issue but continue execution
-    }
+// Create uploads directory if it doesn't exist (for local development)
+if (!isProduction) {
+    ensureUploadDirExists();
 }
 
 // API routes
@@ -74,6 +67,34 @@ const imageRoutes = require('./routes/image');
 app.use('/api/auth', authRoutes);
 app.use('/api/resume', resumeRoutes);
 app.use('/api/image', imageRoutes);
+
+// Add a route to serve uploaded files in development
+if (!isProduction) {
+    app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
+}
+
+// Add debug route for troubleshooting
+app.get('/api/debug', (req, res) => {
+    // Only show this in development
+    if (process.env.NODE_ENV === 'production') {
+        return res.status(403).json({ message: 'Debug information not available in production' });
+    }
+    
+    // Get basic environment information
+    const debugInfo = {
+        environment: process.env.NODE_ENV || 'development',
+        uploads_directory: path.join(__dirname, 'uploads'),
+        uploads_exist: fs.existsSync(path.join(__dirname, 'uploads')),
+        platform: process.platform,
+        storage_type: isProduction ? 'S3' : 'local',
+        s3_configured: !!(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY),
+        jwt_secret_configured: !!process.env.JWT_SECRET,
+        admin_password_configured: !!process.env.ADMIN_PASSWORD,
+        server_timezone: new Date().toString(),
+    };
+    
+    res.json(debugInfo);
+});
 
 // Basic route for testing
 app.get('/', (req, res) => {
