@@ -9,10 +9,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set API base URL 
     window.API_BASE_URL = determineApiBaseUrl();
     
-    // Set emergency mode to always be false
-    window.emergencyMode = false;
-    localStorage.setItem('emergencyModeEnabled', 'false');
-    
     // Initialize card
     initializeCard();
 });

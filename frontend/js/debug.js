@@ -86,11 +86,8 @@
             }
         }
         
-        // Check emergency mode
-        debugLog(`Emergency mode: ${window.emergencyMode ? 'Active' : 'Inactive'}`, 'info');
-        
         // Check authentication
-        const authenticated = !!localStorage.getItem('authToken') || window.emergencyMode;
+        const authenticated = !!localStorage.getItem('authToken');
         debugLog(`Authentication: ${authenticated ? 'Authenticated' : 'Not authenticated'}`, 'info');
     }
 
