@@ -2,15 +2,7 @@
     --card-width: 320px;
     --card-height: 450px;
     --card-border-radius: 16px;
-    --primary-color: #0a7ea4;    /* Teal blue */
-    --secondary-color: #00334e;  /* Deep blue */
-    --accent-color: #ffc107;     /* Gold */
-    --accent-dark: #e6ac00;      /* Dark gold */
-    --text-light: #ffffff;       /* White text */
-    --text-dark: #2c3e50;        /* Dark blue-gray text */
-    --bg-dark: #1a2a3a;          /* Dark blue background */
-    --bg-light: #f8f9fa;         /* Light background */
-    --card-shadow: 0 10px 30px rgba(0, 51, 78, 0.15); /* Soft shadow */
+    --accent-color: #F1BE48; /* ISU Gold */
 }
 
 * {
@@ -483,9 +475,9 @@ body.authenticated a.admin-only {
     transform-style: preserve-3d;
     border-radius: var(--card-border-radius);
     box-shadow: 
-        0 0 30px rgba(10, 126, 164, 0.3),
+        0 0 30px rgba(192, 28, 39, 0.5),
         inset 0 0 10px rgba(0, 0, 0, 0.5);
-    border: 3px solid rgba(255, 255, 255, 0.9); /* Clean white border */
+    border: 3px solid rgba(241, 190, 72, 0.9); /* ISU Gold border */
     background: linear-gradient(145deg, rgba(30, 30, 30, 1), rgba(25, 25, 25, 1));
 }
 
@@ -501,138 +493,118 @@ body.authenticated a.admin-only {
 }
 
 .card-front {
-    background: linear-gradient(135deg, #121212, #222);
+    background-color: #1a1a1a;
     color: white;
     display: flex;
     flex-direction: column;
 }
 
-.card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 15px 5px;
-    font-weight: bold;
-    position: relative;
-    z-index: 2;
-    background-image: linear-gradient(to right, rgba(10, 126, 164, 0.9), rgba(0, 51, 78, 0.9)),
-        url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-opacity='0.06' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-    background-blend-mode: multiply;
+.card-back {
+    background: linear-gradient(135deg, #7c1017, #c01c27);
     color: white;
-    font-size: 1.2rem;
-    letter-spacing: 0.05em;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-    border-bottom: 1px solid rgba(10, 126, 164, 0.5);
+    transform: rotateY(180deg);
+    display: flex;
+    flex-direction: column;
+    padding: 20px 15px;
+    overflow-y: auto;
 }
 
-.card-stats {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    font-weight: 600;
-    font-size: 1.1rem;
+.card-header {
+    background: linear-gradient(135deg, #b8860b, #d4af37);
+    padding: 10px;
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
     position: relative;
-    z-index: 2;
-    color: var(--accent-color);
-    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.4);
+    text-shadow: 0 0 2px #000;
+}
+
+.card-energy {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-weight: bold;
+    color: #ffdf00;
+    text-shadow: 0 0 3px #000;
 }
 
 .card-image {
-    position: relative;
-    width: 100%;
-    height: 40%;
-    min-height: 155px;
-    margin: 0 auto;
+    width: 90%;
+    height: 155px;
+    margin: 10px auto;
+    background-color: #333;
+    border-radius: 8px;
     overflow: hidden;
-    box-sizing: border-box;
-    z-index: 1;
-    background: linear-gradient(45deg, #1a2a3a, #2c3e50);
-    padding: 0;
-    border-bottom: 1px solid rgba(10, 126, 164, 0.5);
-    border-top: 1px solid rgba(10, 126, 164, 0.5);
-    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+    position: relative;
 }
 
 .card-image img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: all 0.5s ease;
-    z-index: 1;
-    filter: brightness(1.05) contrast(1.05);
+}
+
+/* Custom uploaded image styling */
+.card-image img.custom-image {
+    object-fit: cover;
+    transition: all 0.3s ease;
+}
+
+.card-image:hover img.custom-image {
+    transform: scale(1.05);
 }
 
 .card-info {
+    border: 2px solid #00b06b;
+    margin: 0 10px;
+    border-radius: 8px;
+    padding: 10px;
+    text-align: left;
+    font-size: 12px;
+    background-color: rgba(0, 176, 107, 0.1);
     position: relative;
-    padding: 12px 15px;
-    font-size: 0.9rem;
-    line-height: 1.5;
-    letter-spacing: 0.01em;
-    color: white;
-    background: linear-gradient(135deg, #00334e, #0a7ea4); /* Teal/blue gradient */
-    margin: 0;
-    text-align: center;
-    z-index: 2;
-    border-bottom: 1px solid rgba(10, 126, 164, 0.5);
 }
 
 .card-abilities {
-    background: linear-gradient(135deg, #00334e, #0a7ea4); /* Teal/blue gradient */
-    padding: 12px 15px;
+    margin: 10px;
+    padding: 10px;
     text-align: left;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    z-index: 2;
+    background-color: rgba(30, 107, 82, 0.2);
+    border-radius: 8px;
 }
 
 .ability-name {
     font-weight: bold;
-    color: var(--accent-color); /* Gold */
-    font-size: 1rem;
-    display: inline-block;
-    margin-right: 10px;
+    color: #00c985;
+    margin-right: 5px;
 }
 
 .ability-cost {
-    color: var(--accent-color); /* Gold */
-    font-weight: normal;
-    float: right;
+    font-weight: bold;
+    margin-right: 10px;
+    color: gold;
 }
 
 .ability-description {
-    margin-top: 5px;
-    font-size: 0.88rem;
-    line-height: 1.4;
-    color: rgba(255, 255, 255, 0.9);
+    font-size: 12px;
+    color: #ddd;
 }
 
 .card-footer {
+    margin: 0 10px 10px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 15px;
-    font-size: 0.8rem;
-    background: linear-gradient(135deg, #00334e, #0a7ea4); /* Teal/blue gradient */
-    border-top: 1px solid rgba(10, 126, 164, 0.5);
-    z-index: 2;
-    background-blend-mode: multiply;
-    background-image: 
-        linear-gradient(to right, rgba(10, 126, 164, 0.9), rgba(0, 51, 78, 0.9)),
-        url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-opacity='0.06' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
 }
 
 .card-type {
+    font-size: 12px;
+    color: #d4af37; /* Golden color for legendary type */
     font-weight: bold;
-    color: var(--accent-color); /* Gold */
 }
 
-.card-energy {
-    color: var(--accent-color); /* Gold */
-    letter-spacing: 1px;
-    font-size: 1.05rem;
-    position: relative;
-    top: -1px;
+.card-stats {
+    font-weight: bold;
 }
 
 /* Special holographic effects */
@@ -660,16 +632,16 @@ body.authenticated a.admin-only {
     z-index: 4;
     background: linear-gradient(
         125deg,
-        rgba(10, 126, 164, 0.5) 0%,    /* Teal */
-        rgba(0, 51, 78, 0.5) 20%,      /* Deep blue */
-        rgba(255, 193, 7, 0.5) 40%,    /* Gold */
-        rgba(10, 126, 164, 0.5) 60%,   /* Teal */
-        rgba(0, 51, 78, 0.5) 80%,      /* Deep blue */
-        rgba(255, 193, 7, 0.5) 100%    /* Gold */
+        rgba(192, 28, 39, 0.6) 0%,    /* ISU Cardinal */
+        rgba(124, 16, 23, 0.6) 20%,   /* Darker Cardinal */
+        rgba(241, 190, 72, 0.6) 40%,  /* ISU Gold */
+        rgba(192, 28, 39, 0.6) 60%,   /* ISU Cardinal */
+        rgba(124, 16, 23, 0.6) 80%,   /* Darker Cardinal */
+        rgba(241, 190, 72, 0.6) 100%  /* ISU Gold */
     );
     background-size: 200% 200%;
     background-position: 0% 0%;
-    opacity: 0.6;
+    opacity: 0.7;
     mix-blend-mode: overlay;
     filter: contrast(120%) brightness(110%);
     pointer-events: none;
@@ -694,20 +666,6 @@ body.authenticated a.admin-only {
     }
 }
 
-.sparkles {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 3;
-    background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.3'%3E%3Cpath d='M50 50c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10s-10-4.477-10-10 4.477-10 10-10zM10 10c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10S0 25.523 0 20s4.477-10 10-10zm10 8c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8zm40 40c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8z' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-    background-position: center center;
-    opacity: 0.2;
-    transition: opacity 0.3s ease;
-    pointer-events: none;
-}
-
 /* Pokemon-style holographic edge */
 .card::before {
     content: '';
@@ -718,11 +676,11 @@ body.authenticated a.admin-only {
     bottom: -2px;
     background: linear-gradient(
         115deg,
-        rgba(10, 126, 164, 0.7) 0%,    /* Teal */
-        rgba(0, 51, 78, 0.7) 25%,      /* Deep blue */
-        rgba(255, 193, 7, 0.7) 50%,    /* Gold */
-        rgba(0, 51, 78, 0.7) 75%,      /* Deep blue */
-        rgba(10, 126, 164, 0.7) 100%   /* Teal */
+        rgba(192, 28, 39, 0.8) 0%,    /* ISU Cardinal */
+        rgba(124, 16, 23, 0.8) 25%,   /* Darker Cardinal */
+        rgba(241, 190, 72, 0.8) 50%,  /* ISU Gold */
+        rgba(124, 16, 23, 0.8) 75%,   /* Darker Cardinal */
+        rgba(192, 28, 39, 0.8) 100%   /* ISU Cardinal */
     );
     z-index: -1;
     border-radius: calc(var(--card-border-radius) + 1px);
@@ -732,95 +690,66 @@ body.authenticated a.admin-only {
     pointer-events: none;
 }
 
-/* Add a swirly pattern overlay to the edge to match the Palkia card */
-.card::after {
-    content: '';
-    position: absolute;
-    top: -3px;
-    left: -3px;
-    right: -3px;
-    bottom: -3px;
-    background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='0.2'/%3E%3C/svg%3E");
-    border-radius: calc(var(--card-border-radius) + 1px);
-    z-index: -1;
-    opacity: 0.6;
-    background-size: 80px 80px;
-    animation: patternShift 15s linear infinite;
-    pointer-events: none;
-}
-
-@keyframes patternShift {
-    0% {
-        background-position: 0px 0px;
-    }
-    100% {
-        background-position: 80px 80px;
-    }
-}
-
-/* Re-add the shine effect animation */
 @keyframes shineEffect {
     0% {
-        background-position: 0% 0%;
+        top: -150%;
+        opacity: 0;
+    }
+    30% {
+        opacity: 0;
+    }
+    40% {
+        opacity: 0.3;
     }
     50% {
-        background-position: 100% 100%;
+        top: 150%;
+        opacity: 0.3;
+    }
+    60% {
+        opacity: 0;
     }
     100% {
-        background-position: 0% 0%;
+        top: 150%;
+        opacity: 0;
     }
 }
 
-/* Enhanced styles for card back */
-.card-back {
-    background: linear-gradient(135deg, #362c00, #5e4c00);
-    color: white;
-    transform: rotateY(180deg);
-    display: flex;
-    flex-direction: column;
-    padding: 20px 15px;
-    overflow-y: auto;
-}
-
+/* Card flip classes */
 .card-inner.flipped {
     transform: rotateY(180deg);
+    box-shadow: 0 0 30px rgba(212, 175, 55, 0.9); /* Brighter glow when flipped */
 }
 
 .card-inner.flipping {
     pointer-events: none;
+    animation: card-pulse 0.8s;
 }
 
 @keyframes card-pulse {
-    0% { box-shadow: 0 0 30px rgba(212, 175, 55, 0.7); }
-    50% { box-shadow: 0 0 40px rgba(212, 175, 55, 1); }
-    100% { box-shadow: 0 0 30px rgba(212, 175, 55, 0.7); }
+    0% { box-shadow: 0 0 30px rgba(192, 28, 39, 0.7); }
+    50% { box-shadow: 0 0 40px rgba(241, 190, 72, 1); }
+    100% { box-shadow: 0 0 30px rgba(192, 28, 39, 0.7); }
 }
 
 .card:hover .card-inner {
     animation: card-pulse 2s infinite;
 }
 
-/* Pokemon card specific new styles */
-:root {
-    --card-width: 320px;
-    --card-height: 450px;
-    --card-border-radius: 16px;
+.skill-tag {
+    background: linear-gradient(135deg, #1e6b52, #00b06b);
+    color: white;
+    padding: 3px 6px;
+    border-radius: 50px;
+    font-size: 10px;
+    margin: 2px;
+    display: inline-block;
 }
 
-/* Pokemon color type styling */
-.card.legendary-type {
-    --type-color: rgba(212, 175, 55, 1);
-    --type-bg: linear-gradient(135deg, #362c00, #5e4c00);
-}
-
-.card-stage {
-    position: absolute;
-    top: 10px;
-    left: 15px;
-    font-size: 0.8rem;
-    font-weight: bold;
-    color: #000;
-    z-index: 5;
+.skills-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 10px;
 }
 
 /* Background animation */
@@ -849,7 +778,7 @@ body.authenticated a.admin-only {
     bottom: -100px;
     width: 40px;
     height: 40px;
-    background: linear-gradient(45deg, #1e6b52, #00b06b);
+    background: linear-gradient(45deg, #7c1017, #c01c27);
     border-radius: 50%;
     opacity: 0.5;
     animation: rise 15s infinite ease-in;
@@ -953,23 +882,22 @@ body.authenticated a.admin-only {
     position: absolute;
     bottom: 10px;
     right: 10px;
-    background: linear-gradient(135deg, #0a7ea4, #005a87);
+    background-color: rgba(255, 215, 0, 0.85);
     border-radius: 15px;
     padding: 5px 10px;
     font-size: 12px;
-    color: white;
+    color: #000;
     display: flex;
     align-items: center;
     gap: 5px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
     z-index: 10;
     transition: all 0.3s ease;
-    border: 1px solid rgba(255, 193, 7, 0.7);
 }
 
 .resume-badge:hover {
     transform: scale(1.1);
-    background: linear-gradient(145deg, #5d9cdc, #4a80b0);
+    background-color: rgba(255, 215, 0, 1);
 }
 
 .badge-icon {
@@ -1358,109 +1286,77 @@ body .debug-console-btn {
 }
 
 @keyframes slideUp {
-    from { transform: translateY(20px); opacity: 0; }
+    from { transform: translateY(50px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
 }
 
-/* Pokemon skill tag styling */
-.skill-tag {
-    background: linear-gradient(135deg, #00334e, #0a7ea4);
-    color: white;
-    padding: 4px 10px;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    margin: 4px;
-    display: inline-block;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 193, 7, 0.6);
-    letter-spacing: 0.02em;
-    font-weight: 500;
-    transition: all 0.2s ease;
+/* Pokemon color type styling */
+.card.legendary-type {
+    --type-color: rgba(241, 190, 72, 1);
+    --type-bg: linear-gradient(135deg, #7c1017, #c01c27);
 }
 
-.skill-tag:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
-    border-color: rgba(255, 193, 7, 0.9);
+/* Legendary marker styling */
+.legendary-marker {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    color: var(--accent-color); /* ISU Gold */
+    font-size: 24px;
+    text-shadow: 0 0 5px rgba(192, 28, 39, 0.8); /* ISU Cardinal glow */
+    z-index: 10;
+    animation: legendary-pulse 2s infinite;
 }
 
-.skills-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-    margin-top: 10px;
+@keyframes legendary-pulse {
+    0% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(1); opacity: 0.8; }
 }
 
-/* Card Editor Styles */
-.card-editor {
-    background-color: rgba(30, 30, 30, 0.7);
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 20px;
+/* Enhanced styling for legendary cards */
+.card.legendary-type .card-inner {
+    box-shadow: 
+        0 0 30px rgba(192, 28, 39, 0.6),
+        0 0 60px rgba(241, 190, 72, 0.3),
+        inset 0 0 20px rgba(241, 190, 72, 0.4);
+    border: 3px solid rgba(241, 190, 72, 1); /* Solid ISU Gold border for legendary */
 }
 
-.card-editor .form-group {
-    margin-bottom: 15px;
+.card.legendary-type .card-header {
+    background: linear-gradient(135deg, #7c1017, #c01c27, #7c1017); /* Enhanced ISU Cardinal gradient */
+    border-bottom: 2px solid var(--accent-color); /* ISU Gold border */
+    text-shadow: 0 0 5px rgba(0, 0, 0, 0.7);
+    padding: 12px 10px;
 }
 
-.card-editor label {
-    display: block;
-    margin-bottom: 5px;
-    color: #eee;
-    font-size: 14px;
+.card.legendary-type .card-image {
+    box-shadow: 0 0 15px rgba(241, 190, 72, 0.5); /* Gold glow around image */
+    border: 1px solid var(--accent-color);
 }
 
-.card-edit-input {
-    width: 100%;
-    padding: 8px 12px;
-    background-color: rgba(0, 0, 0, 0.3);
-    border: 1px solid #444;
-    border-radius: 4px;
-    color: #fff;
-    font-size: 14px;
+.card.legendary-type .holo-effect {
+    opacity: 0.8; /* More pronounced holographic effect */
+    animation: professionalHoloShift 6s ease infinite; /* Faster animation */
 }
 
-.card-edit-input:focus {
-    border-color: #ffd700;
-    outline: none;
-    box-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+.card.legendary-type::before {
+    opacity: 0.9; /* More visible edge effect */
+    animation: shineEffect 6s linear infinite; /* Faster animation */
 }
 
-textarea.card-edit-input {
-    resize: vertical;
-    min-height: 60px;
+.card.legendary-type .card-energy {
+    color: rgba(241, 190, 72, 1); /* Brighter ISU Gold */
+    text-shadow: 0 0 8px rgba(241, 190, 72, 0.8); /* Enhanced glow */
 }
 
-#saveCardContent {
-    margin-top: 10px;
-    width: 100%;
+/* Override the default pulse animation for legendary cards */
+@keyframes card-pulse {
+    0% { box-shadow: 0 0 30px rgba(192, 28, 39, 0.7), 0 0 60px rgba(241, 190, 72, 0.3); }
+    50% { box-shadow: 0 0 40px rgba(241, 190, 72, 1), 0 0 80px rgba(192, 28, 39, 0.5); }
+    100% { box-shadow: 0 0 30px rgba(192, 28, 39, 0.7), 0 0 60px rgba(241, 190, 72, 0.3); }
 }
 
-/* Media query for smaller screens */
-@media (max-width: 768px) {
-    .card-editor {
-        padding: 15px;
-    }
-    
-    .card-edit-input {
-        font-size: 16px; /* Better for touch input */
-    }
-}
-
-/* Additional enhancements to card design */
-
-/* Add subtle animation to card on hover */
-.card:hover .card-image img {
-    transform: scale(1.03);
-}
-
-/* Add subtle animation to card on hover */
-@keyframes subtle-glow {
-    0% { box-shadow: 0 0 30px rgba(10, 126, 164, 0.3), inset 0 0 10px rgba(0, 0, 0, 0.5); }
-    50% { box-shadow: 0 0 40px rgba(10, 126, 164, 0.4), inset 0 0 10px rgba(0, 0, 0, 0.5); }
-    100% { box-shadow: 0 0 30px rgba(10, 126, 164, 0.3), inset 0 0 10px rgba(0, 0, 0, 0.5); }
-}
-
-.card:hover .card-inner {
-    animation: subtle-glow 3s infinite;
+.card.legendary-type:hover .card-inner {
+    animation: card-pulse 1.5s infinite; /* Faster pulse for more intensity */
 } 

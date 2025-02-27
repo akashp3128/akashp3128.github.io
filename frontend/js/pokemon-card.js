@@ -5,10 +5,9 @@ const holoEffect = document.querySelectorAll('.holo-effect');
 const holoOverlay = document.querySelectorAll('.holo-overlay');
 const sparkles = document.querySelectorAll('.sparkles');
 
-console.log('Pokemon Card Debug: Script loaded.');
-console.log('Card elements detected:', { 
-    card: card ? 'Found' : 'Missing', 
-    cardInner: cardInner ? 'Found' : 'Missing', 
+console.log('Card elements:', { 
+    card: card, 
+    cardInner: cardInner, 
     holoEffect: holoEffect.length, 
     holoOverlay: holoOverlay.length, 
     sparkles: sparkles.length 
@@ -20,13 +19,9 @@ function setupCardFlipping() {
     const cardInner = document.querySelector('.card-inner');
     
     if (!pokemonCard || !cardInner) {
-        console.error('Pokemon card elements not found - unable to set up flip functionality');
-        console.error('pokemonCard:', pokemonCard);
-        console.error('cardInner:', cardInner);
+        console.error('Pokemon card elements not found');
         return;
     }
-    
-    console.log('Pokemon Card: Setting up flip functionality');
     
     // Method to check if an element is related to admin functionality
     function isAdminElement(element) {
@@ -63,7 +58,7 @@ function setupCardFlipping() {
         console.log('Card flipped state:', cardInner.classList.contains('flipped'));
         
         // Play flip sound effect
-        const flipSound = new Audio('assets/sounds/flip.mp3');
+        const flipSound = new Audio('/assets/sounds/flip.mp3');
         flipSound.volume = 0.5;
         flipSound.play().catch(e => {
             console.log('Sound play error:', e);
@@ -128,53 +123,59 @@ document.addEventListener('mousemove', function(e) {
         const mouseX = ((e.clientX - cardCenterX) / (cardRect.width / 2));
         const mouseY = ((e.clientY - cardCenterY) / (cardRect.height / 2));
         
-        // Calculate rotation based on mouse position (max ±12 degrees - softer rotation)
-        const rotateY = mouseX * 12;
-        const rotateX = -mouseY * 12;
+        // Calculate rotation based on mouse position (max ±15 degrees)
+        const rotateY = mouseX * 15;
+        const rotateX = -mouseY * 15;
         
-        // Apply the transform to the card with smoother easing
-        card.style.transform = `perspective(1000px) rotateY(${rotateY}deg) rotateX(${rotateX}deg) scale3d(1.03, 1.03, 1.03)`;
+        // Apply the transform to the card
+        card.style.transform = `perspective(1000px) rotateY(${rotateY}deg) rotateX(${rotateX}deg) scale3d(1.05, 1.05, 1.05)`;
         
-        // Apply holographic effect based on mouse position
+        // Apply rainbow effect based on mouse position
         holoEffect.forEach(effect => {
             // Shift the linear gradient based on mouse position
-            const gradientX = 50 + (mouseX * 20);
-            const gradientY = 50 + (mouseY * 20);
+            const gradientX = 50 + (mouseX * 30);
+            const gradientY = 50 + (mouseY * 30);
             
-            // Create a teal/blue/gold gradient for professional look
+            // Check if the card has legendary styling
+            const isLegendary = card.classList.contains('legendary-type');
+            const opacityLevel = isLegendary ? '0.8' : '0.7';
+            const contrastLevel = isLegendary ? '140%' : '130%';
+            const brightnessLevel = isLegendary ? '120%' : '110%';
+            
             effect.style.background = `
               linear-gradient(
-                ${135 + mouseX * 25}deg, 
-                rgba(10, 126, 164, 0.5) 0%,    /* Teal */
-                rgba(0, 51, 78, 0.5) 20%,      /* Deep blue */
-                rgba(255, 193, 7, 0.6) 40%,    /* Gold */
-                rgba(10, 126, 164, 0.5) 60%,   /* Teal */
-                rgba(0, 51, 78, 0.5) 80%,      /* Deep blue */
-                rgba(255, 193, 7, 0.5) 100%    /* Gold */
+                ${135 + mouseX * 30}deg, 
+                rgba(192, 28, 39, 0.6) 0%,    /* ISU Cardinal */
+                rgba(124, 16, 23, 0.6) 20%,   /* Darker Cardinal */
+                rgba(241, 190, 72, 0.6) 40%,  /* ISU Gold */
+                rgba(192, 28, 39, 0.6) 60%,   /* ISU Cardinal */ 
+                rgba(124, 16, 23, 0.6) 80%,   /* Darker Cardinal */
+                rgba(241, 190, 72, 0.6) 100%  /* ISU Gold */
               )
             `;
             effect.style.backgroundPosition = `${gradientX}% ${gradientY}%`;
-            effect.style.opacity = '0.6';
-            effect.style.filter = 'contrast(120%) brightness(110%)';
+            effect.style.opacity = opacityLevel;
+            effect.style.filter = `contrast(${contrastLevel}) brightness(${brightnessLevel})`;
         });
         
-        // Show sparkles with mouse movement
+        // Show sparkles with mouse movement - enhanced for legendary cards
         sparkles.forEach(sparkle => {
-            sparkle.style.opacity = '0.3';
-            sparkle.style.backgroundPosition = `${50 + mouseX * 30}% ${50 + mouseY * 30}%`;
+            const isLegendary = card.classList.contains('legendary-type');
+            sparkle.style.opacity = isLegendary ? '0.5' : '0.3';
+            sparkle.style.backgroundPosition = `${50 + mouseX * 50}% ${50 + mouseY * 50}%`;
         });
         
         // Enhance holographic overlay
         holoOverlay.forEach(overlay => {
             overlay.style.opacity = '0.4';
-            overlay.style.backgroundPosition = `${-mouseX * 10}px ${-mouseY * 10}px`;
+            overlay.style.backgroundPosition = `${-mouseX * 20}px ${-mouseY * 20}px`;
         });
     } else {
-        // Reset card when mouse is far away with smoother transition
+        // Reset card when mouse is far away
         card.style.transform = 'perspective(1000px) rotateY(0deg) rotateX(0deg) scale3d(1, 1, 1)';
         
         holoEffect.forEach(effect => {
-            effect.style.opacity = '0.2';
+            effect.style.opacity = '0.3';
         });
         
         sparkles.forEach(sparkle => {
@@ -182,7 +183,7 @@ document.addEventListener('mousemove', function(e) {
         });
         
         holoOverlay.forEach(overlay => {
-            overlay.style.opacity = '0.1';
+            overlay.style.opacity = '0.2';
         });
     }
 });
@@ -234,17 +235,41 @@ function pulseEffect() {
         angle = (angle + 1) % 360;
         
         if (!card.matches(':hover')) {
+            const isLegendary = card && card.classList.contains('legendary-type');
+            
             holoEffect.forEach(effect => {
-                effect.style.background = `
-                  linear-gradient(
-                    ${angle}deg, 
-                    rgba(10, 126, 164, 0.4) 0%,    /* Teal */
-                    rgba(0, 51, 78, 0.5) 25%,      /* Deep blue */
-                    rgba(255, 193, 7, 0.5) 50%,    /* Gold */
-                    rgba(0, 51, 78, 0.5) 75%,      /* Deep blue */
-                    rgba(10, 126, 164, 0.4) 100%   /* Teal */
-                  )
-                `;
+                if (isLegendary) {
+                    // Enhanced legendary fallback effect with ISU colors
+                    effect.style.background = `
+                      linear-gradient(
+                        ${angle}deg, 
+                        rgba(192, 28, 39, 0.5) 0%,    /* ISU Cardinal */
+                        rgba(241, 190, 72, 0.5) 25%,  /* ISU Gold */
+                        rgba(192, 28, 39, 0.5) 50%,   /* ISU Cardinal */
+                        rgba(241, 190, 72, 0.5) 75%,  /* ISU Gold */
+                        rgba(192, 28, 39, 0.5) 100%   /* ISU Cardinal */
+                      )
+                    `;
+                    effect.style.opacity = '0.5';
+                } else {
+                    // Original fallback for non-legendary cards
+                    effect.style.background = `
+                      linear-gradient(
+                        ${angle}deg, 
+                        rgba(255, 0, 0, 0.3) 0%, 
+                        rgba(255, 255, 0, 0.3) 10%, 
+                        rgba(0, 255, 0, 0.3) 20%, 
+                        rgba(0, 255, 255, 0.3) 30%, 
+                        rgba(0, 0, 255, 0.3) 40%, 
+                        rgba(255, 0, 255, 0.3) 50%, 
+                        rgba(255, 0, 0, 0.3) 60%, 
+                        rgba(255, 255, 0, 0.3) 70%, 
+                        rgba(0, 255, 0, 0.3) 80%, 
+                        rgba(0, 255, 255, 0.3) 90%, 
+                        rgba(0, 0, 255, 0.3) 100%
+                      )
+                    `;
+                }
             });
         }
     }, 50);
