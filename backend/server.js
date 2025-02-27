@@ -62,9 +62,11 @@ if (!fs.existsSync(uploadDir)) {
 // API routes
 const authRoutes = require('./routes/auth');
 const resumeRoutes = require('./routes/resume');
+const imageRoutes = require('./routes/image');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/resume', resumeRoutes);
+app.use('/api/image', imageRoutes);
 
 // Basic route for testing
 app.get('/', (req, res) => {
@@ -77,6 +79,11 @@ app.get('/', (req, res) => {
 // Add an explicit health endpoint for connectivity checks
 app.get('/health', (req, res) => {
     res.status(200).json({ status: 'ok', message: 'Server is healthy' });
+});
+
+// Add API version of health endpoint for frontend
+app.get('/api/health', (req, res) => {
+    res.status(200).json({ status: 'ok', message: 'API is healthy' });
 });
 
 // Add CORS headers to all responses as a fallback

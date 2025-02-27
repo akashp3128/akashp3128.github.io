@@ -162,23 +162,24 @@ footer {
 }
 
 .upload-area {
-    border: 2px dashed #00b06b;
-    padding: 2rem;
+    border: 2px dashed rgba(255, 255, 255, 0.3);
+    border-radius: 5px;
+    padding: 20px;
     text-align: center;
-    margin: 1.5rem 0;
+    margin: 15px 0;
     cursor: pointer;
     transition: all 0.3s ease;
-    background-color: rgba(0, 176, 107, 0.1);
+    background-color: rgba(255, 255, 255, 0.05);
 }
 
 .upload-area:hover {
-    border-color: #00c985;
-    background-color: rgba(0, 176, 107, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
 .upload-area.highlight {
-    border-color: #00c985;
-    background-color: rgba(0, 176, 107, 0.3);
+    border-color: gold;
+    background-color: rgba(255, 215, 0, 0.1);
 }
 
 .modal {
@@ -357,6 +358,11 @@ body {
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
     backdrop-filter: blur(5px);
     border: 1px solid rgba(255, 255, 255, 0.1);
+    display: none; /* Hidden by default */
+}
+
+.admin-panel.visible {
+    display: block !important; /* Force display when visible class is added */
 }
 
 .admin-panel button {
@@ -390,12 +396,6 @@ body.authenticated a.admin-only {
 /* Removing the fallback method that might be causing issues */
 .admin-toggle.admin-active + .admin-only {
     display: none !important;
-}
-
-/* Highlight active upload area */
-.upload-area.highlight {
-    border-color: gold;
-    background-color: rgba(255, 215, 0, 0.1);
 }
 
 /* Notification styles */

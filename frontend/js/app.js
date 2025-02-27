@@ -7,10 +7,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const adminLoginButton = document.getElementById('submitPassword');
     const adminLogoutButton = document.getElementById('logoutBtn');
     const adminPanel = document.querySelector('.admin-panel');
-    const resumeUploadButton = document.getElementById('resumeUploadButton');
+    const resumeUploadArea = document.getElementById('uploadArea');
     const resumeFileInput = document.getElementById('fileInput');
     const imageFileInput = document.getElementById('imageFileInput');
-    const imageUploadButton = document.getElementById('imageUploadArea');
+    const imageUploadArea = document.getElementById('imageUploadArea');
+    const deleteResumeButton = document.getElementById('deleteResumeBtn');
+    const deleteImageButton = document.getElementById('deleteImageBtn');
     
     // Check if ApiClient is available
     if (!window.ApiClient) {
@@ -40,18 +42,72 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Function to show the admin panel
     function showAdminPanel() {
-        if (adminPanel) adminPanel.classList.add('visible');
+        // Add authenticated class to body
+        document.body.classList.add('authenticated');
+        
+        // Show admin panel
+        if (adminPanel) {
+            adminPanel.classList.add('visible');
+            adminPanel.style.display = 'block';
+        }
+        
+        // Hide login elements
         if (adminPasswordInput) adminPasswordInput.style.display = 'none';
         if (adminLoginButton) adminLoginButton.style.display = 'none';
+        
+        // Show admin elements
         if (adminLogoutButton) adminLogoutButton.style.display = 'block';
+        
+        // Make all admin-only elements visible
+        document.querySelectorAll('.admin-only').forEach(element => {
+            if (element.tagName === 'BUTTON' || element.tagName === 'A') {
+                element.style.display = 'inline-block';
+            } else {
+                element.style.display = 'block';
+            }
+        });
+        
+        // Show delete buttons if they exist
+        if (deleteResumeButton) deleteResumeButton.style.display = 'block';
+        if (deleteImageButton) deleteImageButton.style.display = 'block';
+        
+        // Show upload areas
+        const uploadAreas = document.querySelectorAll('.upload-area');
+        uploadAreas.forEach(area => {
+            area.style.display = 'block';
+        });
+        
+        console.log('Admin panel shown');
     }
     
     // Function to hide the admin panel
     function hideAdminPanel() {
-        if (adminPanel) adminPanel.classList.remove('visible');
+        // Remove authenticated class from body
+        document.body.classList.remove('authenticated');
+        
+        // Hide admin panel
+        if (adminPanel) {
+            adminPanel.classList.remove('visible');
+            adminPanel.style.display = 'none';
+        }
+        
+        // Show login elements
         if (adminPasswordInput) adminPasswordInput.style.display = 'block';
         if (adminLoginButton) adminLoginButton.style.display = 'block';
+        
+        // Hide admin elements
         if (adminLogoutButton) adminLogoutButton.style.display = 'none';
+        
+        // Hide all admin-only elements
+        document.querySelectorAll('.admin-only').forEach(element => {
+            element.style.display = 'none';
+        });
+        
+        // Hide delete buttons if they exist
+        if (deleteResumeButton) deleteResumeButton.style.display = 'none';
+        if (deleteImageButton) deleteImageButton.style.display = 'none';
+        
+        console.log('Admin panel hidden');
     }
     
     // Initialize the Pokemon card
@@ -63,6 +119,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Load profile image if available
         loadProfileImage();
+        
+        // Load resume preview
+        loadResumePreview();
     }
     
     // Load the profile image
@@ -73,12 +132,61 @@ document.addEventListener('DOMContentLoaded', function() {
                 const profileImage = document.querySelector('.profile-image');
                 if (profileImage) {
                     profileImage.src = response.data.url;
+                    
+                    // Show delete image button if authenticated
+                    if (ApiClient.auth.isAuthenticated() && deleteImageButton) {
+                        deleteImageButton.style.display = 'block';
+                    }
                 }
             } else {
                 console.log('No profile image found, using placeholder');
+                
+                // Hide delete image button
+                if (deleteImageButton) {
+                    deleteImageButton.style.display = 'none';
+                }
             }
         }).catch(error => {
             console.error('Error loading profile image:', error);
+        });
+    }
+    
+    // Load resume preview
+    function loadResumePreview() {
+        ApiClient.resume.get().then(response => {
+            if (response.success) {
+                // Set resume preview
+                const resumePreview = document.getElementById('resumePreview');
+                const downloadBtn = document.getElementById('downloadBtn');
+                
+                if (resumePreview) {
+                    resumePreview.src = response.data.url;
+                }
+                
+                if (downloadBtn) {
+                    downloadBtn.href = response.data.url;
+                    downloadBtn.style.display = 'inline-block';
+                }
+                
+                // Show delete resume button if authenticated
+                if (ApiClient.auth.isAuthenticated() && deleteResumeButton) {
+                    deleteResumeButton.style.display = 'block';
+                }
+            } else {
+                console.log('No resume found');
+                
+                // Hide download and delete buttons
+                const downloadBtn = document.getElementById('downloadBtn');
+                if (downloadBtn) {
+                    downloadBtn.style.display = 'none';
+                }
+                
+                if (deleteResumeButton) {
+                    deleteResumeButton.style.display = 'none';
+                }
+            }
+        }).catch(error => {
+            console.error('Error loading resume:', error);
         });
     }
     
@@ -116,9 +224,9 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         
-        // Resume upload button
-        if (resumeUploadButton && resumeFileInput) {
-            resumeUploadButton.addEventListener('click', function() {
+        // Resume upload area click handler
+        if (resumeUploadArea && resumeFileInput) {
+            resumeUploadArea.addEventListener('click', function() {
                 resumeFileInput.click();
             });
             
@@ -126,12 +234,22 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Profile image upload
-        if (imageUploadButton && imageFileInput) {
-            imageUploadButton.addEventListener('click', function() {
+        if (imageUploadArea && imageFileInput) {
+            imageUploadArea.addEventListener('click', function() {
                 imageFileInput.click();
             });
             
             imageFileInput.addEventListener('change', handleImageUpload);
+        }
+        
+        // Delete resume button
+        if (deleteResumeButton) {
+            deleteResumeButton.addEventListener('click', handleResumeDelete);
+        }
+        
+        // Delete image button
+        if (deleteImageButton) {
+            deleteImageButton.addEventListener('click', handleImageDelete);
         }
         
         // Close dialog buttons
@@ -169,6 +287,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (passwordModal) {
                     passwordModal.style.display = 'none';
                 }
+                
+                // Reload profile image and resume to check if delete buttons should be shown
+                loadProfileImage();
+                loadResumePreview();
+                
+                showMessage('Admin login successful');
             } else {
                 showError('Invalid password');
             }
@@ -194,12 +318,36 @@ document.addEventListener('DOMContentLoaded', function() {
         ApiClient.resume.upload(file).then(response => {
             if (response.success) {
                 showMessage('Resume uploaded successfully');
+                // Reload resume preview
+                loadResumePreview();
             } else {
                 showError('Resume upload failed: ' + (response.error || 'Unknown error'));
             }
         }).catch(error => {
             console.error('Resume upload error:', error);
             showError('Resume upload failed');
+        });
+    }
+    
+    // Handle resume delete
+    function handleResumeDelete() {
+        if (!confirm('Are you sure you want to delete your resume?')) {
+            return;
+        }
+        
+        showMessage('Deleting resume...');
+        
+        ApiClient.resume.delete().then(response => {
+            if (response.success) {
+                showMessage('Resume deleted successfully');
+                // Reload resume preview
+                loadResumePreview();
+            } else {
+                showError('Resume delete failed: ' + (response.error || 'Unknown error'));
+            }
+        }).catch(error => {
+            console.error('Resume delete error:', error);
+            showError('Resume delete failed');
         });
     }
     
@@ -226,6 +374,28 @@ document.addEventListener('DOMContentLoaded', function() {
         }).catch(error => {
             console.error('Image upload error:', error);
             showError('Image upload failed');
+        });
+    }
+    
+    // Handle image delete
+    function handleImageDelete() {
+        if (!confirm('Are you sure you want to delete your profile image?')) {
+            return;
+        }
+        
+        showMessage('Deleting image...');
+        
+        ApiClient.image.delete().then(response => {
+            if (response.success) {
+                showMessage('Image deleted successfully');
+                // Reload profile image
+                loadProfileImage();
+            } else {
+                showError('Image delete failed: ' + (response.error || 'Unknown error'));
+            }
+        }).catch(error => {
+            console.error('Image delete error:', error);
+            showError('Image delete failed');
         });
     }
     

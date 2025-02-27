@@ -80,21 +80,49 @@ const ApiClient = (function() {
             console.log('Attempting login with ApiClient', password ? '********' : 'empty password');
             
             try {
-                // Simple localStorage direct authentication (for demo)
-                if (password === 'Rosie@007') {
-                    console.log('Password matched, authentication successful');
+                // Check for development mode with hardcoded password fallback
+                const isDevMode = window.location.hostname === 'localhost' || 
+                                 window.location.hostname === '127.0.0.1';
+                
+                // For local development without backend, use a hardcoded password
+                if (isDevMode && password === 'Rosie@007') {
+                    console.log('Dev mode: Using hardcoded password');
                     const token = 'demo-token-' + Date.now();
                     setAuthToken(token);
                     return { success: true, token: token };
                 }
                 
-                console.log('Password did not match');
+                // Use the backend authentication
+                const response = await fetch(`${API_ENDPOINTS.AUTH}/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ password })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.token) {
+                        setAuthToken(data.token);
+                        return { success: true, token: data.token };
+                    }
+                }
+                
+                console.log('Login failed');
                 return { 
                     success: false, 
                     error: 'Invalid password'
                 };
             } catch (error) {
                 console.error('Login error:', error);
+                // Fallback to hardcoded password for demo if backend unreachable
+                if (password === 'Rosie@007') {
+                    console.log('Backend unreachable, using fallback authentication');
+                    const token = 'demo-token-fallback-' + Date.now();
+                    setAuthToken(token);
+                    return { success: true, token: token };
+                }
                 return { 
                     success: false, 
                     error: error.message || 'Authentication failed' 

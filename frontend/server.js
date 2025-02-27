@@ -8,6 +8,9 @@ const BASE_PORT = 8080;
 let PORT = BASE_PORT;
 let server = null;
 
+// Backend API URL
+const BACKEND_URL = 'http://localhost:3000';
+
 const MIME_TYPES = {
   '.html': 'text/html',
   '.css': 'text/css',
@@ -35,9 +38,46 @@ function isPortInUse(port) {
   });
 }
 
+// Function to proxy API requests to the backend
+function proxyRequest(req, res) {
+  const options = {
+    hostname: 'localhost',
+    port: 3000,
+    path: req.url,
+    method: req.method,
+    headers: req.headers
+  };
+
+  console.log(`Proxying request to backend: ${req.method} ${req.url}`);
+  
+  const proxyReq = http.request(options, (proxyRes) => {
+    res.writeHead(proxyRes.statusCode, proxyRes.headers);
+    proxyRes.pipe(res, { end: true });
+  });
+  
+  proxyReq.on('error', (e) => {
+    console.error('Proxy request error:', e);
+    res.writeHead(502);
+    res.end('Bad Gateway - Backend server may be down');
+  });
+  
+  // If there's request data, pipe it to the proxy request
+  if (req.method === 'POST' || req.method === 'PUT') {
+    req.pipe(proxyReq, { end: true });
+  } else {
+    proxyReq.end();
+  }
+}
+
 // Create the server handler
 const requestHandler = (req, res) => {
   console.log(`Request for ${req.url}`);
+  
+  // Handle API requests (except placeholder)
+  if (req.url.startsWith('/api/') && !req.url.startsWith('/api/placeholder')) {
+    proxyRequest(req, res);
+    return;
+  }
   
   // Normalize URL to prevent directory traversal
   let filePath = '.' + req.url;
