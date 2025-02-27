@@ -15,7 +15,7 @@
   ],
   "routes": [
     {
-      "src": "/(.*)",
+      "src": "/api/(.*)",
       "dest": "backend/server.js"
     },
     {
@@ -30,5 +30,10 @@
   "env": {
     "NODE_ENV": "production"
   },
-  "installCommand": "npm install --legacy-peer-deps"
+  "build": {
+    "env": {
+      "NPM_FLAGS": "--legacy-peer-deps"
+    }
+  },
+  "installCommand": "npm install --no-package-lock --legacy-peer-deps"
 } 

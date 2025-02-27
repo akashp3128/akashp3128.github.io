@@ -27,7 +27,7 @@
     "mongodb": "^4.17.1",
     "mongoose": "^6.12.3",
     "morgan": "^1.10.0",
-    "multer": "^1.4.5-lts.1",
+    "multer": "1.4.4",
     "multer-gridfs-storage": "^5.0.2"
   },
   "devDependencies": {
@@ -35,5 +35,8 @@
   },
   "engines": {
     "node": ">=16.0.0"
+  },
+  "overrides": {
+    "multer": "1.4.4"
   }
 }
