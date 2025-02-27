@@ -263,6 +263,15 @@ document.addEventListener('DOMContentLoaded', function() {
             deleteImageButton.addEventListener('click', handleImageDelete);
         }
         
+        // Card content save button
+        const saveCardContentBtn = document.getElementById('saveCardContent');
+        if (saveCardContentBtn) {
+            saveCardContentBtn.addEventListener('click', saveCardContent);
+            
+            // Load saved card content if it exists
+            loadCardContent();
+        }
+        
         // Close dialog buttons
         document.querySelectorAll('.close-modal').forEach(button => {
             button.addEventListener('click', function() {
@@ -435,6 +444,122 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Image delete error:', error);
             showError('Image delete failed');
         });
+    }
+    
+    // Save card content to localStorage
+    function saveCardContent() {
+        // Get all the form field values
+        const cardContent = {
+            name: document.getElementById('cardName').value,
+            hp: document.getElementById('cardHP').value,
+            info: document.getElementById('cardInfo').value,
+            ability1Name: document.getElementById('ability1Name').value,
+            ability1Cost: document.getElementById('ability1Cost').value,
+            ability1Desc: document.getElementById('ability1Desc').value,
+            ability2Name: document.getElementById('ability2Name').value,
+            ability2Cost: document.getElementById('ability2Cost').value,
+            ability2Desc: document.getElementById('ability2Desc').value,
+            type: document.getElementById('cardType').value,
+            energy: document.getElementById('cardEnergy').value
+        };
+        
+        // Save to localStorage
+        localStorage.setItem('pokemonCardContent', JSON.stringify(cardContent));
+        
+        // Update the card elements
+        updateCardContent(cardContent);
+        
+        // Show success message
+        showMessage('Card content saved');
+    }
+    
+    // Load card content from localStorage
+    function loadCardContent() {
+        // Get content from localStorage
+        const savedContent = localStorage.getItem('pokemonCardContent');
+        if (savedContent) {
+            const cardContent = JSON.parse(savedContent);
+            
+            // Fill the form fields
+            document.getElementById('cardName').value = cardContent.name || 'Akash Patel';
+            document.getElementById('cardHP').value = cardContent.hp || '200';
+            document.getElementById('cardInfo').value = cardContent.info || 'Software Engineer with a strong background in embedded systems, C++, and real-time applications. Former U.S. Navy Hull Maintenance Tech with Secret Clearance.';
+            document.getElementById('ability1Name').value = cardContent.ability1Name || 'Algorithm Development';
+            document.getElementById('ability1Cost').value = cardContent.ability1Cost || '★★★★';
+            document.getElementById('ability1Desc').value = cardContent.ability1Desc || 'Optimized real-time systems by 30% using advanced scheduling algorithms.';
+            document.getElementById('ability2Name').value = cardContent.ability2Name || 'Systems Integration';
+            document.getElementById('ability2Cost').value = cardContent.ability2Cost || '★★★';
+            document.getElementById('ability2Desc').value = cardContent.ability2Desc || 'Engineered seamless hardware-software integration with real-time data synchronization.';
+            document.getElementById('cardType').value = cardContent.type || 'Legendary Software Engineer';
+            document.getElementById('cardEnergy').value = cardContent.energy || '✦✦✦✦✦';
+            
+            // Update the card display
+            updateCardContent(cardContent);
+        }
+    }
+    
+    // Update the card display with the new content
+    function updateCardContent(content) {
+        // Card header (name)
+        const cardHeader = document.querySelector('.card-header');
+        if (cardHeader) {
+            // Update the text node (name) between the first child and the stats div
+            const nameTextNode = Array.from(cardHeader.childNodes).find(node => 
+                node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== '');
+            
+            if (nameTextNode) {
+                nameTextNode.textContent = content.name;
+            } else {
+                // Create a new text node if it doesn't exist
+                const statsDiv = cardHeader.querySelector('.card-stats');
+                if (statsDiv) {
+                    const newNameNode = document.createTextNode(content.name);
+                    cardHeader.insertBefore(newNameNode, statsDiv);
+                }
+            }
+        }
+        
+        // HP value
+        const cardStats = document.querySelector('.card-stats');
+        if (cardStats) {
+            cardStats.textContent = `HP ${content.hp} ⚡`;
+        }
+        
+        // Card info/description
+        const cardInfo = document.querySelector('.card-info');
+        if (cardInfo) {
+            cardInfo.textContent = content.info;
+        }
+        
+        // Ability 1
+        const ability1Name = document.querySelector('.card-abilities > div:nth-child(1) .ability-name');
+        const ability1Cost = document.querySelector('.card-abilities > div:nth-child(1) .ability-cost');
+        const ability1Desc = document.querySelector('.card-abilities > div:nth-child(1) .ability-description');
+        
+        if (ability1Name) ability1Name.textContent = content.ability1Name;
+        if (ability1Cost) ability1Cost.textContent = content.ability1Cost;
+        if (ability1Desc) ability1Desc.textContent = content.ability1Desc;
+        
+        // Ability 2
+        const ability2Name = document.querySelector('.card-abilities > div:nth-child(2) .ability-name');
+        const ability2Cost = document.querySelector('.card-abilities > div:nth-child(2) .ability-cost');
+        const ability2Desc = document.querySelector('.card-abilities > div:nth-child(2) .ability-description');
+        
+        if (ability2Name) ability2Name.textContent = content.ability2Name;
+        if (ability2Cost) ability2Cost.textContent = content.ability2Cost;
+        if (ability2Desc) ability2Desc.textContent = content.ability2Desc;
+        
+        // Card type
+        const cardType = document.querySelector('.card-type');
+        if (cardType) {
+            cardType.textContent = content.type;
+        }
+        
+        // Card energy
+        const cardEnergy = document.querySelector('.card-energy');
+        if (cardEnergy) {
+            cardEnergy.textContent = content.energy;
+        }
     }
     
     // Show an error message

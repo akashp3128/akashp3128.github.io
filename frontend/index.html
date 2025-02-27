@@ -38,7 +38,6 @@
                         <div class="sparkles"></div>
                         
                         <div class="card-header">
-                            <div class="card-stage">STAGE EX</div>
                             Akash Patel
                             <div class="card-stats">HP 200 ⚡</div>
                         </div>
@@ -146,6 +145,55 @@
                     <input type="file" id="imageFileInput" style="display: none" accept="image/*">
                 </div>
                 <button id="deleteImageBtn" class="btn btn-accent admin-only" style="display: none;">Delete Current Image</button>
+                
+                <h3 style="margin-top: 20px;">Edit Card Content</h3>
+                <div class="card-editor admin-only">
+                    <div class="form-group">
+                        <label for="cardName">Card Name</label>
+                        <input type="text" id="cardName" class="card-edit-input" value="Akash Patel">
+                    </div>
+                    <div class="form-group">
+                        <label for="cardHP">HP Value</label>
+                        <input type="text" id="cardHP" class="card-edit-input" value="200">
+                    </div>
+                    <div class="form-group">
+                        <label for="cardInfo">Card Description</label>
+                        <textarea id="cardInfo" class="card-edit-input" rows="3">Software Engineer with a strong background in embedded systems, C++, and real-time applications. Former U.S. Navy Hull Maintenance Tech with Secret Clearance.</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="ability1Name">Ability 1 Name</label>
+                        <input type="text" id="ability1Name" class="card-edit-input" value="Algorithm Development">
+                    </div>
+                    <div class="form-group">
+                        <label for="ability1Cost">Ability 1 Cost (★ symbols)</label>
+                        <input type="text" id="ability1Cost" class="card-edit-input" value="★★★★">
+                    </div>
+                    <div class="form-group">
+                        <label for="ability1Desc">Ability 1 Description</label>
+                        <textarea id="ability1Desc" class="card-edit-input" rows="2">Optimized real-time systems by 30% using advanced scheduling algorithms.</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="ability2Name">Ability 2 Name</label>
+                        <input type="text" id="ability2Name" class="card-edit-input" value="Systems Integration">
+                    </div>
+                    <div class="form-group">
+                        <label for="ability2Cost">Ability 2 Cost (★ symbols)</label>
+                        <input type="text" id="ability2Cost" class="card-edit-input" value="★★★">
+                    </div>
+                    <div class="form-group">
+                        <label for="ability2Desc">Ability 2 Description</label>
+                        <textarea id="ability2Desc" class="card-edit-input" rows="2">Engineered seamless hardware-software integration with real-time data synchronization.</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="cardType">Card Type</label>
+                        <input type="text" id="cardType" class="card-edit-input" value="Legendary Software Engineer">
+                    </div>
+                    <div class="form-group">
+                        <label for="cardEnergy">Energy Symbols (✦ symbols)</label>
+                        <input type="text" id="cardEnergy" class="card-edit-input" value="✦✦✦✦✦">
+                    </div>
+                    <button id="saveCardContent" class="btn btn-accent">Save Card Content</button>
+                </div>
                 
                 <button id="logoutBtn" class="btn admin-only">Logout</button>
             </div>

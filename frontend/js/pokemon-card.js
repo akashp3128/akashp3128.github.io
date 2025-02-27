@@ -63,7 +63,7 @@ function setupCardFlipping() {
         console.log('Card flipped state:', cardInner.classList.contains('flipped'));
         
         // Play flip sound effect
-        const flipSound = new Audio('/frontend/assets/sounds/flip.mp3');
+        const flipSound = new Audio('assets/sounds/flip.mp3');
         flipSound.volume = 0.5;
         flipSound.play().catch(e => {
             console.log('Sound play error:', e);
