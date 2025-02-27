@@ -353,36 +353,76 @@ body {
 
 /* Admin panel styling */
 .admin-panel {
-    background: rgba(40, 44, 52, 0.95);
-    border-radius: 10px;
-    padding: 20px;
-    margin: 20px 0;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(5px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    display: none; /* Hidden by default */
-    position: relative;
-    z-index: 100; /* Ensure admin panel is above the card */
+    display: none;
+    max-width: 800px;
+    margin: 30px auto;
+    padding: 30px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-bg-alt);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .admin-panel.visible {
-    display: block !important; /* Force display when visible class is added */
+    display: block;
+    animation: fadeIn 0.3s ease-in-out;
 }
 
 .admin-panel button {
+    margin-top: 10px;
+}
+
+/* Card Edit Form Styles */
+.card-edit-form {
     margin-top: 15px;
-    margin-right: 10px;
-    position: relative;
-    z-index: 101; /* Ensure buttons are clickable */
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 1px solid var(--color-border);
+    border-radius: 5px;
+    background-color: rgba(255, 255, 255, 0.05);
 }
 
-#logoutBtn {
-    background-color: #ff5722;
+.card-edit-form .form-group {
+    margin-bottom: 12px;
+}
+
+.card-edit-form label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: var(--color-text);
+}
+
+.card-edit-form input[type="text"],
+.card-edit-form textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-family: inherit;
+}
+
+.card-edit-form textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+.card-edit-form button {
+    display: block;
+    margin-top: 15px;
+    padding: 10px 15px;
+    background-color: var(--color-accent);
     color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
 }
 
-#logoutBtn:hover {
-    background-color: #e64a19;
+.card-edit-form button:hover {
+    background-color: var(--color-accent-hover);
 }
 
 /* Admin and Authentication related styles */
