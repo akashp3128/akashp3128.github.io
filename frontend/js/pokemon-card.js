@@ -135,42 +135,38 @@ document.addEventListener('mousemove', function(e) {
         // Apply the transform to the card
         card.style.transform = `perspective(1000px) rotateY(${rotateY}deg) rotateX(${rotateX}deg) scale3d(1.05, 1.05, 1.05)`;
         
-        // Apply rainbow effect based on mouse position
+        // Apply holographic effect based on mouse position
         holoEffect.forEach(effect => {
             // Shift the linear gradient based on mouse position
             const gradientX = 50 + (mouseX * 30);
             const gradientY = 50 + (mouseY * 30);
             
+            // Create a pink/magenta/purple gradient similar to Palkia EX card
             effect.style.background = `
               linear-gradient(
                 ${135 + mouseX * 30}deg, 
-                rgba(255, 0, 0, 0.5) 0%, 
-                rgba(255, 255, 0, 0.5) 10%, 
-                rgba(0, 255, 0, 0.5) 20%, 
-                rgba(0, 255, 255, 0.5) 30%, 
-                rgba(0, 0, 255, 0.5) 40%, 
-                rgba(255, 0, 255, 0.5) 50%, 
-                rgba(255, 0, 0, 0.5) 60%, 
-                rgba(255, 255, 0, 0.5) 70%, 
-                rgba(0, 255, 0, 0.5) 80%, 
-                rgba(0, 255, 255, 0.5) 90%, 
-                rgba(0, 0, 255, 0.5) 100%
+                rgba(255, 0, 255, 0.5) 0%,    /* Magenta */
+                rgba(128, 0, 255, 0.6) 20%,   /* Purple */
+                rgba(255, 0, 128, 0.7) 40%,   /* Pink */
+                rgba(180, 0, 255, 0.6) 60%,   /* Purple-Magenta */
+                rgba(100, 0, 255, 0.5) 80%,   /* Blue-Purple */
+                rgba(255, 0, 200, 0.6) 100%   /* Pink-Magenta */
               )
             `;
             effect.style.backgroundPosition = `${gradientX}% ${gradientY}%`;
-            effect.style.opacity = '0.5';
-            effect.style.filter = 'contrast(140%) brightness(120%)';
+            effect.style.opacity = '0.7';
+            effect.style.filter = 'contrast(150%) brightness(130%)';
         });
         
         // Show sparkles with mouse movement
         sparkles.forEach(sparkle => {
-            sparkle.style.opacity = '0.3';
+            sparkle.style.opacity = '0.5';
             sparkle.style.backgroundPosition = `${50 + mouseX * 50}% ${50 + mouseY * 50}%`;
         });
         
         // Enhance holographic overlay
         holoOverlay.forEach(overlay => {
-            overlay.style.opacity = '0.4';
+            overlay.style.opacity = '0.6';
             overlay.style.backgroundPosition = `${-mouseX * 20}px ${-mouseY * 20}px`;
         });
     } else {
@@ -242,17 +238,11 @@ function pulseEffect() {
                 effect.style.background = `
                   linear-gradient(
                     ${angle}deg, 
-                    rgba(255, 0, 0, 0.3) 0%, 
-                    rgba(255, 255, 0, 0.3) 10%, 
-                    rgba(0, 255, 0, 0.3) 20%, 
-                    rgba(0, 255, 255, 0.3) 30%, 
-                    rgba(0, 0, 255, 0.3) 40%, 
-                    rgba(255, 0, 255, 0.3) 50%, 
-                    rgba(255, 0, 0, 0.3) 60%, 
-                    rgba(255, 255, 0, 0.3) 70%, 
-                    rgba(0, 255, 0, 0.3) 80%, 
-                    rgba(0, 255, 255, 0.3) 90%, 
-                    rgba(0, 0, 255, 0.3) 100%
+                    rgba(255, 0, 255, 0.4) 0%,    /* Magenta */
+                    rgba(128, 0, 255, 0.5) 25%,   /* Purple */
+                    rgba(255, 0, 128, 0.6) 50%,   /* Pink */
+                    rgba(180, 0, 255, 0.5) 75%,   /* Purple-Magenta */
+                    rgba(255, 0, 200, 0.4) 100%   /* Pink-Magenta */
                   )
                 `;
             });
