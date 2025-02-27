@@ -27,7 +27,7 @@ app.use(helmet()); // Security headers
 
 // CORS middleware
 const allowedOrigins = process.env.NODE_ENV === 'production' 
-    ? [process.env.FRONTEND_URL, 'https://akashp3128.github.io'] 
+    ? [process.env.FRONTEND_URL, 'https://akashp3128.github.io', 'https://akashp3128-github-io.vercel.app', 'https://batman-akashp3128-github-io.vercel.app', 'https://akashp3128.vercel.app', 'https://akashp3128-github-io-git-main-batman.vercel.app'] 
     : ['http://localhost:8080', 'http://localhost:3000', 'http://127.0.0.1:8080', 'http://127.0.0.1:3000', 'null'];
 
 app.use(cors({
@@ -45,13 +45,8 @@ app.use(cors({
             return callback(null, true);
         }
         
-        // Check if the origin is allowed
-        if (allowedOrigins.includes(origin)) {
-            return callback(null, true);
-        } else {
-            console.warn(`Origin not allowed: ${origin}`);
-            return callback(null, true); // Still allow for now, but log a warning
-        }
+        // In production, always allow any origin for now to ensure it works
+        return callback(null, true);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],

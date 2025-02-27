@@ -114,9 +114,19 @@ The API client (`api.js`) automatically:
 - Switches to emergency mode when needed
 - Handles authentication tokens
 
-## Production Deployment
+## Production Deployment Information
 
-See [PRODUCTION.md](PRODUCTION.md) for detailed instructions on deploying to Vercel.
+This site is configured to work in two modes:
+
+1. **Full Mode** - With backend API connectivity (ideal scenario)
+2. **Emergency Mode** - When backend API is unreachable, the site will:
+   - Store data in localStorage instead of the backend
+   - Allow basic functionality without API connectivity
+   - Display a notification when operating in emergency mode
+
+The site will automatically detect if the backend is unreachable and enable emergency mode.
+
+**Admin Access in Emergency Mode:** Use password "localdev" or "Rosie@007" for authentication.
 
 ## License
 

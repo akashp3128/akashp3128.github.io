@@ -10,6 +10,13 @@ const ApiClient = (function() {
         }
     }
     
+    // Check for emergency mode immediately when script loads
+    const isEmergencyMode = localStorage.getItem('emergency_mode') === 'true';
+    if (isEmergencyMode) {
+        debugLog('EMERGENCY MODE ACTIVE: Will use local storage instead of backend API');
+        document.documentElement.classList.add('emergency-mode');
+    }
+    
     // Determine the API URL based on the current environment
     const determineApiUrl = () => {
         // Check if we're in a local development environment
