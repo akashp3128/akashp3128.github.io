@@ -128,53 +128,53 @@ document.addEventListener('mousemove', function(e) {
         const mouseX = ((e.clientX - cardCenterX) / (cardRect.width / 2));
         const mouseY = ((e.clientY - cardCenterY) / (cardRect.height / 2));
         
-        // Calculate rotation based on mouse position (max ±15 degrees)
-        const rotateY = mouseX * 15;
-        const rotateX = -mouseY * 15;
+        // Calculate rotation based on mouse position (max ±12 degrees - softer rotation)
+        const rotateY = mouseX * 12;
+        const rotateX = -mouseY * 12;
         
-        // Apply the transform to the card
-        card.style.transform = `perspective(1000px) rotateY(${rotateY}deg) rotateX(${rotateX}deg) scale3d(1.05, 1.05, 1.05)`;
+        // Apply the transform to the card with smoother easing
+        card.style.transform = `perspective(1000px) rotateY(${rotateY}deg) rotateX(${rotateX}deg) scale3d(1.03, 1.03, 1.03)`;
         
         // Apply holographic effect based on mouse position
         holoEffect.forEach(effect => {
             // Shift the linear gradient based on mouse position
-            const gradientX = 50 + (mouseX * 30);
-            const gradientY = 50 + (mouseY * 30);
+            const gradientX = 50 + (mouseX * 20);
+            const gradientY = 50 + (mouseY * 20);
             
-            // Create a pink/magenta/purple gradient similar to Palkia EX card
+            // Create a teal/blue/gold gradient for professional look
             effect.style.background = `
               linear-gradient(
-                ${135 + mouseX * 30}deg, 
-                rgba(255, 0, 255, 0.5) 0%,    /* Magenta */
-                rgba(128, 0, 255, 0.6) 20%,   /* Purple */
-                rgba(255, 0, 128, 0.7) 40%,   /* Pink */
-                rgba(180, 0, 255, 0.6) 60%,   /* Purple-Magenta */
-                rgba(100, 0, 255, 0.5) 80%,   /* Blue-Purple */
-                rgba(255, 0, 200, 0.6) 100%   /* Pink-Magenta */
+                ${135 + mouseX * 25}deg, 
+                rgba(10, 126, 164, 0.5) 0%,    /* Teal */
+                rgba(0, 51, 78, 0.5) 20%,      /* Deep blue */
+                rgba(255, 193, 7, 0.6) 40%,    /* Gold */
+                rgba(10, 126, 164, 0.5) 60%,   /* Teal */
+                rgba(0, 51, 78, 0.5) 80%,      /* Deep blue */
+                rgba(255, 193, 7, 0.5) 100%    /* Gold */
               )
             `;
             effect.style.backgroundPosition = `${gradientX}% ${gradientY}%`;
-            effect.style.opacity = '0.7';
-            effect.style.filter = 'contrast(150%) brightness(130%)';
+            effect.style.opacity = '0.6';
+            effect.style.filter = 'contrast(120%) brightness(110%)';
         });
         
         // Show sparkles with mouse movement
         sparkles.forEach(sparkle => {
-            sparkle.style.opacity = '0.5';
-            sparkle.style.backgroundPosition = `${50 + mouseX * 50}% ${50 + mouseY * 50}%`;
+            sparkle.style.opacity = '0.3';
+            sparkle.style.backgroundPosition = `${50 + mouseX * 30}% ${50 + mouseY * 30}%`;
         });
         
         // Enhance holographic overlay
         holoOverlay.forEach(overlay => {
-            overlay.style.opacity = '0.6';
-            overlay.style.backgroundPosition = `${-mouseX * 20}px ${-mouseY * 20}px`;
+            overlay.style.opacity = '0.4';
+            overlay.style.backgroundPosition = `${-mouseX * 10}px ${-mouseY * 10}px`;
         });
     } else {
-        // Reset card when mouse is far away
+        // Reset card when mouse is far away with smoother transition
         card.style.transform = 'perspective(1000px) rotateY(0deg) rotateX(0deg) scale3d(1, 1, 1)';
         
         holoEffect.forEach(effect => {
-            effect.style.opacity = '0.3';
+            effect.style.opacity = '0.2';
         });
         
         sparkles.forEach(sparkle => {
@@ -182,7 +182,7 @@ document.addEventListener('mousemove', function(e) {
         });
         
         holoOverlay.forEach(overlay => {
-            overlay.style.opacity = '0.2';
+            overlay.style.opacity = '0.1';
         });
     }
 });
@@ -238,11 +238,11 @@ function pulseEffect() {
                 effect.style.background = `
                   linear-gradient(
                     ${angle}deg, 
-                    rgba(255, 0, 255, 0.4) 0%,    /* Magenta */
-                    rgba(128, 0, 255, 0.5) 25%,   /* Purple */
-                    rgba(255, 0, 128, 0.6) 50%,   /* Pink */
-                    rgba(180, 0, 255, 0.5) 75%,   /* Purple-Magenta */
-                    rgba(255, 0, 200, 0.4) 100%   /* Pink-Magenta */
+                    rgba(10, 126, 164, 0.4) 0%,    /* Teal */
+                    rgba(0, 51, 78, 0.5) 25%,      /* Deep blue */
+                    rgba(255, 193, 7, 0.5) 50%,    /* Gold */
+                    rgba(0, 51, 78, 0.5) 75%,      /* Deep blue */
+                    rgba(10, 126, 164, 0.4) 100%   /* Teal */
                   )
                 `;
             });
