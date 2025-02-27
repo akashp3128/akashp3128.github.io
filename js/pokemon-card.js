@@ -57,6 +57,18 @@ function setupCardFlipping() {
         cardInner.classList.toggle('flipped');
         console.log('Card flipped state:', cardInner.classList.contains('flipped'));
         
+        // Play flip sound effect
+        const flipSound = new Audio('/assets/sounds/flip.mp3');
+        flipSound.volume = 0.5;
+        flipSound.play().catch(e => {
+            console.log('Sound play error:', e);
+            // If sound fails to play, add an additional visual effect as fallback
+            cardInner.style.animation = 'none';
+            setTimeout(() => {
+                cardInner.style.animation = 'card-pulse 0.8s';
+            }, 10);
+        });
+        
         // Remove the flipping class after animation completes
         setTimeout(() => {
             cardInner.classList.remove('flipping');
