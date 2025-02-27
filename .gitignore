@@ -3,3 +3,8 @@ node_modules/
 .DS_Store
 .env
 *.log
+backend/uploads/
+test_*.jpg
+test_*.pdf
+retrieved_*.jpg
+retrieved_*.pdf

@@ -5,7 +5,12 @@ const morgan = require('morgan');
 const path = require('path');
 const fs = require('fs');
 const helmet = require('helmet');
-const { ensureUploadDirExists, isProduction } = require('./utils/storage');
+const { 
+    ensureUploadDirExists, 
+    isProduction, 
+    getGridFSReadStream, 
+    getGridFSFiles 
+} = require('./utils/storage');
 
 // Load environment variables
 dotenv.config();
@@ -68,6 +73,35 @@ app.use('/api/auth', authRoutes);
 app.use('/api/resume', resumeRoutes);
 app.use('/api/image', imageRoutes);
 
+// Add a route to serve files from GridFS in production
+if (isProduction) {
+    app.get('/api/file/:filename', async (req, res) => {
+        try {
+            const filename = req.params.filename;
+            
+            // Check if the file exists in GridFS
+            const files = await getGridFSFiles({ filename });
+            
+            if (!files || files.length === 0) {
+                return res.status(404).json({ message: 'File not found' });
+            }
+            
+            // Check if this is an image file
+            const contentType = files[0].contentType;
+            if (contentType) {
+                res.set('Content-Type', contentType);
+            }
+            
+            // Stream the file from GridFS
+            const readStream = getGridFSReadStream(filename);
+            readStream.pipe(res);
+        } catch (error) {
+            console.error('Error streaming file from GridFS:', error);
+            res.status(500).json({ message: 'Error retrieving file', error: error.message });
+        }
+    });
+}
+
 // Add a route to serve uploaded files in development
 if (!isProduction) {
     app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -80,14 +114,24 @@ app.get('/api/debug', (req, res) => {
         return res.status(403).json({ message: 'Debug information not available in production' });
     }
     
+    // Get MongoDB connection status
+    const mongoStatus = require('mongoose').connection.readyState;
+    const mongoStatusText = {
+        0: 'disconnected',
+        1: 'connected',
+        2: 'connecting',
+        3: 'disconnecting'
+    }[mongoStatus] || 'unknown';
+    
     // Get basic environment information
     const debugInfo = {
         environment: process.env.NODE_ENV || 'development',
         uploads_directory: path.join(__dirname, 'uploads'),
         uploads_exist: fs.existsSync(path.join(__dirname, 'uploads')),
         platform: process.platform,
-        storage_type: isProduction ? 'S3' : 'local',
-        s3_configured: !!(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY),
+        storage_type: isProduction ? 'MongoDB GridFS' : 'local',
+        mongodb_status: mongoStatusText,
+        mongodb_uri: isProduction ? 'hidden in production' : (process.env.MONGODB_URI || 'mongodb://localhost:27017/pokemon-card-resume'),
         jwt_secret_configured: !!process.env.JWT_SECRET,
         admin_password_configured: !!process.env.ADMIN_PASSWORD,
         server_timezone: new Date().toString(),
