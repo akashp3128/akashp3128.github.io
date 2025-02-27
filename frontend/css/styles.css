@@ -506,6 +506,7 @@ body.authenticated a.admin-only {
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
     cursor: pointer;
     overflow: hidden;
+    z-index: 1;
 }
 
 .card-inner {
@@ -521,6 +522,7 @@ body.authenticated a.admin-only {
         inset 0 0 10px rgba(0, 0, 0, 0.5);
     border: 3px solid rgba(241, 190, 72, 0.9); /* ISU Gold border */
     background: linear-gradient(145deg, rgba(25, 25, 25, 1), rgba(18, 18, 18, 1));
+    pointer-events: auto; /* Ensure clicks pass through */
 }
 
 .card-front,
@@ -534,6 +536,7 @@ body.authenticated a.admin-only {
     backface-visibility: hidden;
     border-radius: var(--card-border-radius);
     overflow: hidden;
+    cursor: pointer; /* Make sure cursor is pointer for clickability cue */
 }
 
 .card-front {
@@ -542,6 +545,7 @@ body.authenticated a.admin-only {
     display: flex;
     flex-direction: column;
     z-index: 2;
+    pointer-events: auto; /* Ensure clicks work */
 }
 
 .card-back {
@@ -552,6 +556,7 @@ body.authenticated a.admin-only {
     flex-direction: column;
     padding: 20px 15px;
     overflow-y: auto;
+    pointer-events: auto; /* Ensure clicks work */
 }
 
 .card-header {

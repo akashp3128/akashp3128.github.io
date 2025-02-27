@@ -40,8 +40,8 @@ function setupCardFlipping() {
         );
     }
     
-    // Simple click handler for card flipping
-    pokemonCard.addEventListener('click', function(event) {
+    // Add click handlers to multiple elements for better coverage
+    function handleCardClick(event) {
         // Check if the click is on admin-related elements
         if (isAdminElement(event.target)) {
             // Do not process card flip for admin elements
@@ -50,7 +50,11 @@ function setupCardFlipping() {
         }
         
         console.log('Card clicked for flipping');
-        
+        flipCardAnimation();
+    }
+    
+    // Separate the flip animation logic for reusability
+    function flipCardAnimation() {
         // Add a temporary class to prevent hover effects during flip
         cardInner.classList.add('flipping');
         
@@ -75,20 +79,42 @@ function setupCardFlipping() {
         setTimeout(() => {
             cardInner.classList.remove('flipping');
         }, 800); // Match the animation duration
-    });
+    }
+    
+    // Add click handlers to multiple elements for better coverage
+    pokemonCard.addEventListener('click', handleCardClick);
+    
+    // Also add click handlers to child elements for better coverage
+    const cardFront = pokemonCard.querySelector('.card-front');
+    const cardBack = pokemonCard.querySelector('.card-back');
+    
+    if (cardFront) {
+        cardFront.addEventListener('click', function(e) {
+            if (!isAdminElement(e.target)) {
+                e.stopPropagation(); // Prevent multiple triggers
+                handleCardClick(e);
+            }
+        });
+    }
+    
+    if (cardBack) {
+        cardBack.addEventListener('click', function(e) {
+            if (!isAdminElement(e.target)) {
+                e.stopPropagation(); // Prevent multiple triggers
+                handleCardClick(e);
+            }
+        });
+    }
+    
+    // Add a direct method on the card element itself
+    pokemonCard.flip = flipCardAnimation;
     
     // Add a direct flip method to the window for external calls
     window.flipCard = function() {
         if (!cardInner || !pokemonCard) return;
         
         console.log('Manual card flip triggered');
-        cardInner.classList.add('flipping');
-        cardInner.classList.toggle('flipped');
-        pokemonCard.classList.toggle('card-flipped');
-        
-        setTimeout(() => {
-            cardInner.classList.remove('flipping');
-        }, 800);
+        flipCardAnimation();
     };
 }
 

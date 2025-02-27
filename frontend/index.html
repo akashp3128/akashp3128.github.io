@@ -286,6 +286,50 @@
                     }
                 });
             }
+            
+            // Force add another click handler directly to the card as a last resort
+            setTimeout(function() {
+                const pokemonCard = document.getElementById('pokemonCard');
+                const cardElements = [
+                    pokemonCard,
+                    document.querySelector('.card-inner'),
+                    document.querySelector('.card-front'),
+                    document.querySelector('.card-header'),
+                    document.querySelector('.card-image'),
+                    document.querySelector('.card-info'),
+                    document.querySelector('.card-abilities'),
+                    document.querySelector('.card-footer')
+                ];
+                
+                cardElements.forEach(element => {
+                    if (element) {
+                        element.addEventListener('click', function(e) {
+                            // Skip if clicking on admin elements or buttons
+                            if (e.target.closest('.btn') || 
+                                e.target.closest('.admin-panel') || 
+                                e.target.closest('#adminToggle') ||
+                                e.target.closest('button')) {
+                                console.log('Admin element clicked, ignoring');
+                                return;
+                            }
+                            
+                            console.log('Backup event handler: element clicked:', element);
+                            if (window.flipCard) {
+                                window.flipCard();
+                            } else {
+                                const cardInner = document.querySelector('.card-inner');
+                                const pokemonCard = document.getElementById('pokemonCard');
+                                if (cardInner && pokemonCard) {
+                                    cardInner.classList.toggle('flipped');
+                                    pokemonCard.classList.toggle('card-flipped');
+                                }
+                            }
+                        });
+                    }
+                });
+                
+                console.log('Backup click handlers added for card elements');
+            }, 500); // Wait for everything to be fully loaded
         });
     </script>
 </body>
