@@ -3,6 +3,7 @@ const router = express.Router();
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
+const { list } = require('@vercel/blob');
 const { authenticateToken } = require('../middleware/auth');
 const { 
     createImageStorage, 

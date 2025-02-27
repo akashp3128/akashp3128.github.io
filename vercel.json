@@ -23,6 +23,5 @@
       "memory": 1024,
       "maxDuration": 10
     }
-  },
-  "installCommand": "npm install --legacy-peer-deps"
+  }
 } 
