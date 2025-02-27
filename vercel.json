@@ -30,11 +30,5 @@
   "env": {
     "NODE_ENV": "production",
     "STORAGE_TYPE": "vercel-blob"
-  },
-  "functions": {
-    "backend/server.js": {
-      "memory": 1024,
-      "maxDuration": 10
-    }
   }
 } 
