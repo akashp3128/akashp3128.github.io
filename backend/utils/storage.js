@@ -15,10 +15,7 @@ const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/pokemon-c
 // Initialize MongoDB connection and GridFS
 const connectMongoDB = () => {
     if (mongoose.connection.readyState === 0) {
-        mongoose.connect(mongoURI, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true
-        })
+        mongoose.connect(mongoURI)
         .then(() => {
             console.log('MongoDB connected successfully');
         })
@@ -64,7 +61,6 @@ const createGridFsStorage = (fileType) => {
         console.log(`Using GridFS storage for ${fileType} uploads`);
         return new GridFsStorage({
             url: mongoURI,
-            options: { useNewUrlParser: true, useUnifiedTopology: true },
             file: (req, file) => {
                 const filename = fileType === 'resume' ? 'resume.pdf' : 
                                 (fileType === 'image' ? `profile${path.extname(file.originalname).toLowerCase()}` : file.originalname);
