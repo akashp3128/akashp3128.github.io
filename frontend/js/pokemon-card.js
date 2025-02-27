@@ -5,38 +5,88 @@ const holoEffect = document.querySelectorAll('.holo-effect');
 const holoOverlay = document.querySelectorAll('.holo-overlay');
 const sparkles = document.querySelectorAll('.sparkles');
 
+console.log('Card elements:', { 
+    card: card, 
+    cardInner: cardInner, 
+    holoEffect: holoEffect.length, 
+    holoOverlay: holoOverlay.length, 
+    sparkles: sparkles.length 
+});
+
 // Card flip functionality
 function setupCardFlipping() {
     const pokemonCard = document.getElementById('pokemonCard');
+    const cardInner = document.querySelector('.card-inner');
     
-    if (!pokemonCard) {
-        console.error('Pokemon card element not found');
+    if (!pokemonCard || !cardInner) {
+        console.error('Pokemon card elements not found');
         return;
     }
     
-    // Simple click handler for card flipping
-    pokemonCard.addEventListener('click', function(event) {
+    // Simple click handler for card flipping - using event delegation for better handling
+    document.addEventListener('click', function(e) {
+        // Find if the click was on the card or any of its children
+        const isCardClicked = e.target === pokemonCard || pokemonCard.contains(e.target);
+        
         // Check if the click is on the admin toggle or within the admin panel
-        if (event.target.id === 'adminToggle' || 
-            event.target.closest('#adminToggle') || 
-            event.target.closest('#adminPanel') ||
-            event.target.closest('.modal') ||
-            event.target.closest('.admin-only')) {
+        if (e.target.id === 'adminToggle' || 
+            e.target.closest('#adminToggle') || 
+            e.target.closest('#adminPanel') ||
+            e.target.closest('.modal') ||
+            e.target.closest('.admin-only')) {
             // Prevent card flip when clicking on admin elements
-            event.stopPropagation();
             return;
         }
         
-        // Toggle the card-flipped class
-        this.classList.toggle('card-flipped');
+        if (isCardClicked) {
+            console.log('Card clicked!');
+            
+            // Add a temporary class to prevent hover effects during flip
+            cardInner.classList.add('flipping');
+            
+            // Toggle the flipped state
+            cardInner.classList.toggle('flipped');
+            console.log('Card flipped state:', cardInner.classList.contains('flipped'));
+            
+            // Remove the flipping class after animation completes
+            setTimeout(() => {
+                cardInner.classList.remove('flipping');
+            }, 800); // Match the animation duration
+        }
     });
+    
+    // Direct click handler for the card as fallback
+    pokemonCard.onclick = function(e) {
+        // Skip if clicking on admin elements
+        if (e.target.id === 'adminToggle' || 
+            e.target.closest('#adminToggle') || 
+            e.target.closest('#adminPanel') ||
+            e.target.closest('.modal') ||
+            e.target.closest('.admin-only')) {
+            return;
+        }
+        
+        console.log('Direct card click!');
+        e.stopPropagation(); // Prevent double toggling
+        
+        // Add a temporary class to prevent hover effects during flip
+        cardInner.classList.add('flipping');
+        
+        // Toggle the flipped state
+        cardInner.classList.toggle('flipped');
+        
+        // Remove the flipping class after animation completes
+        setTimeout(() => {
+            cardInner.classList.remove('flipping');
+        }, 800); // Match the animation duration
+    };
 }
 
 // Add method to manually reset card to front
 window.resetCardToFront = function() {
-    const card = document.getElementById('pokemonCard');
-    if (card && card.classList.contains('card-flipped')) {
-        card.classList.remove('card-flipped');
+    const cardInner = document.querySelector('.card-inner');
+    if (cardInner && cardInner.classList.contains('flipped')) {
+        cardInner.classList.remove('flipped');
         console.log('Card reset to front');
     }
 };
@@ -51,17 +101,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Holographic effect on mouse move
 document.addEventListener('mousemove', function(e) {
+    // Don't apply hover effects during flip animation
+    if (cardInner.classList.contains('flipping')) return;
+    
     const cardRect = card.getBoundingClientRect();
     
     // Check if mouse is over or near the card
     const isNearCard = 
-        e.clientX >= cardRect.left - 100 && 
-        e.clientX <= cardRect.right + 100 && 
-        e.clientY >= cardRect.top - 100 && 
-        e.clientY <= cardRect.bottom + 100;
+        e.clientX >= cardRect.left - 50 && 
+        e.clientX <= cardRect.right + 50 && 
+        e.clientY >= cardRect.top - 50 && 
+        e.clientY <= cardRect.bottom + 50;
     
     // Skip if card is flipped
-    if (card.classList.contains('card-flipped')) {
+    if (cardInner.classList.contains('flipped')) {
         return;
     }
     
@@ -78,7 +131,7 @@ document.addEventListener('mousemove', function(e) {
         const rotateX = -mouseY * 15;
         
         // Apply the transform to the card
-        card.style.transform = `perspective(1000px) rotateY(${rotateY}deg) rotateX(${rotateX}deg) scale3d(1.03, 1.03, 1.03)`;
+        card.style.transform = `perspective(1000px) rotateY(${rotateY}deg) rotateX(${rotateX}deg) scale3d(1.05, 1.05, 1.05)`;
         
         // Apply rainbow effect based on mouse position
         holoEffect.forEach(effect => {
@@ -103,8 +156,8 @@ document.addEventListener('mousemove', function(e) {
               )
             `;
             effect.style.backgroundPosition = `${gradientX}% ${gradientY}%`;
-            effect.style.opacity = '0.7';
-            effect.style.filter = 'contrast(150%) brightness(110%)';
+            effect.style.opacity = '0.5';
+            effect.style.filter = 'contrast(140%) brightness(120%)';
         });
         
         // Show sparkles with mouse movement
@@ -115,7 +168,7 @@ document.addEventListener('mousemove', function(e) {
         
         // Enhance holographic overlay
         holoOverlay.forEach(overlay => {
-            overlay.style.opacity = '0.5';
+            overlay.style.opacity = '0.4';
             overlay.style.backgroundPosition = `${-mouseX * 20}px ${-mouseY * 20}px`;
         });
     } else {

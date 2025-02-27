@@ -708,8 +708,15 @@ body.authenticated a.admin-only {
     }
 }
 
-.card-flipped .card-inner {
+/* Card flip classes */
+.card-inner.flipped {
     transform: rotateY(180deg);
+}
+
+/* Temporary class to prevent hover effects during flip */
+.card-inner.flipping {
+    transition: transform 0.8s;
+    pointer-events: none;
 }
 
 .skill-tag {
