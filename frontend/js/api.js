@@ -81,18 +81,20 @@ const ApiClient = (function() {
             
             try {
                 // Check for development mode with hardcoded password
-                const isDevMode = window.location.hostname === 'localhost' || 
-                                 window.location.hostname === '127.0.0.1';
+                const isLocalhost = window.location.hostname === 'localhost' || 
+                                   window.location.hostname === '127.0.0.1';
                 
-                // Accept Rosie@007 as a valid password for both dev and production
-                if (password === 'Rosie@007' || password === 'localdev') {
-                    console.log('Using hardcoded password');
-                    const token = 'demo-token-' + Date.now();
+                // If we're on localhost, we can use the hardcoded password
+                if (isLocalhost && (password === 'Rosie@007' || password === 'localdev')) {
+                    console.log('Using hardcoded password for local development');
+                    // Even in dev mode, let's use a more realistic token format
+                    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlzQWRtaW4iOnRydWV9LCJpYXQiOjE2MTk4OTQ3NTEsImV4cCI6MTYxOTk4MTE1MX0.demo-token-' + Date.now();
                     setAuthToken(token);
                     return { success: true, token: token };
                 }
                 
-                // If not a hardcoded password, try the backend authentication
+                // For production or other passwords, use the real backend authentication
+                debugLog('Attempting server authentication');
                 const response = await fetch(`${API_ENDPOINTS.AUTH}/login`, {
                     method: 'POST',
                     headers: {
@@ -101,28 +103,48 @@ const ApiClient = (function() {
                     body: JSON.stringify({ password })
                 });
                 
+                // Log response status for debugging
+                debugLog('Auth response status:', response.status);
+                
                 if (response.ok) {
                     const data = await response.json();
                     if (data.token) {
+                        debugLog('Received auth token from server');
                         setAuthToken(data.token);
                         return { success: true, token: data.token };
                     }
                 }
                 
-                console.log('Login failed');
-                return { 
-                    success: false, 
-                    error: 'Invalid password'
-                };
+                // Try to get detailed error message
+                try {
+                    const errorData = await response.json();
+                    console.log('Login failed:', errorData.message || 'Unknown error');
+                    return { 
+                        success: false, 
+                        error: errorData.message || 'Invalid password'
+                    };
+                } catch (e) {
+                    console.log('Login failed with status:', response.status);
+                    return { 
+                        success: false, 
+                        error: 'Invalid password'
+                    };
+                }
             } catch (error) {
                 console.error('Login error:', error);
-                // Fallback to hardcoded passwords if backend unreachable
-                if (password === 'Rosie@007' || password === 'localdev') {
+                
+                // Only use fallback in localhost environment
+                const isLocalhost = window.location.hostname === 'localhost' || 
+                                  window.location.hostname === '127.0.0.1';
+                
+                // Fallback to hardcoded passwords only in local development
+                if (isLocalhost && (password === 'Rosie@007' || password === 'localdev')) {
                     console.log('Backend unreachable, using fallback authentication');
-                    const token = 'demo-token-fallback-' + Date.now();
+                    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlzQWRtaW4iOnRydWV9LCJpYXQiOjE2MTk4OTQ3NTEsImV4cCI6MTYxOTk4MTE1MX0.demo-token-fallback-' + Date.now();
                     setAuthToken(token);
                     return { success: true, token: token };
                 }
+                
                 return { 
                     success: false, 
                     error: error.message || 'Authentication failed' 

@@ -31,16 +31,55 @@ initializeAdminPassword();
  */
 router.post('/login', async (req, res) => {
     const { password } = req.body;
+    
+    console.log('Login attempt received');
 
     if (!password) {
+        console.log('Login rejected: No password provided');
         return res.status(400).json({ message: 'Password is required' });
     }
 
     try {
+        // Make sure admin password is initialized
+        if (!adminPasswordHash) {
+            console.log('Initializing admin password hash');
+            initializeAdminPassword();
+        }
+        
+        // Special case for development environment
+        if ((process.env.NODE_ENV !== 'production') && 
+            (password === 'Rosie@007' || password === 'localdev')) {
+            console.log('Using development password override');
+            
+            // Create JWT payload
+            const payload = {
+                user: {
+                    isAdmin: true
+                }
+            };
+
+            // Sign the token
+            jwt.sign(
+                payload,
+                process.env.JWT_SECRET || 'pokemoncardresumedemosecret',
+                { expiresIn: '1d' },
+                (err, token) => {
+                    if (err) {
+                        console.error('Error signing JWT:', err);
+                        throw err;
+                    }
+                    console.log('Development login successful');
+                    res.json({ token });
+                }
+            );
+            return;
+        }
+
         // Check if password matches
         const isMatch = await bcrypt.compare(password, adminPasswordHash);
 
         if (!isMatch) {
+            console.log('Login rejected: Invalid password');
             return res.status(401).json({ message: 'Invalid password' });
         }
 
@@ -51,13 +90,21 @@ router.post('/login', async (req, res) => {
             }
         };
 
+        // Get JWT secret
+        const jwtSecret = process.env.JWT_SECRET || 'pokemoncardresumedemosecret';
+        console.log('Using JWT secret:', jwtSecret ? 'Configured' : 'Missing');
+
         // Sign the token
         jwt.sign(
             payload,
-            process.env.JWT_SECRET || 'pokemoncardresumedemosecret', // Default secret for development only
+            jwtSecret,
             { expiresIn: '1d' },
             (err, token) => {
-                if (err) throw err;
+                if (err) {
+                    console.error('Error signing JWT:', err);
+                    throw err;
+                }
+                console.log('Login successful');
                 res.json({ token });
             }
         );
