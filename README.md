@@ -45,7 +45,7 @@ If the backend server is not running, the application will automatically switch 
 
 - Stores data in local storage instead of a database
 - Shows an emergency mode banner
-- Allows login with the password "localdev" or "Rosie@007"
+
 
 ## Project Structure
 
