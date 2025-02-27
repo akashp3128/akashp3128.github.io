@@ -9,8 +9,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set API base URL 
     window.API_BASE_URL = determineApiBaseUrl();
     
-    // Check for emergency mode
-    checkEmergencyMode();
+    // Set emergency mode to always be false
+    window.emergencyMode = false;
+    localStorage.setItem('emergencyModeEnabled', 'false');
     
     // Initialize card
     initializeCard();
@@ -35,17 +36,5 @@ function initializeCard() {
     // Use setupCardFlipping if available
     if (typeof setupCardFlipping === 'function') {
         setupCardFlipping();
-    }
-}
-
-// Check and initialize emergency mode
-function checkEmergencyMode() {
-    const storedMode = localStorage.getItem('emergencyModeEnabled');
-    window.emergencyMode = storedMode === 'true';
-    
-    // Show emergency banner if in emergency mode
-    const banner = document.getElementById('emergencyModeBanner');
-    if (banner && window.emergencyMode) {
-        banner.style.display = 'block';
     }
 } 
