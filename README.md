@@ -45,7 +45,7 @@ If the backend server is not running, the application will automatically switch 
 
 - Stores data in local storage instead of a database
 - Shows an emergency mode banner
-- Allows login with the password "localdev" or "Rosie@007"
+- Provides an alternative authentication method for local development
 
 ## Project Structure
 
@@ -82,11 +82,11 @@ The Pokemon card is the centerpiece of the website. It features:
 
 ### Authentication
 
-The admin panel is protected by a password:
+The admin panel is protected by secure authentication:
 
-- Production mode: Set via the `ADMIN_PASSWORD` environment variable
-- Development mode: "admin1234" (default) or custom
-- Emergency mode: "localdev" or "Rosie@007"
+- Production mode: Set via environment variables
+- Development mode: Custom authentication setting
+- Emergency mode: Special local development authentication
 
 ### File Uploads
 
@@ -125,8 +125,6 @@ This site is configured to work in two modes:
    - Display a notification when operating in emergency mode
 
 The site will automatically detect if the backend is unreachable and enable emergency mode.
-
-**Admin Access in Emergency Mode:** Use password "localdev" or "Rosie@007" for authentication.
 
 ## License
 
