@@ -130,7 +130,7 @@ document.addEventListener('mousemove', function(e) {
         // Apply the transform to the card
         card.style.transform = `perspective(1000px) rotateY(${rotateY}deg) rotateX(${rotateX}deg) scale3d(1.05, 1.05, 1.05)`;
         
-        // Apply rainbow effect based on mouse position
+        // Apply effect based on mouse position
         holoEffect.forEach(effect => {
             // Shift the linear gradient based on mouse position
             const gradientX = 50 + (mouseX * 30);
@@ -145,12 +145,11 @@ document.addEventListener('mousemove', function(e) {
             effect.style.background = `
               linear-gradient(
                 ${135 + mouseX * 30}deg, 
-                rgba(192, 28, 39, 0.6) 0%,    /* ISU Cardinal */
-                rgba(124, 16, 23, 0.6) 20%,   /* Darker Cardinal */
-                rgba(241, 190, 72, 0.6) 40%,  /* ISU Gold */
-                rgba(192, 28, 39, 0.6) 60%,   /* ISU Cardinal */ 
-                rgba(124, 16, 23, 0.6) 80%,   /* Darker Cardinal */
-                rgba(241, 190, 72, 0.6) 100%  /* ISU Gold */
+                rgba(192, 28, 39, 0.7) 0%,    /* ISU Cardinal */
+                rgba(0, 0, 0, 0.5) 30%,       /* Black */
+                rgba(241, 190, 72, 0.7) 50%,  /* ISU Gold (only for tint) */
+                rgba(0, 0, 0, 0.5) 70%,       /* Black */
+                rgba(192, 28, 39, 0.7) 100%   /* ISU Cardinal */
               )
             `;
             effect.style.backgroundPosition = `${gradientX}% ${gradientY}%`;
@@ -243,30 +242,24 @@ function pulseEffect() {
                     effect.style.background = `
                       linear-gradient(
                         ${angle}deg, 
-                        rgba(192, 28, 39, 0.5) 0%,    /* ISU Cardinal */
-                        rgba(241, 190, 72, 0.5) 25%,  /* ISU Gold */
-                        rgba(192, 28, 39, 0.5) 50%,   /* ISU Cardinal */
-                        rgba(241, 190, 72, 0.5) 75%,  /* ISU Gold */
-                        rgba(192, 28, 39, 0.5) 100%   /* ISU Cardinal */
+                        rgba(192, 28, 39, 0.6) 0%,    /* ISU Cardinal */
+                        rgba(0, 0, 0, 0.5) 25%,       /* Black */
+                        rgba(241, 190, 72, 0.6) 50%,  /* ISU Gold */
+                        rgba(0, 0, 0, 0.5) 75%,       /* Black */
+                        rgba(192, 28, 39, 0.6) 100%   /* ISU Cardinal */
                       )
                     `;
                     effect.style.opacity = '0.5';
                 } else {
-                    // Original fallback for non-legendary cards
+                    // Standard fallback
                     effect.style.background = `
                       linear-gradient(
                         ${angle}deg, 
-                        rgba(255, 0, 0, 0.3) 0%, 
-                        rgba(255, 255, 0, 0.3) 10%, 
-                        rgba(0, 255, 0, 0.3) 20%, 
-                        rgba(0, 255, 255, 0.3) 30%, 
-                        rgba(0, 0, 255, 0.3) 40%, 
-                        rgba(255, 0, 255, 0.3) 50%, 
-                        rgba(255, 0, 0, 0.3) 60%, 
-                        rgba(255, 255, 0, 0.3) 70%, 
-                        rgba(0, 255, 0, 0.3) 80%, 
-                        rgba(0, 255, 255, 0.3) 90%, 
-                        rgba(0, 0, 255, 0.3) 100%
+                        rgba(192, 28, 39, 0.5) 0%,    /* ISU Cardinal */
+                        rgba(0, 0, 0, 0.4) 30%,       /* Black */
+                        rgba(241, 190, 72, 0.5) 50%,  /* ISU Gold */
+                        rgba(0, 0, 0, 0.4) 70%,       /* Black */
+                        rgba(192, 28, 39, 0.5) 100%   /* ISU Cardinal */
                       )
                     `;
                 }
