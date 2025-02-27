@@ -307,8 +307,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const file = e.target.files[0];
         if (!file) return;
         
-        // Validate file
-        if (file.type !== 'application/pdf') {
+        // Validate file - check both MIME type and extension
+        const isPdfMimeType = file.type === 'application/pdf';
+        const isPdfExtension = file.name.toLowerCase().endsWith('.pdf');
+        
+        if (!isPdfMimeType && !isPdfExtension) {
             showError('Please upload a PDF file');
             return;
         }
@@ -356,9 +359,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const file = e.target.files[0];
         if (!file) return;
         
-        // Validate file
-        if (!file.type.startsWith('image/')) {
-            showError('Please upload an image file');
+        // Validate file - check both MIME type and extension
+        const isImageMimeType = file.type.startsWith('image/');
+        const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
+        const hasImageExtension = imageExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
+        
+        if (!isImageMimeType && !hasImageExtension) {
+            showError('Please upload a valid image file (JPG, PNG, GIF, etc.)');
             return;
         }
         
