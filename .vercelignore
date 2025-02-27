@@ -1,0 +1,7 @@
+**/node_modules
+**/package-lock.json
+**/yarn.lock
+**/.git
+**/.gitignore
+**/uploads
+**/.DS_Store 
