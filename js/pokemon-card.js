@@ -136,30 +136,32 @@ document.addEventListener('mousemove', function(e) {
             const gradientX = 50 + (mouseX * 30);
             const gradientY = 50 + (mouseY * 30);
             
+            // Check if the card has legendary styling
+            const isLegendary = card.classList.contains('legendary-type');
+            const opacityLevel = isLegendary ? '0.8' : '0.7';
+            const contrastLevel = isLegendary ? '140%' : '130%';
+            const brightnessLevel = isLegendary ? '120%' : '110%';
+            
             effect.style.background = `
               linear-gradient(
                 ${135 + mouseX * 30}deg, 
-                rgba(255, 0, 0, 0.5) 0%, 
-                rgba(255, 255, 0, 0.5) 10%, 
-                rgba(0, 255, 0, 0.5) 20%, 
-                rgba(0, 255, 255, 0.5) 30%, 
-                rgba(0, 0, 255, 0.5) 40%, 
-                rgba(255, 0, 255, 0.5) 50%, 
-                rgba(255, 0, 0, 0.5) 60%, 
-                rgba(255, 255, 0, 0.5) 70%, 
-                rgba(0, 255, 0, 0.5) 80%, 
-                rgba(0, 255, 255, 0.5) 90%, 
-                rgba(0, 0, 255, 0.5) 100%
+                rgba(192, 28, 39, 0.6) 0%,    /* ISU Cardinal */
+                rgba(124, 16, 23, 0.6) 20%,   /* Darker Cardinal */
+                rgba(241, 190, 72, 0.6) 40%,  /* ISU Gold */
+                rgba(192, 28, 39, 0.6) 60%,   /* ISU Cardinal */ 
+                rgba(124, 16, 23, 0.6) 80%,   /* Darker Cardinal */
+                rgba(241, 190, 72, 0.6) 100%  /* ISU Gold */
               )
             `;
             effect.style.backgroundPosition = `${gradientX}% ${gradientY}%`;
-            effect.style.opacity = '0.5';
-            effect.style.filter = 'contrast(140%) brightness(120%)';
+            effect.style.opacity = opacityLevel;
+            effect.style.filter = `contrast(${contrastLevel}) brightness(${brightnessLevel})`;
         });
         
-        // Show sparkles with mouse movement
+        // Show sparkles with mouse movement - enhanced for legendary cards
         sparkles.forEach(sparkle => {
-            sparkle.style.opacity = '0.3';
+            const isLegendary = card.classList.contains('legendary-type');
+            sparkle.style.opacity = isLegendary ? '0.5' : '0.3';
             sparkle.style.backgroundPosition = `${50 + mouseX * 50}% ${50 + mouseY * 50}%`;
         });
         
@@ -233,23 +235,41 @@ function pulseEffect() {
         angle = (angle + 1) % 360;
         
         if (!card.matches(':hover')) {
+            const isLegendary = card && card.classList.contains('legendary-type');
+            
             holoEffect.forEach(effect => {
-                effect.style.background = `
-                  linear-gradient(
-                    ${angle}deg, 
-                    rgba(255, 0, 0, 0.3) 0%, 
-                    rgba(255, 255, 0, 0.3) 10%, 
-                    rgba(0, 255, 0, 0.3) 20%, 
-                    rgba(0, 255, 255, 0.3) 30%, 
-                    rgba(0, 0, 255, 0.3) 40%, 
-                    rgba(255, 0, 255, 0.3) 50%, 
-                    rgba(255, 0, 0, 0.3) 60%, 
-                    rgba(255, 255, 0, 0.3) 70%, 
-                    rgba(0, 255, 0, 0.3) 80%, 
-                    rgba(0, 255, 255, 0.3) 90%, 
-                    rgba(0, 0, 255, 0.3) 100%
-                  )
-                `;
+                if (isLegendary) {
+                    // Enhanced legendary fallback effect with ISU colors
+                    effect.style.background = `
+                      linear-gradient(
+                        ${angle}deg, 
+                        rgba(192, 28, 39, 0.5) 0%,    /* ISU Cardinal */
+                        rgba(241, 190, 72, 0.5) 25%,  /* ISU Gold */
+                        rgba(192, 28, 39, 0.5) 50%,   /* ISU Cardinal */
+                        rgba(241, 190, 72, 0.5) 75%,  /* ISU Gold */
+                        rgba(192, 28, 39, 0.5) 100%   /* ISU Cardinal */
+                      )
+                    `;
+                    effect.style.opacity = '0.5';
+                } else {
+                    // Original fallback for non-legendary cards
+                    effect.style.background = `
+                      linear-gradient(
+                        ${angle}deg, 
+                        rgba(255, 0, 0, 0.3) 0%, 
+                        rgba(255, 255, 0, 0.3) 10%, 
+                        rgba(0, 255, 0, 0.3) 20%, 
+                        rgba(0, 255, 255, 0.3) 30%, 
+                        rgba(0, 0, 255, 0.3) 40%, 
+                        rgba(255, 0, 255, 0.3) 50%, 
+                        rgba(255, 0, 0, 0.3) 60%, 
+                        rgba(255, 255, 0, 0.3) 70%, 
+                        rgba(0, 255, 0, 0.3) 80%, 
+                        rgba(0, 255, 255, 0.3) 90%, 
+                        rgba(0, 0, 255, 0.3) 100%
+                      )
+                    `;
+                }
             });
         }
     }, 50);
