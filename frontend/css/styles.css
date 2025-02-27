@@ -514,7 +514,7 @@ body.authenticated a.admin-only {
     width: 100%;
     height: 100%;
     text-align: center;
-    transition: transform 0.6s;
+    transition: transform 0.8s ease-in-out, box-shadow 0.8s ease;
     transform-style: preserve-3d;
     border-radius: var(--card-border-radius);
     box-shadow: 
@@ -527,6 +527,8 @@ body.authenticated a.admin-only {
 .card-front,
 .card-back {
     position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
     -webkit-backface-visibility: hidden;
@@ -770,35 +772,79 @@ body.authenticated a.admin-only {
 }
 
 .card-inner.flipping {
-    pointer-events: none;
+    pointer-events: none; /* Prevent clicking during animation */
     animation: card-pulse 0.8s;
 }
 
+/* Ensure proper transform-style for 3D effects */
+.card {
+    transform-style: preserve-3d;
+}
+
 @keyframes card-pulse {
-    0% { box-shadow: 0 0 30px rgba(192, 28, 39, 0.7); }
-    50% { box-shadow: 0 0 40px rgba(241, 190, 72, 1); }
-    100% { box-shadow: 0 0 30px rgba(192, 28, 39, 0.7); }
+    0% { box-shadow: 0 0 30px rgba(192, 28, 39, 0.7), 0 0 60px rgba(241, 190, 72, 0.3); }
+    50% { box-shadow: 0 0 40px rgba(241, 190, 72, 1), 0 0 80px rgba(192, 28, 39, 0.5); }
+    100% { box-shadow: 0 0 30px rgba(192, 28, 39, 0.7), 0 0 60px rgba(241, 190, 72, 0.3); }
 }
 
-.card:hover .card-inner {
-    animation: card-pulse 2s infinite;
+/* Pokemon color type styling */
+.card.legendary-type {
+    --type-color: rgba(241, 190, 72, 1);
+    --type-bg: linear-gradient(135deg, var(--dark-cardinal), var(--cardinal-red));
 }
 
-.skill-tag {
-    background: linear-gradient(135deg, var(--dark-cardinal), var(--cardinal-red));
-    color: white;
-    padding: 3px 6px;
-    border-radius: 50px;
-    font-size: 9px; /* Smaller font */
-    margin: 2px;
-    display: inline-block;
+/* Legendary marker styling */
+.legendary-marker {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    color: var(--accent-color); /* ISU Gold */
+    font-size: 24px;
+    text-shadow: 0 0 5px rgba(192, 28, 39, 0.8); /* ISU Cardinal glow */
+    z-index: 10;
+    animation: legendary-pulse 2s infinite;
 }
 
-.skills-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-    margin-top: 10px;
+@keyframes legendary-pulse {
+    0% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(1); opacity: 0.8; }
+}
+
+/* Enhanced styling for legendary cards */
+.card.legendary-type .card-inner {
+    box-shadow: 
+        0 0 30px rgba(192, 28, 39, 0.6),
+        0 0 60px rgba(241, 190, 72, 0.3),
+        inset 0 0 20px rgba(0, 0, 0, 0.4);
+    border: 3px solid rgba(241, 190, 72, 1); /* Solid ISU Gold border for legendary */
+}
+
+.card.legendary-type .card-header {
+    background: linear-gradient(135deg, var(--dark-cardinal), var(--cardinal-red), var(--dark-cardinal)); /* Enhanced ISU Cardinal gradient */
+    border-bottom: 2px solid var(--accent-color); /* ISU Gold border */
+    text-shadow: 0 0 5px rgba(0, 0, 0, 0.7);
+    padding: 12px 10px;
+}
+
+.card.legendary-type .card-image {
+    box-shadow: 0 0 15px rgba(241, 190, 72, 0.5); /* Gold glow around image */
+    border: 1px solid var(--accent-color);
+}
+
+.card.legendary-type .holo-effect {
+    opacity: 0.8; /* More pronounced holographic effect */
+    animation: professionalHoloShift 6s ease infinite; /* Faster animation */
+}
+
+.card.legendary-type::before {
+    opacity: 0.9; /* More visible edge effect */
+    animation: shineEffect 6s linear infinite; /* Faster animation */
+}
+
+.card.legendary-type .card-energy {
+    color: rgba(241, 190, 72, 1); /* Brighter ISU Gold */
+    text-shadow: 0 0 8px rgba(241, 190, 72, 0.8); /* Enhanced glow */
 }
 
 /* Background animation */
@@ -1404,6 +1450,32 @@ body .debug-console-btn {
     0% { box-shadow: 0 0 30px rgba(192, 28, 39, 0.7), 0 0 60px rgba(241, 190, 72, 0.3); }
     50% { box-shadow: 0 0 40px rgba(241, 190, 72, 1), 0 0 80px rgba(192, 28, 39, 0.5); }
     100% { box-shadow: 0 0 30px rgba(192, 28, 39, 0.7), 0 0 60px rgba(241, 190, 72, 0.3); }
+}
+
+.card.legendary-type:hover .card-inner {
+    animation: card-pulse 1.5s infinite; /* Faster pulse for more intensity */
+}
+
+.skill-tag {
+    background: linear-gradient(135deg, var(--dark-cardinal), var(--cardinal-red));
+    color: white;
+    padding: 3px 6px;
+    border-radius: 50px;
+    font-size: 9px; /* Smaller font */
+    margin: 2px;
+    display: inline-block;
+}
+
+.skills-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 10px;
+}
+
+/* Back face should be rotated 180 degrees */
+.card-back {
+    transform: rotateY(180deg);
 }
 
 .card.legendary-type:hover .card-inner {

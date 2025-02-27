@@ -55,6 +55,10 @@ function setupCardFlipping() {
         
         // Toggle the flipped state
         cardInner.classList.toggle('flipped');
+        
+        // Also add/remove the card-flipped class for compatibility with debug.js
+        pokemonCard.classList.toggle('card-flipped');
+        
         console.log('Card flipped state:', cardInner.classList.contains('flipped'));
         
         // Play flip sound effect
@@ -79,8 +83,11 @@ function setupCardFlipping() {
 // Add method to manually reset card to front
 window.resetCardToFront = function() {
     const cardInner = document.querySelector('.card-inner');
+    const pokemonCard = document.getElementById('pokemonCard');
+    
     if (cardInner && cardInner.classList.contains('flipped')) {
         cardInner.classList.remove('flipped');
+        if (pokemonCard) pokemonCard.classList.remove('card-flipped');
         console.log('Card reset to front');
     }
 };
