@@ -16,7 +16,8 @@
     }
   ],
   "env": {
-    "NODE_ENV": "production"
+    "NODE_ENV": "production",
+    "STORAGE_TYPE": "vercel-blob"
   },
   "functions": {
     "backend/server.js": {

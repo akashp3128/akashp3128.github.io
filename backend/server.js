@@ -18,6 +18,10 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Log storage type
+console.log(`Storage provider: ${isProduction ? 'Vercel Blob Storage' : 'Local File System'}`);
+console.log('MongoDB is NOT being used in this application');
+
 // Set up middleware
 app.use(helmet()); // Security headers
 
