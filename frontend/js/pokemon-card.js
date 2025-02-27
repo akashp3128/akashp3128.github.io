@@ -23,6 +23,8 @@ function setupCardFlipping() {
         return;
     }
     
+    console.log('Card flip setup initialized');
+    
     // Method to check if an element is related to admin functionality
     function isAdminElement(element) {
         return (
@@ -43,7 +45,6 @@ function setupCardFlipping() {
         // Check if the click is on admin-related elements
         if (isAdminElement(event.target)) {
             // Do not process card flip for admin elements
-            event.stopPropagation();
             console.log('Admin element clicked, ignoring card flip');
             return;
         }
@@ -61,23 +62,34 @@ function setupCardFlipping() {
         
         console.log('Card flipped state:', cardInner.classList.contains('flipped'));
         
-        // Play flip sound effect
-        const flipSound = new Audio('/assets/sounds/flip.mp3');
-        flipSound.volume = 0.5;
-        flipSound.play().catch(e => {
-            console.log('Sound play error:', e);
-            // If sound fails to play, add an additional visual effect as fallback
-            cardInner.style.animation = 'none';
-            setTimeout(() => {
-                cardInner.style.animation = 'card-pulse 0.8s';
-            }, 10);
-        });
+        // Play flip sound effect if available
+        try {
+            const flipSound = new Audio('/assets/sounds/flip.mp3');
+            flipSound.volume = 0.5;
+            flipSound.play().catch(e => console.log('Sound play error:', e));
+        } catch (error) {
+            console.log('Could not play flip sound:', error);
+        }
         
         // Remove the flipping class after animation completes
         setTimeout(() => {
             cardInner.classList.remove('flipping');
         }, 800); // Match the animation duration
     });
+    
+    // Add a direct flip method to the window for external calls
+    window.flipCard = function() {
+        if (!cardInner || !pokemonCard) return;
+        
+        console.log('Manual card flip triggered');
+        cardInner.classList.add('flipping');
+        cardInner.classList.toggle('flipped');
+        pokemonCard.classList.toggle('card-flipped');
+        
+        setTimeout(() => {
+            cardInner.classList.remove('flipping');
+        }, 800);
+    };
 }
 
 // Add method to manually reset card to front
@@ -94,7 +106,22 @@ window.resetCardToFront = function() {
 
 // Make sure the card is defined in the DOM
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, setting up card flip');
     setupCardFlipping();
+    
+    // Add a debug helper button if in development
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        const flipButton = document.createElement('button');
+        flipButton.textContent = 'Test Flip Card';
+        flipButton.style.position = 'fixed';
+        flipButton.style.bottom = '80px';
+        flipButton.style.left = '20px';
+        flipButton.style.zIndex = '9999';
+        flipButton.onclick = function() {
+            window.flipCard();
+        };
+        document.body.appendChild(flipButton);
+    }
     
     // Initialize the pulse effect
     pulseEffect();

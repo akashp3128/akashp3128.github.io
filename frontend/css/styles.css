@@ -504,7 +504,6 @@ body.authenticated a.admin-only {
     transform-style: preserve-3d;
     border-radius: var(--card-border-radius);
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-    transition: transform 0.6s;
     cursor: pointer;
     overflow: hidden;
 }
@@ -542,6 +541,7 @@ body.authenticated a.admin-only {
     color: white;
     display: flex;
     flex-direction: column;
+    z-index: 2;
 }
 
 .card-back {
