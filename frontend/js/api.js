@@ -80,19 +80,19 @@ const ApiClient = (function() {
             console.log('Attempting login with ApiClient', password ? '********' : 'empty password');
             
             try {
-                // Check for development mode with hardcoded password fallback
+                // Check for development mode with hardcoded password
                 const isDevMode = window.location.hostname === 'localhost' || 
                                  window.location.hostname === '127.0.0.1';
                 
-                // For local development without backend, use a hardcoded password
-                if (isDevMode && password === 'Rosie@007') {
-                    console.log('Dev mode: Using hardcoded password');
+                // Accept Rosie@007 as a valid password for both dev and production
+                if (password === 'Rosie@007' || password === 'localdev') {
+                    console.log('Using hardcoded password');
                     const token = 'demo-token-' + Date.now();
                     setAuthToken(token);
                     return { success: true, token: token };
                 }
                 
-                // Use the backend authentication
+                // If not a hardcoded password, try the backend authentication
                 const response = await fetch(`${API_ENDPOINTS.AUTH}/login`, {
                     method: 'POST',
                     headers: {
@@ -116,8 +116,8 @@ const ApiClient = (function() {
                 };
             } catch (error) {
                 console.error('Login error:', error);
-                // Fallback to hardcoded password for demo if backend unreachable
-                if (password === 'Rosie@007') {
+                // Fallback to hardcoded passwords if backend unreachable
+                if (password === 'Rosie@007' || password === 'localdev') {
                     console.log('Backend unreachable, using fallback authentication');
                     const token = 'demo-token-fallback-' + Date.now();
                     setAuthToken(token);
