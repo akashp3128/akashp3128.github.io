@@ -5,9 +5,10 @@ const holoEffect = document.querySelectorAll('.holo-effect');
 const holoOverlay = document.querySelectorAll('.holo-overlay');
 const sparkles = document.querySelectorAll('.sparkles');
 
-console.log('Card elements:', { 
-    card: card, 
-    cardInner: cardInner, 
+console.log('Pokemon Card Debug: Script loaded.');
+console.log('Card elements detected:', { 
+    card: card ? 'Found' : 'Missing', 
+    cardInner: cardInner ? 'Found' : 'Missing', 
     holoEffect: holoEffect.length, 
     holoOverlay: holoOverlay.length, 
     sparkles: sparkles.length 
@@ -19,9 +20,13 @@ function setupCardFlipping() {
     const cardInner = document.querySelector('.card-inner');
     
     if (!pokemonCard || !cardInner) {
-        console.error('Pokemon card elements not found');
+        console.error('Pokemon card elements not found - unable to set up flip functionality');
+        console.error('pokemonCard:', pokemonCard);
+        console.error('cardInner:', cardInner);
         return;
     }
+    
+    console.log('Pokemon Card: Setting up flip functionality');
     
     // Method to check if an element is related to admin functionality
     function isAdminElement(element) {
@@ -58,7 +63,7 @@ function setupCardFlipping() {
         console.log('Card flipped state:', cardInner.classList.contains('flipped'));
         
         // Play flip sound effect
-        const flipSound = new Audio('/assets/sounds/flip.mp3');
+        const flipSound = new Audio('/frontend/assets/sounds/flip.mp3');
         flipSound.volume = 0.5;
         flipSound.play().catch(e => {
             console.log('Sound play error:', e);
