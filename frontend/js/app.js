@@ -129,17 +129,28 @@ document.addEventListener('DOMContentLoaded', function() {
         ApiClient.image.get().then(response => {
             if (response.success) {
                 // Set profile image on the card
-                const profileImage = document.querySelector('.profile-image');
-                if (profileImage) {
-                    profileImage.src = response.data.url;
+                const cardImage = document.querySelector('.card-image img');
+                if (cardImage) {
+                    cardImage.src = response.data.url;
+                    cardImage.classList.add('custom-image');
+                    cardImage.alt = 'Akash Patel - Legendary Software Engineer';
                     
                     // Show delete image button if authenticated
                     if (ApiClient.auth.isAuthenticated() && deleteImageButton) {
                         deleteImageButton.style.display = 'block';
                     }
+                    
+                    console.log('Successfully loaded custom profile image:', response.data.url);
                 }
             } else {
                 console.log('No profile image found, using placeholder');
+                
+                // Reset to placeholder if no image found
+                const cardImage = document.querySelector('.card-image img');
+                if (cardImage) {
+                    cardImage.src = '/api/placeholder/300/155';
+                    cardImage.classList.remove('custom-image');
+                }
                 
                 // Hide delete image button
                 if (deleteImageButton) {

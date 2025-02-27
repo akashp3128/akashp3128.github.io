@@ -472,7 +472,8 @@ body.authenticated a.admin-only {
     transition: transform 0.6s;
     transform-style: preserve-3d;
     border-radius: var(--card-border-radius);
-    box-shadow: 0 0 30px rgba(0, 176, 107, 0.5);
+    box-shadow: 0 0 30px rgba(212, 175, 55, 0.7); /* Golden glow for legendary card */
+    border: 2px solid rgba(212, 175, 55, 0.8); /* Golden border */
 }
 
 .card-front,
@@ -505,12 +506,13 @@ body.authenticated a.admin-only {
 }
 
 .card-header {
-    background: linear-gradient(135deg, #1e6b52, #00b06b);
+    background: linear-gradient(135deg, #b8860b, #d4af37);
     padding: 10px;
     text-align: center;
     font-size: 16px;
     font-weight: bold;
     position: relative;
+    text-shadow: 0 0 2px #000;
 }
 
 .card-energy {
@@ -518,7 +520,8 @@ body.authenticated a.admin-only {
     top: 10px;
     right: 10px;
     font-weight: bold;
-    color: #fff;
+    color: #ffdf00;
+    text-shadow: 0 0 3px #000;
 }
 
 .card-image {
@@ -592,7 +595,8 @@ body.authenticated a.admin-only {
 
 .card-type {
     font-size: 12px;
-    color: #999;
+    color: #d4af37; /* Golden color for legendary type */
+    font-weight: bold;
 }
 
 .card-stats {
@@ -715,12 +719,18 @@ body.authenticated a.admin-only {
 /* Card flip classes */
 .card-inner.flipped {
     transform: rotateY(180deg);
+    box-shadow: 0 0 30px rgba(212, 175, 55, 0.9); /* Brighter glow when flipped */
 }
 
-/* Temporary class to prevent hover effects during flip */
 .card-inner.flipping {
-    transition: transform 0.8s;
     pointer-events: none;
+    animation: card-pulse 0.8s;
+}
+
+@keyframes card-pulse {
+    0% { box-shadow: 0 0 30px rgba(212, 175, 55, 0.7); }
+    50% { box-shadow: 0 0 40px rgba(212, 175, 55, 1); }
+    100% { box-shadow: 0 0 30px rgba(212, 175, 55, 0.7); }
 }
 
 .skill-tag {
