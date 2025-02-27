@@ -2,15 +2,15 @@
 document.addEventListener('DOMContentLoaded', function() {
     // DOM References
     const cardInner = document.querySelector('.card-inner');
-    const settingsBtn = document.getElementById('settingsBtn');
-    const adminPasswordInput = document.getElementById('adminPassword');
-    const adminLoginButton = document.getElementById('adminLoginButton');
-    const adminLogoutButton = document.getElementById('adminLogoutButton');
+    const settingsBtn = document.getElementById('adminToggle');
+    const adminPasswordInput = document.getElementById('passwordInput');
+    const adminLoginButton = document.getElementById('submitPassword');
+    const adminLogoutButton = document.getElementById('logoutBtn');
     const adminPanel = document.querySelector('.admin-panel');
     const resumeUploadButton = document.getElementById('resumeUploadButton');
-    const resumeFileInput = document.getElementById('resumeFile');
-    const imageFileInput = document.getElementById('imageFile');
-    const imageUploadButton = document.getElementById('imageUploadButton');
+    const resumeFileInput = document.getElementById('fileInput');
+    const imageFileInput = document.getElementById('imageFileInput');
+    const imageUploadButton = document.getElementById('imageUploadArea');
     
     // Check if ApiClient is available
     if (!window.ApiClient) {
@@ -40,18 +40,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Function to show the admin panel
     function showAdminPanel() {
-        adminPanel.classList.add('visible');
-        adminPasswordInput.style.display = 'none';
-        adminLoginButton.style.display = 'none';
-        adminLogoutButton.style.display = 'block';
+        if (adminPanel) adminPanel.classList.add('visible');
+        if (adminPasswordInput) adminPasswordInput.style.display = 'none';
+        if (adminLoginButton) adminLoginButton.style.display = 'none';
+        if (adminLogoutButton) adminLogoutButton.style.display = 'block';
     }
     
     // Function to hide the admin panel
     function hideAdminPanel() {
-        adminPanel.classList.remove('visible');
-        adminPasswordInput.style.display = 'block';
-        adminLoginButton.style.display = 'block';
-        adminLogoutButton.style.display = 'none';
+        if (adminPanel) adminPanel.classList.remove('visible');
+        if (adminPasswordInput) adminPasswordInput.style.display = 'block';
+        if (adminLoginButton) adminLoginButton.style.display = 'block';
+        if (adminLogoutButton) adminLogoutButton.style.display = 'none';
     }
     
     // Initialize the Pokemon card
@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Settings button click handler
         if (settingsBtn) {
             settingsBtn.addEventListener('click', function() {
-                const authDialog = document.getElementById('authDialog');
+                const authDialog = document.getElementById('passwordModal');
                 if (authDialog) {
                     authDialog.style.display = 'flex';
                 }
@@ -135,11 +135,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Close dialog buttons
-        document.querySelectorAll('.close-dialog').forEach(button => {
+        document.querySelectorAll('.close-modal').forEach(button => {
             button.addEventListener('click', function() {
-                const dialog = this.closest('.dialog');
-                if (dialog) {
-                    dialog.style.display = 'none';
+                const modal = this.closest('.modal');
+                if (modal) {
+                    modal.style.display = 'none';
                 }
             });
         });
@@ -147,6 +147,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Handle admin login
     function handleAdminLogin() {
+        if (!adminPasswordInput) {
+            console.error('Password input not found');
+            return;
+        }
+        
         const password = adminPasswordInput.value;
         
         if (!password) {
@@ -158,6 +163,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if (response.success) {
                 showAdminPanel();
                 adminPasswordInput.value = '';
+                
+                // Hide the password modal after successful login
+                const passwordModal = document.getElementById('passwordModal');
+                if (passwordModal) {
+                    passwordModal.style.display = 'none';
+                }
             } else {
                 showError('Invalid password');
             }
@@ -220,12 +231,15 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Show an error message
     function showError(message) {
-        const errorDialog = document.getElementById('errorDialog');
-        const errorMessage = document.getElementById('errorMessage');
+        const notification = document.getElementById('notification');
         
-        if (errorDialog && errorMessage) {
-            errorMessage.textContent = message;
-            errorDialog.style.display = 'flex';
+        if (notification) {
+            notification.textContent = message;
+            notification.className = 'notification error show';
+            
+            setTimeout(() => {
+                notification.className = 'notification';
+            }, 3000);
         } else {
             alert('Error: ' + message);
         }
@@ -233,12 +247,15 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Show a message
     function showMessage(message) {
-        const messageDialog = document.getElementById('messageDialog');
-        const messageText = document.getElementById('messageText');
+        const notification = document.getElementById('notification');
         
-        if (messageDialog && messageText) {
-            messageText.textContent = message;
-            messageDialog.style.display = 'flex';
+        if (notification) {
+            notification.textContent = message;
+            notification.className = 'notification success show';
+            
+            setTimeout(() => {
+                notification.className = 'notification';
+            }, 3000);
         } else {
             alert(message);
         }
