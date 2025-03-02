@@ -149,28 +149,28 @@
 
 /* Settings Panel Styles */
 .settings-toggle {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background-color: #3a3a3a;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    font-size: 24px;
-    cursor: pointer;
-    z-index: 1900;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    position: fixed !important;
+    bottom: 20px !important;
+    right: 20px !important;
+    background-color: #3a3a3a !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 50% !important;
+    width: 50px !important;
+    height: 50px !important;
+    font-size: 24px !important;
+    cursor: pointer !important;
+    z-index: 9999 !important; /* Increased z-index to be above everything */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3) !important;
+    transition: all 0.3s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
 .settings-toggle:hover {
-    background-color: #555;
-    transform: scale(1.05);
+    background-color: #555 !important;
+    transform: scale(1.05) !important;
 }
 
 .settings-panel {
