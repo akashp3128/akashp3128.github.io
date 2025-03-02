@@ -132,9 +132,22 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Setup all event listeners
     function setupEventListeners() {
-        // Admin toggle
+        console.log('Setting up event listeners');
+        
+        // Admin toggle - use both approaches for maximum compatibility
         if (adminToggle) {
-            adminToggle.addEventListener('click', toggleAdminLogin);
+            console.log('Adding click event to admin toggle');
+            // Keep the original event listener, but make it backup
+            adminToggle.addEventListener('click', function(e) {
+                console.log('Admin toggle clicked via event listener');
+                // The inline onclick should handle this now, this is just backup
+                if (passwordModal) {
+                    passwordModal.style.display = 'block';
+                    if (passwordInput) passwordInput.focus();
+                }
+            });
+        } else {
+            console.error('Admin toggle button not found!');
         }
         
         // Close modal button
@@ -404,38 +417,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (currentEvaluationIndex < evaluations.length - 1) {
             currentEvaluationIndex++;
             openImageViewer(currentEvaluationIndex);
-        }
-    }
-    
-    // Function to toggle admin login form
-    function toggleAdminLogin() {
-        // If authenticated, toggle admin mode
-        if (window.ApiClient.auth.isAuthenticated()) {
-            // Toggle admin panel display (different behavior from main app, as this directly shows/hides admin elements)
-            const newAdminState = !adminToggle.classList.contains('admin-active');
-            
-            if (newAdminState) {
-                // Enable admin features
-                adminToggle.classList.add('admin-active');
-                document.querySelectorAll('.admin-only').forEach(el => {
-                    el.style.display = el.tagName.toLowerCase() === 'button' || 
-                                      el.tagName.toLowerCase() === 'a' ? 
-                                      'inline-block' : 'block';
-                });
-            } else {
-                // If user clicks the button while admin mode is active, offer to log out
-                if (confirm('Do you want to log out?')) {
-                    window.ApiClient.auth.logout();
-                    checkLoginStatus();
-                    window.location.reload(); // Ensure clean state
-                }
-            }
-        } else {
-            // Not authenticated, show the login modal
-            if (passwordModal) {
-                passwordModal.style.display = 'block';
-                if (passwordInput) passwordInput.focus();
-            }
         }
     }
     
