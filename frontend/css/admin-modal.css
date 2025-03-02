@@ -60,4 +60,70 @@
 .modal-control-btn:hover {
     color: white !important;
     background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Dragging state */
+.modal-content.dragging {
+    opacity: 0.8 !important;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Fix for the settings button */
+.admin-toggle {
+    z-index: 900 !important; /* Lower than modal z-index */
+}
+
+/* Enhanced close button */
+.modal-content .close-modal {
+    position: absolute !important;
+    right: 10px !important;
+    top: 10px !important;
+    font-size: 24px !important;
+    z-index: 1000 !important;
+    padding: 5px 10px !important;
+    border-radius: 50% !important;
+    transition: all 0.2s ease !important;
+}
+
+.modal-content .close-modal:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    transform: scale(1.1) !important;
+}
+
+/* Notification system */
+.notification {
+    position: fixed !important;
+    bottom: 20px !important;
+    right: 20px !important;
+    padding: 15px 20px !important;
+    border-radius: 5px !important;
+    background-color: #333 !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    z-index: 9999 !important;
+    transition: transform 0.3s ease, opacity 0.3s ease !important;
+    transform: translateY(100px) !important;
+    opacity: 0 !important;
+    max-width: 300px !important;
+}
+
+.notification.show {
+    transform: translateY(0) !important;
+    opacity: 1 !important;
+}
+
+.notification.success {
+    background-color: #10B981 !important;
+}
+
+.notification.error {
+    background-color: #EF4444 !important;
+}
+
+.notification.warning {
+    background-color: #F59E0B !important;
+}
+
+.notification.info {
+    background-color: #3B82F6 !important;
 } 
