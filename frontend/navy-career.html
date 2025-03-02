@@ -162,12 +162,17 @@
     
     <!-- Admin Login Panel (Reused from main page) -->
     <button id="adminToggle" class="admin-toggle">⚙️</button>
-    <div class="admin-login" id="adminLogin">
-        <h3>Admin Login</h3>
-        <div class="form-group">
-            <input type="password" id="passwordInput" placeholder="Password">
+    
+    <div id="passwordModal" class="modal">
+        <div class="modal-content">
+            <span id="closeModal" class="close-modal">&times;</span>
+            <h2>Enter Admin Password</h2>
+            <div class="form-group">
+                <label for="passwordInput">Admin Password</label>
+                <input type="password" id="passwordInput" placeholder="Enter password">
+            </div>
+            <button id="submitPassword" class="btn">Login</button>
         </div>
-        <button id="submitPassword" class="btn btn-primary">Login</button>
     </div>
     
     <footer>

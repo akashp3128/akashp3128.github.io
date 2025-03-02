@@ -1,6 +1,8 @@
 // Navy Evaluations Page JavaScript
 
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Navy evaluations page initialized');
+    
     // DOM References
     const navyProfileImage = document.getElementById('navyProfileImage');
     const navyProfileUploadOverlay = document.getElementById('navyProfileUploadOverlay');
@@ -45,7 +47,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Admin Panel Controls (Reused from main page)
     const adminToggle = document.getElementById('adminToggle');
-    const adminLogin = document.getElementById('adminLogin');
+    const passwordModal = document.getElementById('passwordModal');
+    const closeModalBtn = document.getElementById('closeModal');
     const passwordInput = document.getElementById('passwordInput');
     const submitPassword = document.getElementById('submitPassword');
     
@@ -55,17 +58,28 @@ document.addEventListener('DOMContentLoaded', function() {
     let evaluations = [];
     let currentUploadStep = 1;
     
-    // Check if ApiClient is available
-    if (!window.ApiClient) {
-        console.error('ApiClient not available');
-        return;
+    // Make sure ApiClient is available before proceeding
+    if (typeof window.ApiClient === 'undefined') {
+        console.error('ApiClient not available. Waiting for it to be defined...');
+        
+        // Check if api.js is loaded
+        const apiScript = document.querySelector('script[src="js/api.js"]');
+        if (!apiScript) {
+            console.error('api.js script tag not found!');
+        }
+        
+        // Wait for ApiClient to be defined
+        const waitForApiClient = setInterval(() => {
+            if (typeof window.ApiClient !== 'undefined') {
+                console.log('ApiClient now available, initializing page');
+                clearInterval(waitForApiClient);
+                initializePage();
+            }
+        }, 100);
+    } else {
+        console.log('ApiClient available, initializing page');
+        initializePage();
     }
-    
-    // Initialize page
-    initializePage();
-    
-    // Setup event listeners
-    setupEventListeners();
     
     // Function to initialize the page
     function initializePage() {
@@ -77,11 +91,20 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Load evaluations
         loadEvaluations();
+        
+        // Setup event listeners
+        setupEventListeners();
     }
     
     // Function to check login status and update UI
     function checkLoginStatus() {
+        if (!window.ApiClient || !window.ApiClient.auth) {
+            console.error('Auth client not available');
+            return;
+        }
+        
         const isAuthenticated = window.ApiClient.auth.isAuthenticated();
+        console.log('Authentication status:', isAuthenticated);
         
         if (isAuthenticated) {
             document.body.classList.add('authenticated');
@@ -96,6 +119,31 @@ document.addEventListener('DOMContentLoaded', function() {
         if (adminToggle) {
             adminToggle.addEventListener('click', toggleAdminLogin);
         }
+        
+        // Close modal button
+        if (closeModalBtn) {
+            closeModalBtn.addEventListener('click', function() {
+                if (passwordModal) {
+                    passwordModal.style.display = 'none';
+                }
+            });
+        }
+        
+        // Close modal when clicking outside
+        window.addEventListener('click', function(event) {
+            if (event.target === passwordModal) {
+                passwordModal.style.display = 'none';
+            }
+            if (event.target === imageViewerModal) {
+                closeModal(imageViewerModal);
+            }
+            if (event.target === uploadEvalModal) {
+                closeModal(uploadEvalModal);
+            }
+            if (event.target === editAboutModal) {
+                closeModal(editAboutModal);
+            }
+        });
         
         // Login form
         if (submitPassword) {
@@ -166,17 +214,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // Image viewer navigation
         if (prevImageBtn) prevImageBtn.addEventListener('click', showPrevImage);
         if (nextImageBtn) nextImageBtn.addEventListener('click', showNextImage);
-        
-        // Close modal when clicking outside of it
-        window.addEventListener('click', function(e) {
-            if (e.target === imageViewerModal) {
-                closeModal(imageViewerModal);
-            } else if (e.target === uploadEvalModal) {
-                closeModal(uploadEvalModal);
-            } else if (e.target === editAboutModal) {
-                closeModal(editAboutModal);
-            }
-        });
     }
     
     // Load naval profile content
@@ -353,16 +390,25 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Function to toggle admin login panel
+    // Function to toggle admin login form
     function toggleAdminLogin() {
-        if (window.ApiClient.auth.isAuthenticated()) {
-            // If already authenticated, ask if they want to log out
+        if (!window.ApiClient.auth.isAuthenticated()) {
+            // Show the password modal
+            if (passwordModal) {
+                passwordModal.style.display = 'block';
+                if (passwordInput) passwordInput.focus();
+            }
+        } else {
+            // If already authenticated, log out
             if (confirm('Do you want to log out?')) {
                 window.ApiClient.auth.logout();
                 checkLoginStatus();
+                adminToggle.classList.remove('admin-active');
+                loadEvaluations(); // Refresh content to hide admin features
+                
+                // Reload the page to ensure all admin elements are properly hidden
+                window.location.reload();
             }
-        } else {
-            adminLogin.style.display = adminLogin.style.display === 'block' ? 'none' : 'block';
         }
     }
     
@@ -376,10 +422,26 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         window.ApiClient.auth.login(password)
-            .then(success => {
-                if (success) {
-                    adminLogin.style.display = 'none';
+            .then(response => {
+                if (response.success) {
+                    // Hide the password modal
+                    if (passwordModal) {
+                        passwordModal.style.display = 'none';
+                    }
+                    
+                    // Update UI based on new auth status
                     checkLoginStatus();
+                    
+                    // Clear password field
+                    passwordInput.value = '';
+                    
+                    // Reload evaluations to show admin features
+                    loadEvaluations();
+                    loadNavalProfile();
+                    
+                    // Apply authenticated class and styles
+                    document.body.classList.add('authenticated');
+                    if (adminToggle) adminToggle.classList.add('admin-active');
                 } else {
                     alert('Invalid password');
                 }
