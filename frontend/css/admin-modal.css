@@ -1,0 +1,63 @@
+/* Admin modal enhancements */
+.modal.admin-modal {
+    background-color: rgba(0, 0, 0, 0.5) !important;
+    backdrop-filter: blur(3px) !important;
+    -webkit-backdrop-filter: blur(3px) !important;
+}
+
+.modal-content.draggable {
+    cursor: move;
+    position: absolute !important;
+    margin: 0 !important;
+    top: 50px !important;
+    left: 50% !important;
+    transform: translateX(-50%);
+    width: 600px !important;
+    max-width: 90% !important;
+    border: 2px solid rgba(29, 78, 216, 0.5) !important;
+    transition: all 0.3s ease !important;
+}
+
+.modal-content.compact {
+    width: 400px !important;
+    max-width: 80% !important;
+    padding: 20px !important;
+    opacity: 0.9 !important;
+}
+
+.modal-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    margin-bottom: 20px !important;
+}
+
+.modal-header h3 {
+    margin: 0 !important;
+}
+
+.modal-controls {
+    display: flex !important;
+    gap: 10px !important;
+}
+
+.modal-control-btn {
+    background: none !important;
+    border: none !important;
+    color: #ccc !important;
+    font-size: 18px !important;
+    cursor: pointer !important;
+    transition: color 0.3s ease !important;
+    padding: 0 !important;
+    width: 28px !important;
+    height: 28px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 4px !important;
+}
+
+.modal-control-btn:hover {
+    color: white !important;
+    background-color: rgba(255, 255, 255, 0.1) !important;
+} 

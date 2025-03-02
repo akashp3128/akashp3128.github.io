@@ -937,6 +937,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function closeModal(modal) {
         if (modal) {
             modal.style.display = 'none';
+            
+            // Remove admin classes
             modal.classList.remove('admin-modal');
             
             // Reset modal content position if it was draggable
