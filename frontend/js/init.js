@@ -116,6 +116,9 @@
         }
     };
     
+    // Make Notifications available globally
+    window.Notifications = Notifications;
+    
     // Settings Panel Manager
     const SettingsManager = {
         init: function() {

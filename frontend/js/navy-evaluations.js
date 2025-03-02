@@ -97,166 +97,50 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize the page
     function initializePage() {
-        console.log('Initializing Navy Evaluations page');
-        
-        // Set up all event listeners
-        setupEventListeners();
+        console.log('Initializing Navy evaluations page');
         
         // Check login status
         checkLoginStatus();
         
-        // Load naval profile info
-        loadNavalProfile();
-        
-        // Load evaluations data
-        loadEvaluations();
+        // Setup event listeners for this page
+        setupEventListeners();
         
         // Setup rich text editor
         setupRichTextEditor();
+        
+        // Load naval profile content
+        loadNavalProfile();
+        
+        // Load evaluations
+        loadEvaluations();
     }
     
-    // Function to check login status and update UI
+    // Check if user is authenticated
     function checkLoginStatus() {
-        console.log('Checking login status...');
+        console.log('Checking login status');
         
-        // For simplicity, we'll use localStorage directly
+        // This is now done in init.js, but we still need to track admin state
         const isAuthenticated = localStorage.getItem('admin_authenticated') === 'true';
         
-        console.log('Authentication status:', isAuthenticated);
-        
-        if (isAuthenticated) {
-            document.body.classList.add('authenticated');
-            if (adminToggle) adminToggle.classList.add('admin-active');
-            
-            // Show all admin-only elements
-            document.querySelectorAll('.admin-only').forEach(el => {
-                el.style.display = el.tagName.toLowerCase() === 'button' || 
-                                  el.tagName.toLowerCase() === 'a' ? 
-                                  'inline-block' : 'block';
-            });
-        } else {
-            document.body.classList.remove('authenticated');
-            if (adminToggle) adminToggle.classList.remove('admin-active');
-            
-            // Hide all admin-only elements
-            document.querySelectorAll('.admin-only').forEach(el => {
-                el.style.display = 'none';
-            });
-        }
+        console.log('User authenticated:', isAuthenticated);
     }
     
-    // Setup all event listeners
+    // Set up page-specific event listeners
     function setupEventListeners() {
         console.log('Setting up event listeners');
+
+        // Only bind event listeners for elements that don't have handlers in init.js
         
-        // Admin toggle - opens settings panel when authenticated, otherwise shows login modal
-        if (adminToggle) {
-            adminToggle.addEventListener('click', function() {
-                if (localStorage.getItem('admin_authenticated') === 'true') {
-                    toggleSettingsPanel();
-                } else {
-                    openModal(passwordModal);
-                }
-            });
-        }
-        
-        // Close settings panel
-        if (closeSettings) {
-            closeSettings.addEventListener('click', toggleSettingsPanel);
-        }
-        
-        // Settings panel buttons
-        if (settingsEditAbout) settingsEditAbout.addEventListener('click', function() {
-            openEditAboutModal();
-            toggleSettingsPanel();
-        });
-        
-        if (settingsUploadProfile) settingsUploadProfile.addEventListener('click', function() {
-            openProfileImageModal();
-            toggleSettingsPanel();
-        });
-        
-        if (settingsUploadEval) settingsUploadEval.addEventListener('click', function() {
-            openUploadEvalModal();
-            toggleSettingsPanel();
-        });
-        
-        if (settingsReorderEvals) settingsReorderEvals.addEventListener('click', function() {
-            enableReorderMode();
-            toggleSettingsPanel();
-        });
-        
-        if (settingsLogout) settingsLogout.addEventListener('click', function() {
-            logout();
-            toggleSettingsPanel();
-        });
-        
-        // Close modals on close button
-        document.querySelectorAll('.close-modal').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const modal = this.closest('.modal');
-                closeModal(modal);
-            });
-        });
-        
-        // Close modals on outside click
-        window.addEventListener('click', function(event) {
-            if (event.target.classList.contains('modal')) {
-                closeModal(event.target);
-            }
-        });
-        
-        // Login form submission
-        if (submitPassword) {
-            submitPassword.addEventListener('click', handleLogin);
-        }
-        
-        if (passwordInput) {
-            passwordInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    handleLogin();
-                }
-            });
-        }
-        
-        // Navy profile image upload overlay
-        if (navyProfileUploadOverlay) {
-            navyProfileUploadOverlay.addEventListener('click', function() {
-                openProfileImageModal();
-            });
-        }
-        
-        // About section edit button
-        if (editNavyAboutBtn) {
-            editNavyAboutBtn.addEventListener('click', openEditAboutModal);
-        }
-        
-        // Save about changes
-        if (saveAboutBtn) {
-            saveAboutBtn.addEventListener('click', saveAboutContent);
-        }
-        
-        // Upload evaluation button
+        // For evaluation-specific functions that aren't in init.js
         if (uploadEvalBtn) {
             uploadEvalBtn.addEventListener('click', openUploadEvalModal);
         }
         
-        // Reorder evaluations button
         if (reorderEvalsBtn) {
             reorderEvalsBtn.addEventListener('click', enableReorderMode);
         }
-        
-        // Evaluation upload area
-        if (evalUploadArea) {
-            evalUploadArea.addEventListener('click', function() {
-                evalFileInput.click();
-            });
-            evalUploadArea.addEventListener('dragover', handleDragOver);
-            evalUploadArea.addEventListener('drop', function(e) {
-                handleFileDrop(e, evalFileInput);
-            });
-        }
-        
+
+        // Since we're already in the Navy career page, we need these event listeners
         // Profile upload area
         if (profileUploadArea) {
             profileUploadArea.addEventListener('click', function() {
@@ -312,32 +196,47 @@ document.addEventListener('DOMContentLoaded', function() {
         // Image viewer navigation
         if (prevImageBtn) prevImageBtn.addEventListener('click', showPrevImage);
         if (nextImageBtn) nextImageBtn.addEventListener('click', showNextImage);
+
+        // IMPORTANT: Add the save button listener that was missing before
+        if (saveAboutBtn) {
+            saveAboutBtn.addEventListener('click', saveAboutContent);
+        }
     }
     
-    // Toggle settings panel visibility
+    // Toggle settings panel
     function toggleSettingsPanel() {
         if (settingsPanel) {
             settingsPanel.classList.toggle('visible');
         }
     }
     
-    // Function to show a notification
+    // Show notification
     function showNotification(message, type = 'success', duration = 3000) {
-        if (!notification || !notificationMessage) return;
+        // Use the Notification system from init.js
+        if (window.Notifications && window.Notifications.show) {
+            window.Notifications.show(message, type, duration);
+            return;
+        }
         
-        notificationMessage.textContent = message;
-        notification.className = 'notification';
-        notification.classList.add(type);
-        notification.classList.add('visible');
+        // Fallback if the global notification system isn't available
+        const notification = document.getElementById('notification');
+        const notificationMessage = document.getElementById('notificationMessage');
         
-        setTimeout(() => {
-            notification.classList.remove('visible');
-        }, duration);
+        if (notification && notificationMessage) {
+            notificationMessage.textContent = message;
+            notification.className = 'notification ' + type;
+            notification.classList.add('visible');
+            
+            setTimeout(() => {
+                notification.classList.remove('visible');
+            }, duration);
+        }
     }
     
     // Setup rich text editor
     function setupRichTextEditor() {
         if (!richTextControls || !aboutTextEditor) return;
+        console.log('Setting up rich text editor');
         
         richTextControls.querySelectorAll('button').forEach(button => {
             button.addEventListener('click', function() {
@@ -408,6 +307,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Function to open the edit about modal
     function openEditAboutModal() {
         if (!aboutTextEditor || !navyAboutContent || !editAboutModal) return;
+        console.log('Opening edit about modal');
         
         // Load content from the about section into the editor
         aboutTextEditor.innerHTML = navyAboutContent.innerHTML;
@@ -419,6 +319,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Function to save about content
     function saveAboutContent() {
         if (!aboutTextEditor || !navyAboutContent) return;
+        console.log('Saving about content');
         
         const content = aboutTextEditor.innerHTML;
         
@@ -469,48 +370,6 @@ document.addEventListener('DOMContentLoaded', function() {
         showNotification('Profile image updated successfully!', 'success');
     }
     
-    // Function to handle login
-    function handleLogin() {
-        const password = passwordInput ? passwordInput.value : '';
-        
-        if (!password) {
-            showNotification('Please enter a password', 'error');
-            return;
-        }
-        
-        // Check password - use the original Rosie@007 password
-        if (password === 'Rosie@007') {
-            // Set authentication in localStorage
-            localStorage.setItem('admin_authenticated', 'true');
-            
-            // Update UI for authenticated user
-            checkLoginStatus();
-            
-            // Close the modal
-            closeModal(passwordModal);
-            
-            // Clear password field
-            if (passwordInput) passwordInput.value = '';
-            
-            // Show success message
-            showNotification('Login successful!', 'success');
-        } else {
-            showNotification('Incorrect password', 'error');
-        }
-    }
-    
-    // Function to handle logout
-    function logout() {
-        // Clear authentication in localStorage
-        localStorage.removeItem('admin_authenticated');
-        
-        // Update UI
-        checkLoginStatus();
-        
-        // Show message
-        showNotification('You have been logged out', 'success');
-    }
-    
     // Function to open a modal
     function openModal(modal) {
         if (modal) {
@@ -527,11 +386,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Function to close all modals
     function closeAllModals() {
-        closeModal(imageViewerModal);
-        closeModal(uploadEvalModal);
-        closeModal(editAboutModal);
-        closeModal(profileImageModal);
-        closeModal(passwordModal);
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.style.display = 'none';
+        });
     }
     
     // Load evaluations & Render (using the existing methods)
