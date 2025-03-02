@@ -1,299 +1,473 @@
-// Initialize the Pokemon Card Website
-console.log('Initializing Pokemon Card Website...');
+/**
+ * Initialization and Core Utilities
+ * Contains global utilities for authentication, notifications, and UI management
+ */
 
-// Globals for the application
-window.ApiClient = window.ApiClient || {};  // Will be populated in api.js
+// Notification System - provides toast notifications
+const NotificationSystem = (() => {
+    const log = (message) => {
+        console.log(`[akash] NotificationSystem: ${message}`);
+    };
 
-// Create promise to track ApiClient initialization
-window.apiClientReady = new Promise((resolve) => {
-    window.resolveApiClient = resolve;
-});
+    const createNotificationElement = (message, type = 'info') => {
+        log(`Creating notification: ${message} (${type})`);
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.textContent = message;
+        return notification;
+    };
 
-// Global auth state management
-window.AuthManager = {
-    // The admin password - centralized in one place
-    ADMIN_PASSWORD: 'admin1234', // This should match what was used in navy-evaluations.js
+    const showNotification = (message, type = 'info', duration = 3000) => {
+        log(`Showing notification: ${message} (${type})`);
+        const notification = createNotificationElement(message, type);
+        document.body.appendChild(notification);
+        
+        // Force reflow for animation
+        notification.offsetHeight;
+        
+        // Show notification
+        notification.classList.add('show');
+        
+        // Auto-hide after duration
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => {
+                notification.remove();
+            }, 300); // Match transition duration
+        }, duration);
+    };
     
-    isAuthenticated: function() {
-        const authState = localStorage.getItem('admin_authenticated') === 'true';
-        console.log('[akash] AuthManager.isAuthenticated() called, returned:', authState);
-        return authState;
-    },
+    return {
+        showNotification
+    };
+})();
+
+// Authentication Manager - handles login, logout, and auth state
+const AuthManager = (() => {
+    const ADMIN_PASSWORD = 'admin1234';
+    const AUTH_KEY = 'authenticated';
+    const authListeners = [];
     
-    login: function(password) {
-        console.log('[akash] AuthManager.login() called');
-        return new Promise((resolve, reject) => {
-            // This is a placeholder - in production you should use a secure method
-            // For demo/development only - do not use in production
-            if (password === this.ADMIN_PASSWORD) {
-                console.log('[akash] Login successful, setting authenticated state to true');
-                localStorage.setItem('admin_authenticated', 'true');
-                document.body.classList.add('authenticated');
-                this.notifyAuthStateChange(true);
-                resolve(true);
-            } else {
-                console.log('[akash] Login failed, password incorrect');
-                reject(new Error('Invalid password'));
-            }
-        });
-    },
+    const log = (message) => {
+        console.log(`[akash] AuthManager: ${message}`);
+    };
     
-    logout: function() {
-        console.log('[akash] AuthManager.logout() called');
-        localStorage.removeItem('admin_authenticated');
-        document.body.classList.remove('authenticated');
-        this.notifyAuthStateChange(false);
-    },
-    
-    notifyAuthStateChange: function(isAuthenticated) {
-        console.log('[akash] AuthManager notifying auth state change:', isAuthenticated);
-        // Dispatch an event that other components can listen for
-        const event = new CustomEvent('authStateChanged', {
-            detail: { isAuthenticated }
-        });
-        document.dispatchEvent(event);
-    },
-    
-    initialize: function() {
-        console.log('[akash] AuthManager initializing');
-        // Set initial auth state
-        if (this.isAuthenticated()) {
-            console.log('[akash] User is authenticated, adding authenticated class to body');
+    const init = () => {
+        log('Initializing AuthManager');
+        
+        // Set initial body class based on authentication
+        if (isAuthenticated()) {
             document.body.classList.add('authenticated');
+            log('User is authenticated, adding authenticated class to body');
         } else {
-            console.log('[akash] User is not authenticated');
             document.body.classList.remove('authenticated');
+            log('User is not authenticated, removing authenticated class from body');
         }
         
-        // Listen for clicks on logout buttons across the site
-        document.querySelectorAll('.logout-btn').forEach(button => {
-            button.addEventListener('click', (e) => {
+        // Setup login form handler
+        const loginForm = document.getElementById('loginForm');
+        if (loginForm) {
+            log('Setting up login form handler');
+            loginForm.addEventListener('submit', (e) => {
                 e.preventDefault();
-                this.logout();
-                window.SettingsManager.closeSettings();
+                const passwordInput = document.getElementById('adminPassword');
+                if (passwordInput) {
+                    login(passwordInput.value)
+                        .then(() => {
+                            // Close login modal
+                            const loginModal = document.getElementById('loginModal');
+                            if (loginModal) {
+                                hideModal(loginModal);
+                            }
+                            
+                            // Show settings panel after login
+                            if (SettingsManager) {
+                                SettingsManager.openSettingsPanel();
+                            }
+                        })
+                        .catch(error => {
+                            NotificationSystem.showNotification(error, 'error');
+                        });
+                }
             });
-        });
-        console.log('[akash] AuthManager initialization complete');
-    }
-};
-
-// Global settings panel management
-window.SettingsManager = {
-    settingsPanel: null,
-    
-    initialize: function() {
-        console.log('[akash] SettingsManager initializing');
-        // Find settings panel across site
-        this.settingsPanel = document.querySelector('.settings-panel');
-        console.log('[akash] Settings panel found:', this.settingsPanel ? 'yes' : 'no');
-        
-        // Setup toggle buttons
-        const toggleButtons = document.querySelectorAll('.settings-toggle');
-        console.log('[akash] Settings toggle buttons found:', toggleButtons.length);
-        toggleButtons.forEach(toggle => {
-            toggle.addEventListener('click', () => this.toggleSettings());
-        });
-        
-        // Add close button listener
-        const closeBtn = document.querySelector('.settings-close');
-        console.log('[akash] Settings close button found:', closeBtn ? 'yes' : 'no');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', () => this.closeSettings());
+        } else {
+            log('Login form not found');
         }
         
-        // Listen for auth state changes
-        document.addEventListener('authStateChanged', (event) => {
-            console.log('[akash] SettingsManager received auth state change:', event.detail.isAuthenticated);
-            if (!event.detail.isAuthenticated) {
-                this.closeSettings();
-            }
-        });
-        console.log('[akash] SettingsManager initialization complete');
-    },
+        return {
+            isAuthenticated,
+            login,
+            logout,
+            onAuthChange
+        };
+    };
     
-    toggleSettings: function() {
-        console.log('[akash] SettingsManager.toggleSettings() called');
-        if (!window.AuthManager.isAuthenticated()) {
-            console.log('[akash] User not authenticated, showing login modal');
-            // Show login modal if not authenticated
-            if (window.ModalManager) {
-                const loginModal = document.getElementById('passwordModal');
-                if (loginModal) {
-                    console.log('[akash] Opening login modal');
-                    window.ModalManager.openModal(loginModal);
-                    setTimeout(() => {
-                        const passwordInput = document.getElementById('passwordInput');
-                        if (passwordInput) passwordInput.focus();
-                    }, 100);
-                } else {
-                    console.log('[akash] Login modal not found');
-                }
+    const isAuthenticated = () => {
+        const authState = localStorage.getItem(AUTH_KEY);
+        const authenticated = authState === 'true';
+        log(`Authentication check: ${authenticated}`);
+        return authenticated;
+    };
+    
+    const login = (password) => {
+        log('Login attempt');
+        return new Promise((resolve, reject) => {
+            if (password === ADMIN_PASSWORD) {
+                log('Login successful');
+                localStorage.setItem(AUTH_KEY, 'true');
+                document.body.classList.add('authenticated');
+                
+                // Update authentication UI
+                updateAuthenticatedUI(true);
+                
+                // Notify listeners
+                notifyAuthListeners(true);
+                
+                NotificationSystem.showNotification('Login successful!', 'success');
+                resolve();
             } else {
-                console.log('[akash] ModalManager not found');
+                log('Login failed - incorrect password');
+                reject('Incorrect password. Please try again.');
             }
-        } else {
-            console.log('[akash] User is authenticated, toggling settings panel');
-            // Toggle settings panel
-            if (this.settingsPanel) {
-                if (this.settingsPanel.classList.contains('open')) {
-                    this.closeSettings();
-                } else {
-                    this.openSettings();
-                }
-            } else {
-                console.log('[akash] Settings panel not found');
-            }
-        }
-    },
+        });
+    };
     
-    openSettings: function() {
-        console.log('[akash] SettingsManager.openSettings() called');
-        if (this.settingsPanel) {
-            this.settingsPanel.classList.add('open');
-        } else {
-            console.log('[akash] Could not open settings panel - not found');
-        }
-    },
-    
-    closeSettings: function() {
-        console.log('[akash] SettingsManager.closeSettings() called');
-        if (this.settingsPanel) {
-            this.settingsPanel.classList.remove('open');
-        } else {
-            console.log('[akash] Could not close settings panel - not found');
-        }
-    }
-};
-
-// Initialize global managers on DOM content loaded
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('[akash] DOM content loaded, initializing global managers');
-    
-    // Ensure we have consistent settings button styling
-    // This must happen before initializing managers
-    const adminToggleButtons = document.querySelectorAll('#adminToggle, .admin-toggle');
-    console.log('[akash] Admin toggle buttons found for styling:', adminToggleButtons.length);
-    adminToggleButtons.forEach(toggle => {
-        toggle.classList.add('settings-toggle');
-    });
-    
-    // Initialize managers
-    window.AuthManager.initialize();
-    window.SettingsManager.initialize();
-    
-    // Check for common issues
-    // If we're on navy page but don't have the settings panel
-    if (document.body.classList.contains('navy-page') && 
-        !document.querySelector('.settings-panel')) {
-        console.error('[akash] ERROR: Navy page is missing settings panel!');
-    }
-    
-    // Log page information
-    console.log('[akash] Current page:', window.location.pathname);
-    console.log('[akash] Is navy page:', document.body.classList.contains('navy-page'));
-    console.log('[akash] Is authenticated:', document.body.classList.contains('authenticated'));
-    console.log('[akash] Settings panel exists:', document.querySelector('.settings-panel') ? 'yes' : 'no');
-    
-    // Set API base URL 
-    window.API_BASE_URL = determineApiBaseUrl();
-    
-    // Initialize card
-    initializeCard();
-    
-    // Check for ApiClient initialization
-    checkApiClientInitialization();
-});
-
-// Check if ApiClient is initialized, with retry logic
-function checkApiClientInitialization() {
-    const maxAttempts = 10;
-    let attempts = 0;
-    const intervalTime = 200; // 200ms
-    
-    const checkInterval = setInterval(() => {
-        attempts++;
+    const logout = () => {
+        log('Logging out');
+        localStorage.removeItem(AUTH_KEY);
+        document.body.classList.remove('authenticated');
         
-        // Check if ApiClient is available and has required properties
-        if (window.ApiClient && window.ApiClient.auth && typeof window.ApiClient.auth.isAuthenticated === 'function') {
-            console.log('ApiClient successfully initialized');
-            clearInterval(checkInterval);
-            
-            // Resolve the promise to signal ApiClient is ready
-            if (window.resolveApiClient) {
-                window.resolveApiClient(window.ApiClient);
-            }
-            
-            // Trigger an event for components that need to know when ApiClient is ready
-            document.dispatchEvent(new CustomEvent('apiClientReady', { detail: window.ApiClient }));
-            return;
-        }
+        // Update authentication UI
+        updateAuthenticatedUI(false);
         
-        if (attempts >= maxAttempts) {
-            console.error('Failed to initialize ApiClient after multiple attempts');
-            clearInterval(checkInterval);
-            
-            // Create a fallback version for emergency mode
-            if (!window.ApiClient || !window.ApiClient.auth) {
-                console.warn('Creating emergency fallback for ApiClient');
-                createFallbackApiClient();
-            }
-        }
-    }, intervalTime);
-}
-
-// Create emergency fallback ApiClient
-function createFallbackApiClient() {
-    // Enable emergency mode
-    localStorage.setItem('emergency_mode', 'true');
+        // Notify listeners
+        notifyAuthListeners(false);
+        
+        return true;
+    };
     
-    // Create a basic fallback ApiClient
-    window.ApiClient = window.ApiClient || {};
-    window.ApiClient.auth = window.ApiClient.auth || {
-        isAuthenticated: function() { return false; },
-        login: async function(password) {
-            console.log('Using fallback login');
-            
-            // Only accept dev passwords
-            if (password === 'Rosie@007' || password === 'localdev') {
-                localStorage.setItem('authToken', 'fallback-emergency-token');
-                return { success: true, token: 'fallback-emergency-token' };
-            }
-            
-            return { success: false, error: 'Invalid password' };
-        },
-        logout: function() {
-            localStorage.removeItem('authToken');
-            return { success: true };
+    const updateAuthenticatedUI = (isAuthenticated) => {
+        log(`Updating UI for authentication state: ${isAuthenticated}`);
+        
+        // Show/hide authenticated-only elements
+        const authenticatedElements = document.querySelectorAll('.authenticated-only');
+        authenticatedElements.forEach(el => {
+            el.style.display = isAuthenticated ? '' : 'none';
+        });
+        
+        // Show/hide non-authenticated-only elements
+        const nonAuthenticatedElements = document.querySelectorAll('.non-authenticated-only');
+        nonAuthenticatedElements.forEach(el => {
+            el.style.display = isAuthenticated ? 'none' : '';
+        });
+    };
+    
+    const onAuthChange = (callback) => {
+        if (typeof callback === 'function') {
+            log('Adding auth change listener');
+            authListeners.push(callback);
         }
     };
     
-    // Resolve the promise to signal ApiClient is ready
-    if (window.resolveApiClient) {
-        window.resolveApiClient(window.ApiClient);
+    const notifyAuthListeners = (isAuthenticated) => {
+        log(`Notifying ${authListeners.length} auth listeners of state: ${isAuthenticated}`);
+        authListeners.forEach(listener => {
+            try {
+                listener(isAuthenticated);
+            } catch (error) {
+                console.error('[akash] Error in auth listener:', error);
+            }
+        });
+    };
+    
+    return {
+        init: init(),
+        isAuthenticated,
+        login,
+        logout,
+        onAuthChange
+    };
+})();
+
+// Settings Manager - handles the side panel with settings
+const SettingsManager = (() => {
+    let settingsPanel = null;
+    let toggleButton = null;
+    
+    const log = (message) => {
+        console.log(`[akash] SettingsManager: ${message}`);
+    };
+    
+    const init = () => {
+        log('Initializing SettingsManager');
+        
+        // Get settings panel element
+        settingsPanel = document.querySelector('.settings-panel');
+        
+        // Try to find settings toggle button
+        toggleButton = document.querySelector('.settings-toggle');
+        
+        if (!settingsPanel) {
+            log('Settings panel not found, creating fallback');
+            createFallbackSettingsPanel();
+        }
+        
+        if (!toggleButton) {
+            log('Settings toggle button not found, creating fallback');
+            createFallbackToggleButton();
+        }
+        
+        setupEventListeners();
+    };
+    
+    const createFallbackSettingsPanel = () => {
+        log('Creating fallback settings panel');
+        settingsPanel = document.createElement('div');
+        settingsPanel.className = 'settings-panel';
+        
+        // Create basic panel structure
+        settingsPanel.innerHTML = `
+            <div class="settings-header">
+                <h3>Settings</h3>
+                <button class="settings-close">&times;</button>
+            </div>
+            <div class="settings-content">
+                <div class="settings-section authenticated-only">
+                    <h4>Card Settings</h4>
+                    <ul class="settings-options">
+                        <li><button id="settingsEditCard" class="settings-option">Edit Card Content</button></li>
+                        <li><button id="settingsUploadImage" class="settings-option">Upload Profile Image</button></li>
+                        <li><button id="settingsUploadResume" class="settings-option">Upload Resume</button></li>
+                    </ul>
+                </div>
+                
+                <div class="settings-section non-authenticated-only">
+                    <p>Please log in to access settings</p>
+                </div>
+                
+                <div class="settings-footer authenticated-only">
+                    <button id="logoutBtn" class="settings-option">Logout</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(settingsPanel);
+    };
+    
+    const createFallbackToggleButton = () => {
+        log('Creating fallback toggle button');
+        toggleButton = document.createElement('button');
+        toggleButton.className = 'settings-toggle';
+        toggleButton.id = 'adminToggle';
+        toggleButton.innerHTML = '<i class="fas fa-cog"></i>';
+        document.body.appendChild(toggleButton);
+    };
+    
+    const setupEventListeners = () => {
+        if (toggleButton) {
+            log('Setting up toggle button click handler');
+            toggleButton.addEventListener('click', handleToggleClick);
+        }
+        
+        if (settingsPanel) {
+            log('Setting up settings panel close button handler');
+            const closeButton = settingsPanel.querySelector('.settings-close');
+            if (closeButton) {
+                closeButton.addEventListener('click', closeSettingsPanel);
+            }
+        }
+    };
+    
+    const handleToggleClick = (e) => {
+        log('Settings toggle button clicked');
+        
+        if (!AuthManager.isAuthenticated()) {
+            log('User not authenticated, showing login modal');
+            const loginModal = document.getElementById('loginModal');
+            if (loginModal) {
+                showModal(loginModal);
+            } else {
+                log('Login modal not found');
+                NotificationSystem.showNotification('Login required', 'warning');
+            }
+            return;
+        }
+        
+        toggleSettingsPanel();
+    };
+    
+    const toggleSettingsPanel = () => {
+        if (!settingsPanel) {
+            log('Cannot toggle settings panel: panel not found');
+            return;
+        }
+        
+        log('Toggling settings panel');
+        const isOpen = settingsPanel.classList.contains('open');
+        
+        if (isOpen) {
+            closeSettingsPanel();
+        } else {
+            openSettingsPanel();
+        }
+    };
+    
+    const openSettingsPanel = () => {
+        if (!settingsPanel) {
+            log('Cannot open settings panel: panel not found');
+            return;
+        }
+        
+        log('Opening settings panel');
+        settingsPanel.classList.add('open');
+        
+        // Escape key to close
+        document.addEventListener('keydown', handlePanelEscapeKey);
+        
+        // Click outside to close
+        setTimeout(() => {
+            document.addEventListener('click', handleClickOutside);
+        }, 10);
+    };
+    
+    const closeSettingsPanel = () => {
+        if (!settingsPanel) {
+            log('Cannot close settings panel: panel not found');
+            return;
+        }
+        
+        log('Closing settings panel');
+        settingsPanel.classList.remove('open');
+        
+        // Remove event listeners
+        document.removeEventListener('keydown', handlePanelEscapeKey);
+        document.removeEventListener('click', handleClickOutside);
+    };
+    
+    const handlePanelEscapeKey = (e) => {
+        if (e.key === 'Escape') {
+            log('Escape key pressed, closing settings panel');
+            closeSettingsPanel();
+        }
+    };
+    
+    const handleClickOutside = (e) => {
+        if (settingsPanel && !settingsPanel.contains(e.target) && e.target !== toggleButton) {
+            log('Clicked outside settings panel, closing panel');
+            closeSettingsPanel();
+        }
+    };
+    
+    return {
+        init,
+        openSettingsPanel,
+        closeSettingsPanel,
+        toggleSettingsPanel
+    };
+})();
+
+// Modal Utilities
+function showModal(modal) {
+    if (!modal) return;
+    console.log('[akash] Showing modal:', modal.id);
+    modal.classList.add('show');
+    modal.style.display = 'flex';
+    
+    // Make body unscrollable
+    document.body.style.overflow = 'hidden';
+    
+    // Make modal draggable if it has the draggable class
+    const content = modal.querySelector('.modal-content.draggable');
+    if (content) {
+        enableDragging(content);
     }
     
-    // Trigger an event
-    document.dispatchEvent(new CustomEvent('apiClientReady', { detail: window.ApiClient }));
+    // Close button handling
+    const closeBtn = modal.querySelector('.close-modal');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => hideModal(modal));
+    }
+    
+    // Close on outer click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            hideModal(modal);
+        }
+    });
+    
+    // Close on escape
+    const escHandler = (e) => {
+        if (e.key === 'Escape') {
+            hideModal(modal);
+        }
+    };
+    modal.escHandler = escHandler;
+    document.addEventListener('keydown', escHandler);
 }
 
-// Determine the API base URL based on environment
-function determineApiBaseUrl() {
-    const isLocalhost = window.location.hostname === 'localhost' || 
-                      window.location.hostname === '127.0.0.1';
-    
-    return window.location.origin; // Use same origin for both local and production
+function hideModal(modal) {
+    if (!modal) return;
+    console.log('[akash] Hiding modal:', modal.id);
+    modal.classList.remove('show');
+    setTimeout(() => {
+        modal.style.display = 'none';
+        
+        // Restore body scrolling
+        document.body.style.overflow = '';
+        
+        // Remove escape handler
+        if (modal.escHandler) {
+            document.removeEventListener('keydown', modal.escHandler);
+        }
+    }, 300); // Match transition duration
 }
 
-// Initialize the Pokemon card
-function initializeCard() {
-    const card = document.getElementById('pokemonCard');
-    if (!card) {
-        console.error('Pokemon card element not found!');
-        return;
+function enableDragging(element) {
+    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+    
+    element.onmousedown = dragMouseDown;
+    
+    function dragMouseDown(e) {
+        e.preventDefault();
+        // Get mouse position at startup
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        document.onmouseup = closeDragElement;
+        // Call function when mouse moves
+        document.onmousemove = elementDrag;
     }
     
-    // Use setupCardFlipping if available
-    if (typeof setupCardFlipping === 'function') {
-        setupCardFlipping();
+    function elementDrag(e) {
+        e.preventDefault();
+        // Calculate new position
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        // Set element's new position
+        element.style.top = (element.offsetTop - pos2) + "px";
+        element.style.left = (element.offsetLeft - pos1) + "px";
     }
-} 
+    
+    function closeDragElement() {
+        // Stop moving when mouse button is released
+        document.onmouseup = null;
+        document.onmousemove = null;
+    }
+}
+
+// Initialize components when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('[akash] DOM ready, initializing components...');
+    
+    // Initialize SettingsManager
+    SettingsManager.init();
+    
+    // Initialize API
+    if (window.API) {
+        console.log('[akash] Dispatching api-ready event');
+        document.dispatchEvent(new CustomEvent('api-ready', { detail: window.API }));
+    } else {
+        console.log('[akash] API not available yet');
+    }
+}); 

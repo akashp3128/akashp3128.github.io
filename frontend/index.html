@@ -205,7 +205,7 @@
                     <button id="saveCardContent" class="btn btn-primary">Save Card Content</button>
                 </div>
                 
-                <button id="logoutBtn" class="btn admin-only">Logout</button>
+                <button id="adminPanelLogoutBtn" class="btn admin-only logout-btn">Logout</button>
             </div>
             
             <div id="resumeDisplay">
@@ -249,21 +249,17 @@
         <span>🐞 Debug</span>
     </button>
 
-    <div id="passwordModal" class="modal">
+    <div id="loginModal" class="modal">
         <div class="modal-content">
-            <span id="closeModal" class="close-modal">&times;</span>
-            <h2>Enter Admin Password</h2>
-            <div class="form-group">
-                <label for="passwordInput">Admin Password</label>
-                <input type="password" id="passwordInput" placeholder="Enter password">
-            </div>
-            <button id="submitPassword" class="btn">Login</button>
-            
-            <!-- Emergency mode toggle for local development -->
-            <button id="emergencyModeToggle" class="emergency-mode-toggle" style="display: none;">
-                <span class="toggle-icon">🛠️</span>
-                <span class="toggle-text">Toggle Emergency Mode</span>
-            </button>
+            <button class="close-modal">&times;</button>
+            <h2>Admin Login</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="adminPassword">Password</label>
+                    <input type="password" id="adminPassword" placeholder="Enter password" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Login</button>
+            </form>
         </div>
     </div>
     
