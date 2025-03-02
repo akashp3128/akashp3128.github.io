@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#121212">
+    <title>Akash Patel - Navy Career</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- Add Cropper.js for image cropping -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+</head>
+<body class="navy-page">
+    <div class="background">
+        <div class="bubbles">
+            <div class="bubble"></div>
+            <div class="bubble"></div>
+            <div class="bubble"></div>
+            <div class="bubble"></div>
+            <div class="bubble"></div>
+            <div class="bubble"></div>
+            <div class="bubble"></div>
+            <div class="bubble"></div>
+            <div class="bubble"></div>
+            <div class="bubble"></div>
+        </div>
+    </div>
+    
+    <nav class="site-navigation">
+        <div class="nav-container">
+            <a href="index.html" class="nav-logo">Akash Patel</a>
+            <div class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="navy-career.html" class="active">Navy Career</a>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container navy-container">
+        <section class="navy-hero">
+            <div class="navy-profile">
+                <div class="profile-image-container">
+                    <img id="navyProfileImage" src="/api/placeholder/300/300" alt="Akash Patel in Navy Uniform" class="navy-profile-image">
+                    <div class="admin-only upload-overlay" id="navyProfileUploadOverlay">
+                        <span>Upload Photo</span>
+                    </div>
+                </div>
+                <div class="navy-intro">
+                    <h1>U.S. Navy Service</h1>
+                    <h2>Hull Maintenance Tech 2nd Class (2015-2023)</h2>
+                    <div class="service-badges">
+                        <span class="badge">Secret Clearance</span>
+                        <span class="badge">HT2</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="navy-about">
+            <h2>About My Naval Service</h2>
+            <div class="about-content" id="navyAboutContent">
+                <!-- This content will be editable by admins -->
+                <p>During my time in the U.S. Navy as a Hull Maintenance Technician 2nd Class (HT2), I developed expertise in structural repair, metalwork, and damage control aboard naval vessels. I was responsible for maintaining the ship's integrity through welding, pipefitting, and fabrication work under challenging conditions.</p>
+                <p>My service included deployments aboard [Ship Names], where I led teams in critical repair operations and earned commendations for excellence in maintenance and emergency response situations.</p>
+            </div>
+            <button id="editNavyAboutBtn" class="btn btn-accent admin-only">Edit About Section</button>
+        </section>
+        
+        <section class="evaluations-section">
+            <h2>Performance Evaluations</h2>
+            <p class="eval-intro">The following evaluations document my performance and achievements during my naval service.</p>
+            
+            <div class="evaluations-gallery" id="evaluationsGallery">
+                <!-- Evaluations will be loaded here dynamically -->
+            </div>
+            
+            <div class="admin-controls admin-only">
+                <button id="uploadEvalBtn" class="btn btn-primary">Upload New Evaluation</button>
+                <button id="reorderEvalsBtn" class="btn btn-accent">Reorder Evaluations</button>
+            </div>
+        </section>
+    </div>
+    
+    <!-- Image Viewer Modal -->
+    <div id="imageViewerModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="image-viewer-container">
+                <img id="enlargedImage" src="" alt="Navy Evaluation">
+            </div>
+            <div class="image-navigation">
+                <button id="prevImageBtn" class="nav-btn">&laquo; Previous</button>
+                <div class="image-info">
+                    <span id="imageDate">Date: </span>
+                    <span id="imageIndex">1 of 6</span>
+                </div>
+                <button id="nextImageBtn" class="nav-btn">Next &raquo;</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Upload Modal with Cropping -->
+    <div id="uploadEvalModal" class="modal admin-only">
+        <div class="modal-content upload-modal">
+            <span class="close-modal">&times;</span>
+            <h3>Upload Evaluation</h3>
+            
+            <div class="upload-steps">
+                <div class="upload-step" id="uploadStep1">
+                    <h4>Step 1: Select Image</h4>
+                    <div class="upload-area" id="evalUploadArea">
+                        <p>Drag & drop your evaluation image here or click to select</p>
+                        <input type="file" id="evalFileInput" style="display: none" accept="image/*">
+                    </div>
+                </div>
+                
+                <div class="upload-step" id="uploadStep2" style="display: none;">
+                    <h4>Step 2: Crop Image</h4>
+                    <div class="cropper-container">
+                        <img id="cropperImage" src="" alt="Image to crop">
+                    </div>
+                    <div class="cropper-controls">
+                        <button id="rotateLeftBtn" class="btn btn-sm">↺ Rotate Left</button>
+                        <button id="rotateRightBtn" class="btn btn-sm">↻ Rotate Right</button>
+                        <button id="zoomInBtn" class="btn btn-sm">+ Zoom In</button>
+                        <button id="zoomOutBtn" class="btn btn-sm">- Zoom Out</button>
+                    </div>
+                </div>
+                
+                <div class="upload-step" id="uploadStep3" style="display: none;">
+                    <h4>Step 3: Add Details</h4>
+                    <div class="form-group">
+                        <label for="evalDate">Evaluation Date</label>
+                        <input type="date" id="evalDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="evalDescription">Description (Optional)</label>
+                        <textarea id="evalDescription" placeholder="Brief description of this evaluation"></textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button id="prevStepBtn" class="btn btn-secondary" style="display: none;">Previous</button>
+                <button id="nextStepBtn" class="btn btn-primary">Next</button>
+                <button id="uploadFinalBtn" class="btn btn-accent" style="display: none;">Upload Evaluation</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Edit About Modal -->
+    <div id="editAboutModal" class="modal admin-only">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>Edit About Section</h3>
+            <div class="form-group">
+                <textarea id="aboutTextEditor" rows="10"></textarea>
+            </div>
+            <button id="saveAboutBtn" class="btn btn-accent">Save Changes</button>
+        </div>
+    </div>
+    
+    <!-- Admin Login Panel (Reused from main page) -->
+    <button id="adminToggle" class="admin-toggle">⚙️</button>
+    <div class="admin-login" id="adminLogin">
+        <h3>Admin Login</h3>
+        <div class="form-group">
+            <input type="password" id="passwordInput" placeholder="Password">
+        </div>
+        <button id="submitPassword" class="btn btn-primary">Login</button>
+    </div>
+    
+    <footer>
+        <p>&copy; 2023 Akash Patel. All rights reserved.</p>
+    </footer>
+    
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/init.js"></script>
+    <script src="js/navy-evaluations.js"></script>
+</body>
+</html> 
