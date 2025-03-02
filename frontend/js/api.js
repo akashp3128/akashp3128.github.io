@@ -173,7 +173,51 @@ const ApiClient = (function() {
         
         // Check if user is authenticated
         isAuthenticated: function() {
-            return !!getAuthToken();
+            const token = getAuthToken();
+            
+            // If no token, user is not authenticated
+            if (!token) {
+                return false;
+            }
+            
+            // For demo/development tokens, just check if it exists
+            if (token.includes('demo-token')) {
+                return true;
+            }
+            
+            try {
+                // For real JWT tokens, we should check if it's expired
+                // This is a simple check - in a real app, we would actually
+                // verify the token signature and expiration properly
+                
+                // JWT token is in the format: header.payload.signature
+                const parts = token.split('.');
+                if (parts.length !== 3) {
+                    // Not a valid JWT format
+                    console.log('Invalid token format, clearing authentication');
+                    setAuthToken(null);
+                    return false;
+                }
+                
+                // Decode the payload
+                const payload = JSON.parse(atob(parts[1]));
+                
+                // Check if the token is expired
+                const now = Math.floor(Date.now() / 1000);
+                if (payload.exp && payload.exp < now) {
+                    // Token is expired
+                    console.log('Token expired, clearing authentication');
+                    setAuthToken(null);
+                    return false;
+                }
+                
+                return true;
+            } catch (error) {
+                console.error('Error validating token:', error);
+                // If there's any error parsing the token, consider it invalid
+                setAuthToken(null);
+                return false;
+            }
         }
     };
 

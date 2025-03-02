@@ -81,61 +81,84 @@ document.addEventListener('DOMContentLoaded', function() {
     function initializePage() {
         console.log('Initializing Navy Evaluations page');
         
-        // First check if ApiClient is globally available (from <script> tag)
-        if (typeof ApiClient !== 'undefined' && !window.ApiClient) {
-            console.log('Found global ApiClient, assigning to window');
-            window.ApiClient = ApiClient;
-        }
-        
-        // Wait for ApiClient to be available (it's loaded separately)
-        if (!window.ApiClient) {
-            console.log('ApiClient not loaded yet, waiting...');
-            
-            // Try to find it in the global scope as fallback
-            if (typeof ApiClient !== 'undefined') {
-                console.log('Using global ApiClient');
+        // Use the apiClientReady promise from init.js if available
+        if (window.apiClientReady) {
+            console.log('Using apiClientReady promise for initialization');
+            window.apiClientReady
+                .then(apiClient => {
+                    console.log('ApiClient ready from promise, continuing initialization');
+                    window.ApiClient = apiClient;
+                    continueInitialization();
+                })
+                .catch(error => {
+                    console.error('Error waiting for ApiClient:', error);
+                    // Still continue, we'll handle API client unavailability in each function
+                    continueInitialization();
+                });
+                
+            // Also listen for the apiClientReady event as a backup
+            document.addEventListener('apiClientReady', (event) => {
+                console.log('ApiClient ready event received');
+                window.ApiClient = event.detail;
+            });
+        } else {
+            // Fall back to the old detection method
+            // First check if ApiClient is globally available (from <script> tag)
+            if (typeof ApiClient !== 'undefined' && !window.ApiClient) {
+                console.log('Found global ApiClient, assigning to window');
                 window.ApiClient = ApiClient;
-                continueInitialization();
-                return;
             }
             
-            // If not found, wait for it to load
-            let waitTime = 0;
-            const waitInterval = 100; // ms
-            const maxWaitTime = 5000; // 5 seconds timeout
-            
-            const waitForApi = setInterval(() => {
-                waitTime += waitInterval;
+            // Wait for ApiClient to be available (it's loaded separately)
+            if (!window.ApiClient) {
+                console.log('ApiClient not loaded yet, waiting...');
                 
-                // Check window.ApiClient first
-                if (window.ApiClient) {
-                    clearInterval(waitForApi);
-                    console.log('ApiClient loaded on window, continuing initialization');
-                    continueInitialization();
-                    return;
-                }
-                
-                // If not in window, check global scope
+                // Try to find it in the global scope as fallback
                 if (typeof ApiClient !== 'undefined') {
-                    clearInterval(waitForApi);
-                    console.log('ApiClient found in global scope, continuing initialization');
+                    console.log('Using global ApiClient');
                     window.ApiClient = ApiClient;
                     continueInitialization();
                     return;
                 }
                 
-                // If we've waited too long, continue anyway but show a warning
-                if (waitTime >= maxWaitTime) {
-                    clearInterval(waitForApi);
-                    console.warn('ApiClient not available after timeout, continuing with limited functionality');
-                    // Don't alert here - it's annoying on page load
-                    // Just continue with whatever we have
-                    continueInitialization();
-                }
-            }, waitInterval);
-        } else {
-            console.log('ApiClient already available, continuing initialization');
-            continueInitialization();
+                // If not found, wait for it to load
+                let waitTime = 0;
+                const waitInterval = 100; // ms
+                const maxWaitTime = 5000; // 5 seconds timeout
+                
+                const waitForApi = setInterval(() => {
+                    waitTime += waitInterval;
+                    
+                    // Check window.ApiClient first
+                    if (window.ApiClient) {
+                        clearInterval(waitForApi);
+                        console.log('ApiClient loaded on window, continuing initialization');
+                        continueInitialization();
+                        return;
+                    }
+                    
+                    // If not in window, check global scope
+                    if (typeof ApiClient !== 'undefined') {
+                        clearInterval(waitForApi);
+                        console.log('ApiClient found in global scope, continuing initialization');
+                        window.ApiClient = ApiClient;
+                        continueInitialization();
+                        return;
+                    }
+                    
+                    // If we've waited too long, continue anyway but show a warning
+                    if (waitTime >= maxWaitTime) {
+                        clearInterval(waitForApi);
+                        console.warn('ApiClient not available after timeout, continuing with limited functionality');
+                        // Don't alert here - it's annoying on page load
+                        // Just continue with whatever we have
+                        continueInitialization();
+                    }
+                }, waitInterval);
+            } else {
+                console.log('ApiClient already available, continuing initialization');
+                continueInitialization();
+            }
         }
     }
     
@@ -159,27 +182,21 @@ document.addEventListener('DOMContentLoaded', function() {
         // Show login status in the debug area
         const loginStatusDiv = document.querySelector('.login-status');
         
-        // First check if ApiClient is globally available (from <script> tag)
-        if (typeof ApiClient !== 'undefined' && !window.ApiClient) {
-            console.log('Found global ApiClient during status check, assigning to window');
-            window.ApiClient = ApiClient;
-        }
+        // Get ApiClient using the safe accessor function
+        const apiClient = getApiClient();
         
-        // Try to use window.ApiClient first
-        let apiClient = window.ApiClient;
-        
-        // If not available on window, try global scope
-        if (!apiClient && typeof ApiClient !== 'undefined') {
-            console.log('Using global ApiClient for login check');
-            apiClient = ApiClient;
-            // Also set it on window for future use
-            window.ApiClient = ApiClient;
-        }
-        
-        // Early return if APIClient isn't available in any scope
+        // If we don't have an ApiClient with auth functionality
         if (!apiClient || !apiClient.auth) {
             console.warn('ApiClient not available for auth check');
             if (loginStatusDiv) loginStatusDiv.textContent = 'Auth service not available';
+            
+            // Hide admin features
+            document.body.classList.remove('authenticated');
+            if (adminToggle) adminToggle.classList.remove('admin-active');
+            document.querySelectorAll('.admin-only').forEach(el => {
+                el.style.display = 'none';
+            });
+            
             return;
         }
         
@@ -218,7 +235,32 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (e) {
             console.error('Error checking authentication status:', e);
             if (loginStatusDiv) loginStatusDiv.textContent = 'Error checking auth status';
+            
+            // On error, hide admin features for safety
+            document.body.classList.remove('authenticated');
+            if (adminToggle) adminToggle.classList.remove('admin-active');
+            document.querySelectorAll('.admin-only').forEach(el => {
+                el.style.display = 'none';
+            });
         }
+    }
+    
+    // Helper function to safely get ApiClient
+    function getApiClient() {
+        // Try window.ApiClient first (should be available from init.js)
+        if (window.ApiClient && window.ApiClient.auth) {
+            return window.ApiClient;
+        }
+        
+        // If not on window, try global scope
+        if (typeof ApiClient !== 'undefined' && ApiClient.auth) {
+            // Also set it on window for future use
+            window.ApiClient = ApiClient;
+            return ApiClient;
+        }
+        
+        // Neither available
+        return null;
     }
     
     // Setup all event listeners
@@ -529,24 +571,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         console.log('Attempting login with password');
         
-        // Check for ApiClient in window and global scope
-        let apiClient = window.ApiClient;
-        
-        // If ApiClient isn't available yet, create a fallback version
-        if (!apiClient) {
-            console.warn('ApiClient not found in window. Attempting to find global scope ApiClient');
-            if (typeof ApiClient !== 'undefined') {
-                console.log('Using global ApiClient');
-                apiClient = ApiClient;
-                // Also set it on window for future use
-                window.ApiClient = ApiClient;
-            } else {
-                console.error('ApiClient not available in any scope');
-                if (loginStatusDiv) loginStatusDiv.textContent = 'Error: Auth service not initialized';
-                alert('Login system not initialized properly. Please refresh the page and try again.');
-                return;
-            }
-        }
+        // Get ApiClient using the safe accessor function
+        const apiClient = getApiClient();
         
         // Make sure ApiClient is available and has auth module
         if (!apiClient || !apiClient.auth) {
@@ -593,9 +619,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         console.log('Login successful, admin features enabled');
                         alert('Login successful! Admin features enabled.');
                     } else {
-                        console.error('Login failed: Invalid credentials');
-                        if (loginStatusDiv) loginStatusDiv.textContent = 'Error: Invalid password';
-                        alert('Invalid password. Please try again.');
+                        console.error('Login failed:', response.error || 'Invalid credentials');
+                        if (loginStatusDiv) loginStatusDiv.textContent = 'Error: ' + (response.error || 'Invalid password');
+                        alert(response.error || 'Invalid password. Please try again.');
                     }
                 })
                 .catch(err => {

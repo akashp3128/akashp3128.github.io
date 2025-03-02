@@ -15,31 +15,101 @@ document.addEventListener('DOMContentLoaded', function() {
     const deleteImageButton = document.getElementById('deleteImageBtn');
     const saveCardContentBtn = document.getElementById('saveCardContent');
     
-    // Check if ApiClient is available
-    if (!window.ApiClient) {
-        console.error('ApiClient not available');
-        return;
+    // Wait for ApiClient to be ready before initializing
+    if (window.apiClientReady) {
+        window.apiClientReady
+            .then(apiClient => {
+                console.log('ApiClient ready from promise, initializing Pokemon card app');
+                initializeApp(apiClient);
+            })
+            .catch(error => {
+                console.error('Error waiting for ApiClient:', error);
+                // Try to initialize anyway with whatever we have
+                initializeApp(window.ApiClient || getApiClientFallback());
+            });
+            
+        // Also listen for the apiClientReady event as a backup
+        document.addEventListener('apiClientReady', (event) => {
+            console.log('ApiClient ready event received in Pokemon card app');
+            // Only initialize if we haven't already
+            if (!window.pokemonCardInitialized) {
+                initializeApp(event.detail);
+            }
+        });
+    } else {
+        // No promise available, initialize directly
+        console.log('No apiClientReady promise, initializing Pokemon card app directly');
+        initializeApp(window.ApiClient || getApiClientFallback());
     }
     
-    // Check login status and update UI accordingly
-    checkLoginStatus();
+    // Helper function to create a fallback ApiClient if needed
+    function getApiClientFallback() {
+        console.warn('Creating fallback ApiClient in Pokemon card app');
+        return {
+            auth: {
+                isAuthenticated: function() { 
+                    return !!localStorage.getItem('authToken'); 
+                },
+                login: async function(password) {
+                    console.log('Using fallback login in Pokemon card app');
+                    // Only accept dev passwords in fallback mode
+                    if (password === 'Rosie@007' || password === 'localdev') {
+                        localStorage.setItem('authToken', 'fallback-token-' + Date.now());
+                        return { success: true };
+                    }
+                    return { success: false, error: 'Invalid password' };
+                },
+                logout: function() {
+                    localStorage.removeItem('authToken');
+                    return { success: true };
+                }
+            }
+        };
+    }
     
-    // Initialize the Pokemon card
-    initializePokemonCard();
-    
-    // Setup event listeners
-    setupEventListeners();
-    
-    // Load card content from localStorage if available
-    loadCardContent();
+    // Main initialization function
+    function initializeApp(apiClient) {
+        // Flag to prevent double initialization
+        window.pokemonCardInitialized = true;
+        
+        // Store ApiClient on window if not already there
+        window.ApiClient = window.ApiClient || apiClient;
+        
+        // Check login status and update UI accordingly
+        checkLoginStatus();
+        
+        // Initialize the Pokemon card
+        initializePokemonCard();
+        
+        // Setup event listeners
+        setupEventListeners();
+        
+        // Load card content from localStorage if available
+        loadCardContent();
+    }
     
     // Function to check login status and update UI
     function checkLoginStatus() {
-        const isAuthenticated = window.ApiClient.auth.isAuthenticated();
+        // Get ApiClient
+        const apiClient = window.ApiClient;
         
-        if (isAuthenticated) {
-            showAdminPanel();
-        } else {
+        if (!apiClient || !apiClient.auth) {
+            console.error('ApiClient not available for auth check');
+            hideAdminPanel();
+            return;
+        }
+        
+        try {
+            const isAuthenticated = apiClient.auth.isAuthenticated();
+            
+            if (isAuthenticated) {
+                showAdminPanel();
+            } else {
+                hideAdminPanel();
+            }
+        } catch (error) {
+            console.error('Error checking authentication:', error);
+            // On error, hide admin panel for safety
             hideAdminPanel();
         }
     }
@@ -298,7 +368,29 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        ApiClient.auth.login(password).then(response => {
+        // Get ApiClient
+        const apiClient = window.ApiClient;
+        
+        if (!apiClient || !apiClient.auth) {
+            console.error('ApiClient not available for login');
+            showError('Login system not available. Please refresh the page and try again.');
+            return;
+        }
+        
+        // Show loading state
+        const loginButton = document.getElementById('submitPassword');
+        if (loginButton) {
+            loginButton.disabled = true;
+            loginButton.textContent = 'Logging in...';
+        }
+        
+        apiClient.auth.login(password).then(response => {
+            // Reset button state
+            if (loginButton) {
+                loginButton.disabled = false;
+                loginButton.textContent = 'Login';
+            }
+            
             if (response.success) {
                 showAdminPanel();
                 adminPasswordInput.value = '';
@@ -315,11 +407,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 showMessage('Admin login successful');
             } else {
-                showError('Invalid password');
+                showError(response.error || 'Invalid password');
             }
         }).catch(error => {
+            // Reset button state
+            if (loginButton) {
+                loginButton.disabled = false;
+                loginButton.textContent = 'Login';
+            }
+            
             console.error('Login error:', error);
-            showError('Login failed');
+            showError('Login failed: ' + (error.message || 'Unknown error'));
         });
     }
     
