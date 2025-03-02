@@ -6,6 +6,10 @@
     <meta name="theme-color" content="#121212">
     <title>Akash Patel - Software Engineer Resume</title>
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/admin-modal.css">
+    <!-- API initialization script -->
+    <script src="js/api.js"></script>
+    <script src="js/init.js"></script>
 </head>
 <body>
     <div class="background">
@@ -214,9 +218,31 @@
     </div>
     
     <!-- Settings/Admin Button -->
-    <button type="button" class="admin-toggle" id="adminToggle" aria-label="Settings">
-        <i>⚙️</i>
-    </button>
+    <button id="adminToggle" class="settings-toggle" aria-label="Settings">⚙️</button>
+
+    <!-- Settings Panel -->
+    <div class="settings-panel">
+        <div class="settings-header">
+            <h3>Settings</h3>
+            <button class="settings-close">&times;</button>
+        </div>
+        <div class="settings-content">
+            <div class="settings-section">
+                <h4>Card Settings</h4>
+                <ul class="settings-options authenticated-only">
+                    <li><button id="settingsEditCard" class="settings-option">Edit Card Content</button></li>
+                    <li><button id="settingsUploadImage" class="settings-option">Upload Profile Image</button></li>
+                    <li><button id="settingsUploadResume" class="settings-option">Upload Resume</button></li>
+                </ul>
+                <div class="non-authenticated-only">
+                    <p>Please login to access settings</p>
+                </div>
+            </div>
+            <div class="settings-footer">
+                <button id="logoutBtn" class="btn btn-danger logout-btn authenticated-only">Logout</button>
+            </div>
+        </div>
+    </div>
     
     <!-- Debug Console Button (only visible in development) -->
     <button type="button" id="debugConsoleBtn" class="debug-console-btn" style="display: none;">

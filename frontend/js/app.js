@@ -69,23 +69,116 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Main initialization function
     function initializeApp(apiClient) {
-        // Flag to prevent double initialization
+        if (window.pokemonCardInitialized) {
+            console.log('[akash] Pokemon card app already initialized, skipping');
+            return;
+        }
+        
+        console.log('[akash] Initializing Pokemon card app with API:', apiClient);
         window.pokemonCardInitialized = true;
+        window.ApiClient = apiClient;
         
-        // Store ApiClient on window if not already there
-        window.ApiClient = window.ApiClient || apiClient;
+        // Initialize Pokemon card functionality
+        initializeCardFeatures();
         
-        // Check login status and update UI accordingly
-        checkLoginStatus();
+        // Setup settings panel button actions
+        setupSettingsPanelEvents();
         
-        // Initialize the Pokemon card
-        initializePokemonCard();
+        // Check login status and update UI
+        if (window.AuthManager) {
+            console.log('[akash] Using centralized AuthManager for authentication status');
+            if (window.AuthManager.isAuthenticated()) {
+                console.log('[akash] User is authenticated, showing admin UI');
+                showAdminUI();
+            } else {
+                console.log('[akash] User is not authenticated, hiding admin UI');
+                hideAdminUI();
+            }
+            
+            // Listen for auth state changes
+            document.addEventListener('authStateChanged', (event) => {
+                console.log('[akash] Auth state changed in Pokemon card app:', event.detail.isAuthenticated);
+                if (event.detail.isAuthenticated) {
+                    showAdminUI();
+                } else {
+                    hideAdminUI();
+                }
+            });
+        } else {
+            console.warn('[akash] AuthManager not available, using legacy auth check');
+            checkLoginStatus();
+        }
         
-        // Setup event listeners
-        setupEventListeners();
-        
-        // Load card content from localStorage if available
+        // Load card content
         loadCardContent();
+    }
+    
+    // Setup event listeners for the settings panel
+    function setupSettingsPanelEvents() {
+        console.log('[akash] Setting up settings panel events');
+        // Edit Card Content
+        const settingsEditCard = document.getElementById('settingsEditCard');
+        if (settingsEditCard) {
+            settingsEditCard.addEventListener('click', () => {
+                console.log('[akash] Edit card button clicked');
+                scrollToSection('adminPanel');
+                if (window.SettingsManager) window.SettingsManager.closeSettings();
+            });
+        } else {
+            console.warn('[akash] Settings edit card button not found');
+        }
+        
+        // Upload Profile Image
+        const settingsUploadImage = document.getElementById('settingsUploadImage');
+        if (settingsUploadImage) {
+            settingsUploadImage.addEventListener('click', () => {
+                console.log('[akash] Upload image button clicked');
+                scrollToSection('imageUploadArea');
+                if (window.SettingsManager) window.SettingsManager.closeSettings();
+            });
+        } else {
+            console.warn('[akash] Settings upload image button not found');
+        }
+        
+        // Upload Resume
+        const settingsUploadResume = document.getElementById('settingsUploadResume');
+        if (settingsUploadResume) {
+            settingsUploadResume.addEventListener('click', () => {
+                console.log('[akash] Upload resume button clicked');
+                scrollToSection('uploadArea');
+                if (window.SettingsManager) window.SettingsManager.closeSettings();
+            });
+        } else {
+            console.warn('[akash] Settings upload resume button not found');
+        }
+    }
+    
+    // Helper function to scroll to a section
+    function scrollToSection(elementId) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+            console.warn('[akash] Element not found:', elementId);
+        }
+    }
+    
+    // Show admin UI elements
+    function showAdminUI() {
+        console.log('[akash] Showing admin UI');
+        document.body.classList.add('authenticated');
+        document.querySelectorAll('.admin-only').forEach(el => {
+            el.style.display = 'block';
+        });
+    }
+    
+    // Hide admin UI elements
+    function hideAdminUI() {
+        console.log('[akash] Hiding admin UI');
+        document.body.classList.remove('authenticated');
+        document.querySelectorAll('.admin-only').forEach(el => {
+            el.style.display = 'none';
+        });
     }
     
     // Function to check login status and update UI
@@ -95,7 +188,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (!apiClient || !apiClient.auth) {
             console.error('ApiClient not available for auth check');
-            hideAdminPanel();
+            hideAdminUI();
             return;
         }
         
@@ -103,89 +196,19 @@ document.addEventListener('DOMContentLoaded', function() {
             const isAuthenticated = apiClient.auth.isAuthenticated();
             
             if (isAuthenticated) {
-                showAdminPanel();
+                showAdminUI();
             } else {
-                hideAdminPanel();
+                hideAdminUI();
             }
         } catch (error) {
             console.error('Error checking authentication:', error);
             // On error, hide admin panel for safety
-            hideAdminPanel();
+            hideAdminUI();
         }
-    }
-    
-    // Function to show the admin panel
-    function showAdminPanel() {
-        // Add authenticated class to body
-        document.body.classList.add('authenticated');
-        
-        // Show admin panel
-        if (adminPanel) {
-            adminPanel.classList.add('visible');
-            adminPanel.style.display = 'block';
-        }
-        
-        // Hide login elements
-        if (adminPasswordInput) adminPasswordInput.style.display = 'none';
-        if (adminLoginButton) adminLoginButton.style.display = 'none';
-        
-        // Show admin elements
-        if (adminLogoutButton) adminLogoutButton.style.display = 'block';
-        
-        // Make all admin-only elements visible
-        document.querySelectorAll('.admin-only').forEach(element => {
-            if (element.tagName === 'BUTTON' || element.tagName === 'A') {
-                element.style.display = 'inline-block';
-            } else {
-                element.style.display = 'block';
-            }
-        });
-        
-        // Show delete buttons if they exist
-        if (deleteResumeButton) deleteResumeButton.style.display = 'block';
-        if (deleteImageButton) deleteImageButton.style.display = 'block';
-        
-        // Show upload areas
-        const uploadAreas = document.querySelectorAll('.upload-area');
-        uploadAreas.forEach(area => {
-            area.style.display = 'block';
-        });
-        
-        console.log('Admin panel shown');
-    }
-    
-    // Function to hide the admin panel
-    function hideAdminPanel() {
-        // Remove authenticated class from body
-        document.body.classList.remove('authenticated');
-        
-        // Hide admin panel
-        if (adminPanel) {
-            adminPanel.classList.remove('visible');
-            adminPanel.style.display = 'none';
-        }
-        
-        // Show login elements
-        if (adminPasswordInput) adminPasswordInput.style.display = 'block';
-        if (adminLoginButton) adminLoginButton.style.display = 'block';
-        
-        // Hide admin elements
-        if (adminLogoutButton) adminLogoutButton.style.display = 'none';
-        
-        // Hide all admin-only elements
-        document.querySelectorAll('.admin-only').forEach(element => {
-            element.style.display = 'none';
-        });
-        
-        // Hide delete buttons if they exist
-        if (deleteResumeButton) deleteResumeButton.style.display = 'none';
-        if (deleteImageButton) deleteImageButton.style.display = 'none';
-        
-        console.log('Admin panel hidden');
     }
     
     // Initialize the Pokemon card
-    function initializePokemonCard() {
+    function initializeCardFeatures() {
         if (!cardInner) {
             console.error('Card inner element not found');
             return;
@@ -273,305 +296,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }).catch(error => {
             console.error('Error loading resume:', error);
         });
-    }
-    
-    // Setup event listeners
-    function setupEventListeners() {
-        // Settings button click handler
-        if (settingsBtn) {
-            settingsBtn.addEventListener('click', function() {
-                const authDialog = document.getElementById('passwordModal');
-                if (authDialog) {
-                    authDialog.style.display = 'flex';
-                }
-            });
-        }
-        
-        // Admin login button
-        if (adminLoginButton) {
-            adminLoginButton.addEventListener('click', handleAdminLogin);
-        }
-        
-        // Admin password input (handle Enter key)
-        if (adminPasswordInput) {
-            adminPasswordInput.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    handleAdminLogin();
-                }
-            });
-        }
-        
-        // Admin logout button
-        if (adminLogoutButton) {
-            adminLogoutButton.addEventListener('click', function() {
-                ApiClient.auth.logout();
-                hideAdminPanel();
-            });
-        }
-        
-        // Resume upload area click handler
-        if (resumeUploadArea && resumeFileInput) {
-            resumeUploadArea.addEventListener('click', function() {
-                resumeFileInput.click();
-            });
-            
-            resumeFileInput.addEventListener('change', handleResumeUpload);
-        }
-        
-        // Profile image upload
-        if (imageUploadArea && imageFileInput) {
-            imageUploadArea.addEventListener('click', function() {
-                imageFileInput.click();
-            });
-            
-            imageFileInput.addEventListener('change', handleImageUpload);
-        }
-        
-        // Delete resume button
-        if (deleteResumeButton) {
-            deleteResumeButton.addEventListener('click', handleResumeDelete);
-        }
-        
-        // Delete image button
-        if (deleteImageButton) {
-            deleteImageButton.addEventListener('click', handleImageDelete);
-        }
-        
-        // Save card content button
-        if (saveCardContentBtn) {
-            saveCardContentBtn.addEventListener('click', saveCardContent);
-            console.log('Card content save button listener added');
-        }
-        
-        // Close dialog buttons
-        document.querySelectorAll('.close-modal').forEach(button => {
-            button.addEventListener('click', function() {
-                const modal = this.closest('.modal');
-                if (modal) {
-                    modal.style.display = 'none';
-                }
-            });
-        });
-    }
-    
-    // Handle admin login
-    function handleAdminLogin() {
-        if (!adminPasswordInput) {
-            console.error('Password input not found');
-            return;
-        }
-        
-        const password = adminPasswordInput.value;
-        
-        if (!password) {
-            showError('Please enter a password');
-            return;
-        }
-        
-        // Get ApiClient
-        const apiClient = window.ApiClient;
-        
-        if (!apiClient || !apiClient.auth) {
-            console.error('ApiClient not available for login');
-            showError('Login system not available. Please refresh the page and try again.');
-            return;
-        }
-        
-        // Show loading state
-        const loginButton = document.getElementById('submitPassword');
-        if (loginButton) {
-            loginButton.disabled = true;
-            loginButton.textContent = 'Logging in...';
-        }
-        
-        apiClient.auth.login(password).then(response => {
-            // Reset button state
-            if (loginButton) {
-                loginButton.disabled = false;
-                loginButton.textContent = 'Login';
-            }
-            
-            if (response.success) {
-                showAdminPanel();
-                adminPasswordInput.value = '';
-                
-                // Hide the password modal after successful login
-                const passwordModal = document.getElementById('passwordModal');
-                if (passwordModal) {
-                    passwordModal.style.display = 'none';
-                }
-                
-                // Reload profile image and resume to check if delete buttons should be shown
-                loadProfileImage();
-                loadResumePreview();
-                
-                showMessage('Admin login successful');
-            } else {
-                showError(response.error || 'Invalid password');
-            }
-        }).catch(error => {
-            // Reset button state
-            if (loginButton) {
-                loginButton.disabled = false;
-                loginButton.textContent = 'Login';
-            }
-            
-            console.error('Login error:', error);
-            showError('Login failed: ' + (error.message || 'Unknown error'));
-        });
-    }
-    
-    // Handle resume upload
-    function handleResumeUpload(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        
-        console.log('Attempting to upload resume file:', {
-            name: file.name,
-            type: file.type,
-            size: file.size,
-            lastModified: new Date(file.lastModified).toISOString()
-        });
-        
-        // Validate file - check both MIME type and extension
-        const isPdfMimeType = file.type === 'application/pdf';
-        const isPdfExtension = file.name.toLowerCase().endsWith('.pdf');
-        
-        console.log('Resume validation:', { isPdfMimeType, isPdfExtension });
-        
-        if (!isPdfMimeType && !isPdfExtension) {
-            showError('Please upload a PDF file');
-            return;
-        }
-        
-        showMessage('Uploading resume...');
-        
-        ApiClient.resume.upload(file).then(response => {
-            console.log('Resume upload response:', response);
-            if (response.success) {
-                showMessage('Resume uploaded successfully');
-                // Reload resume preview
-                loadResumePreview();
-            } else {
-                showError('Resume upload failed: ' + (response.error || 'Unknown error'));
-            }
-        }).catch(error => {
-            console.error('Resume upload error:', error);
-            showError('Resume upload failed');
-        });
-    }
-    
-    // Handle resume delete
-    function handleResumeDelete() {
-        if (!confirm('Are you sure you want to delete your resume?')) {
-            return;
-        }
-        
-        showMessage('Deleting resume...');
-        
-        ApiClient.resume.delete().then(response => {
-            if (response.success) {
-                showMessage('Resume deleted successfully');
-                // Reload resume preview
-                loadResumePreview();
-            } else {
-                showError('Resume delete failed: ' + (response.error || 'Unknown error'));
-            }
-        }).catch(error => {
-            console.error('Resume delete error:', error);
-            showError('Resume delete failed');
-        });
-    }
-    
-    // Handle image upload
-    function handleImageUpload(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        
-        console.log('Attempting to upload image file:', {
-            name: file.name,
-            type: file.type,
-            size: file.size,
-            lastModified: new Date(file.lastModified).toISOString()
-        });
-        
-        // Validate file - check both MIME type and extension
-        const isImageMimeType = file.type.startsWith('image/');
-        const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
-        const hasImageExtension = imageExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
-        
-        console.log('Image validation:', { isImageMimeType, hasImageExtension });
-        
-        if (!isImageMimeType && !hasImageExtension) {
-            showError('Please upload a valid image file (JPG, PNG, GIF, etc.)');
-            return;
-        }
-        
-        showMessage('Uploading image...');
-        
-        ApiClient.image.upload(file).then(response => {
-            console.log('Image upload response:', response);
-            if (response.success) {
-                showMessage('Image uploaded successfully');
-                loadProfileImage(); // Reload the profile image
-            } else {
-                showError('Image upload failed: ' + (response.error || 'Unknown error'));
-            }
-        }).catch(error => {
-            console.error('Image upload error:', error);
-            showError('Image upload failed');
-        });
-    }
-    
-    // Handle image delete
-    function handleImageDelete() {
-        if (!confirm('Are you sure you want to delete your profile image?')) {
-            return;
-        }
-        
-        showMessage('Deleting image...');
-        
-        ApiClient.image.delete().then(response => {
-            if (response.success) {
-                showMessage('Image deleted successfully');
-                // Reload profile image
-                loadProfileImage();
-            } else {
-                showError('Image delete failed: ' + (response.error || 'Unknown error'));
-            }
-        }).catch(error => {
-            console.error('Image delete error:', error);
-            showError('Image delete failed');
-        });
-    }
-    
-    // Save the card content to localStorage
-    function saveCardContent() {
-        console.log('Saving card content');
-        
-        // Get values from form fields
-        const content = {
-            name: document.getElementById('cardName').value,
-            hp: document.getElementById('cardHP').value,
-            info: document.getElementById('cardInfo').value,
-            ability1Name: document.getElementById('ability1Name').value,
-            ability1Cost: document.getElementById('ability1Cost').value,
-            ability1Desc: document.getElementById('ability1Desc').value,
-            ability2Name: document.getElementById('ability2Name').value,
-            ability2Cost: document.getElementById('ability2Cost').value,
-            ability2Desc: document.getElementById('ability2Desc').value,
-            type: document.getElementById('cardType').value,
-            energy: document.getElementById('cardEnergy').value
-        };
-        
-        // Save to localStorage
-        localStorage.setItem('pokemonCardContent', JSON.stringify(content));
-        
-        // Update the card
-        updateCardContent(content);
-        
-        // Show success message
-        showMessage('Card content saved successfully!');
     }
     
     // Load the card content from localStorage

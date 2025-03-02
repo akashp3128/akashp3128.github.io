@@ -252,6 +252,7 @@ class ModalController {
  */
 class NavyUIController {
     constructor() {
+        console.log('[akash] NavyUIController constructor called');
         // DOM References
         this.navyProfileImage = document.getElementById('navyProfileImage');
         this.navyProfileUploadOverlay = document.getElementById('navyProfileUploadOverlay');
@@ -298,22 +299,23 @@ class NavyUIController {
     }
     
     initializePage() {
-        console.log('Initializing Navy Career page');
+        console.log('[akash] NavyUIController.initializePage() called');
         
         // Try to initialize with API client
         this.getApiClient()
             .then(client => {
-                console.log('API client initialized');
+                console.log('[akash] API client initialized');
                 this.apiClient = client;
                 this.continueInitialization();
             })
             .catch(error => {
-                console.warn('API client initialization failed, continuing without API:', error);
+                console.warn('[akash] API client initialization failed, continuing without API:', error);
                 this.continueInitialization();
             });
     }
     
     continueInitialization() {
+        console.log('[akash] NavyUIController.continueInitialization() called');
         // Load data and setup listeners
         this.loadNavalProfile();
         this.setupEventListeners();
@@ -323,14 +325,18 @@ class NavyUIController {
         
         // Listen for auth state changes
         document.addEventListener('authStateChanged', () => {
+            console.log('[akash] NavyUIController received auth state changed event');
             this.updateAuthUIState();
         });
     }
     
     updateAuthUIState() {
+        console.log('[akash] NavyUIController.updateAuthUIState() called');
         if (window.AuthManager && window.AuthManager.isAuthenticated()) {
+            console.log('[akash] NavyUIController showing admin controls');
             this.showAdminControls();
         } else {
+            console.log('[akash] NavyUIController hiding admin controls');
             this.hideAdminControls();
         }
     }
@@ -366,17 +372,19 @@ class NavyUIController {
     }
     
     showAdminControls() {
-        console.log('Showing admin controls');
+        console.log('[akash] NavyUIController.showAdminControls() called');
         document.querySelectorAll('.admin-only').forEach(el => {
             el.style.display = 'block';
         });
+        console.log('[akash] Admin controls should now be visible');
     }
     
     hideAdminControls() {
-        console.log('Hiding admin controls');
+        console.log('[akash] NavyUIController.hideAdminControls() called');
         document.querySelectorAll('.admin-only').forEach(el => {
             el.style.display = 'none';
         });
+        console.log('[akash] Admin controls should now be hidden');
     }
     
     setupEventListeners() {
@@ -1020,13 +1028,13 @@ class NavyUIController {
  */
 class AdminController {
     constructor(navyUI, modalManager) {
-        console.log('Initializing AdminController');
+        console.log('[akash] AdminController constructor called');
         
         // Store controller references
         this.navyUI = navyUI;
         this.modalManager = modalManager;
         
-        console.log('Controller references:', {
+        console.log('[akash] Controller references:', {
             navyUI: this.navyUI ? 'Provided' : 'Missing',
             modalManager: this.modalManager ? 'Provided' : 'Missing'
         });
@@ -1043,7 +1051,7 @@ class AdminController {
         this.passwordInput = document.getElementById('passwordInput');
         this.submitPassword = document.getElementById('submitPassword');
         
-        console.log('Admin elements found:', {
+        console.log('[akash] Admin elements found:', {
             adminToggle: this.adminToggle ? 'Found' : 'Missing',
             passwordModal: this.passwordModal ? 'Found' : 'Missing',
             passwordInput: this.passwordInput ? 'Found' : 'Missing',
@@ -1055,6 +1063,7 @@ class AdminController {
         
         // Listen for auth state changes
         document.addEventListener('authStateChanged', (event) => {
+            console.log('[akash] AdminController received auth state change event:', event.detail.isAuthenticated);
             if (event.detail.isAuthenticated) {
                 this.navyUI.showAdminControls();
             } else {
@@ -1064,7 +1073,7 @@ class AdminController {
     }
     
     setupAdminEventListeners() {
-        console.log('Setting up admin event listeners');
+        console.log('[akash] AdminController.setupAdminEventListeners() called');
         
         // Login form submit
         if (this.submitPassword) {
@@ -1082,9 +1091,9 @@ class AdminController {
     }
     
     handleLogin() {
-        console.log('Handling login');
+        console.log('[akash] AdminController.handleLogin() called');
         if (!this.passwordInput) {
-            console.error('Password input field not found!');
+            console.error('[akash] Password input field not found!');
             return;
         }
         
@@ -1094,9 +1103,11 @@ class AdminController {
             return;
         }
         
+        console.log('[akash] Attempting login with provided password');
         // Use the centralized AuthManager instead of directly manipulating localStorage
         window.AuthManager.login(password)
             .then(() => {
+                console.log('[akash] Login successful through AuthManager');
                 // Close the modal
                 if (this.passwordModal) {
                     this.modalManager.closeModal(this.passwordModal);
@@ -1110,7 +1121,7 @@ class AdminController {
                 this.navyUI.showNotification('Login successful', 'success');
             })
             .catch(error => {
-                console.error('Login error:', error);
+                console.error('[akash] Login error:', error);
                 this.navyUI.showNotification('Invalid password', 'error');
             });
     }
