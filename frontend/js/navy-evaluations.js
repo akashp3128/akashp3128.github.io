@@ -108,8 +108,25 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (isAuthenticated) {
             document.body.classList.add('authenticated');
+            if (adminToggle) adminToggle.classList.add('admin-active');
+            
+            // Show all admin-only elements
+            document.querySelectorAll('.admin-only').forEach(el => {
+                el.style.display = el.tagName.toLowerCase() === 'button' || 
+                                  el.tagName.toLowerCase() === 'a' ? 
+                                  'inline-block' : 'block';
+            });
+            
+            // Hide password modal if it's open
+            if (passwordModal) passwordModal.style.display = 'none';
         } else {
             document.body.classList.remove('authenticated');
+            if (adminToggle) adminToggle.classList.remove('admin-active');
+            
+            // Hide all admin-only elements
+            document.querySelectorAll('.admin-only').forEach(el => {
+                el.style.display = 'none';
+            });
         }
     }
     
@@ -392,22 +409,32 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Function to toggle admin login form
     function toggleAdminLogin() {
-        if (!window.ApiClient.auth.isAuthenticated()) {
-            // Show the password modal
+        // If authenticated, toggle admin mode
+        if (window.ApiClient.auth.isAuthenticated()) {
+            // Toggle admin panel display (different behavior from main app, as this directly shows/hides admin elements)
+            const newAdminState = !adminToggle.classList.contains('admin-active');
+            
+            if (newAdminState) {
+                // Enable admin features
+                adminToggle.classList.add('admin-active');
+                document.querySelectorAll('.admin-only').forEach(el => {
+                    el.style.display = el.tagName.toLowerCase() === 'button' || 
+                                      el.tagName.toLowerCase() === 'a' ? 
+                                      'inline-block' : 'block';
+                });
+            } else {
+                // If user clicks the button while admin mode is active, offer to log out
+                if (confirm('Do you want to log out?')) {
+                    window.ApiClient.auth.logout();
+                    checkLoginStatus();
+                    window.location.reload(); // Ensure clean state
+                }
+            }
+        } else {
+            // Not authenticated, show the login modal
             if (passwordModal) {
                 passwordModal.style.display = 'block';
                 if (passwordInput) passwordInput.focus();
-            }
-        } else {
-            // If already authenticated, log out
-            if (confirm('Do you want to log out?')) {
-                window.ApiClient.auth.logout();
-                checkLoginStatus();
-                adminToggle.classList.remove('admin-active');
-                loadEvaluations(); // Refresh content to hide admin features
-                
-                // Reload the page to ensure all admin elements are properly hidden
-                window.location.reload();
             }
         }
     }
@@ -439,9 +466,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     loadEvaluations();
                     loadNavalProfile();
                     
+                    // Make admin elements visible
+                    document.querySelectorAll('.admin-only').forEach(el => {
+                        el.style.display = el.tagName.toLowerCase() === 'button' || 
+                                          el.tagName.toLowerCase() === 'a' ? 
+                                          'inline-block' : 'block';
+                    });
+                    
                     // Apply authenticated class and styles
                     document.body.classList.add('authenticated');
                     if (adminToggle) adminToggle.classList.add('admin-active');
+                    
+                    console.log('Login successful, admin features enabled');
                 } else {
                     alert('Invalid password');
                 }
