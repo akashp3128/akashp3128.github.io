@@ -219,12 +219,12 @@
                 });
             }
             
-            // Fix submit password button
+            // Fix submit password button - use original password
             const submitPassword = document.getElementById('submitPassword');
             if (submitPassword) {
                 submitPassword.addEventListener('click', function() {
                     const passwordInput = document.getElementById('passwordInput');
-                    if (passwordInput && passwordInput.value === 'admin1234') {
+                    if (passwordInput && passwordInput.value === 'Rosie@007') {
                         // Set authentication in localStorage
                         localStorage.setItem('admin_authenticated', 'true');
                         
@@ -243,9 +243,60 @@
                         // Show a message
                         alert('Login successful!');
                     } else {
-                        alert('Incorrect password. Try admin1234');
+                        alert('Incorrect password.');
                     }
                 });
+            }
+            
+            // Fix Edit About button to properly load content
+            const editAboutBtn = document.getElementById('editNavyAboutBtn');
+            if (editAboutBtn) {
+                editAboutBtn.addEventListener('click', function() {
+                    const aboutContent = document.getElementById('navyAboutContent');
+                    const textEditor = document.getElementById('aboutTextEditor');
+                    const editModal = document.getElementById('editAboutModal');
+                    
+                    if (aboutContent && textEditor && editModal) {
+                        // Copy the HTML content to the editor
+                        textEditor.value = aboutContent.innerHTML;
+                        
+                        // Show the modal
+                        editModal.style.display = 'block';
+                    }
+                });
+            }
+            
+            // Fix Save Changes button
+            const saveAboutBtn = document.getElementById('saveAboutBtn');
+            if (saveAboutBtn) {
+                saveAboutBtn.addEventListener('click', function() {
+                    const aboutContent = document.getElementById('navyAboutContent');
+                    const textEditor = document.getElementById('aboutTextEditor');
+                    const editModal = document.getElementById('editAboutModal');
+                    
+                    if (aboutContent && textEditor) {
+                        // Save the edited content
+                        aboutContent.innerHTML = textEditor.value;
+                        
+                        // Store in local storage for persistence
+                        localStorage.setItem('navy_about_content', textEditor.value);
+                        
+                        // Close the modal
+                        if (editModal) {
+                            editModal.style.display = 'none';
+                        }
+                        
+                        // Show success message
+                        alert('Content updated successfully!');
+                    }
+                });
+            }
+            
+            // Load saved about content on page load
+            const aboutContent = document.getElementById('navyAboutContent');
+            const savedContent = localStorage.getItem('navy_about_content');
+            if (aboutContent && savedContent) {
+                aboutContent.innerHTML = savedContent;
             }
             
             // Check if already authenticated
