@@ -164,7 +164,32 @@
     </div>
     
     <!-- Admin Login Panel (Reused from main page) -->
-    <button id="adminToggle" class="admin-toggle" onclick="document.getElementById('passwordModal').style.display='block';">⚙️</button>
+    <button id="adminToggle" class="settings-toggle">⚙️</button>
+    
+    <!-- Settings Panel -->
+    <div class="settings-panel">
+        <div class="settings-header">
+            <h3>Settings</h3>
+            <button class="settings-close">&times;</button>
+        </div>
+        <div class="settings-content">
+            <div class="settings-section">
+                <h4>Navy Career Settings</h4>
+                <ul class="settings-options authenticated-only">
+                    <li><button id="settingsEditAbout" class="settings-option">Edit About Section</button></li>
+                    <li><button id="settingsUploadPhoto" class="settings-option">Upload Profile Photo</button></li>
+                    <li><button id="settingsAddEval" class="settings-option">Add Evaluation</button></li>
+                    <li><button id="settingsReorderEvals" class="settings-option">Reorder Evaluations</button></li>
+                </ul>
+                <div class="non-authenticated-only">
+                    <p>Please login to access settings</p>
+                </div>
+            </div>
+            <div class="settings-footer">
+                <button id="logoutBtn" class="btn btn-danger logout-btn authenticated-only">Logout</button>
+            </div>
+        </div>
+    </div>
     
     <div id="passwordModal" class="modal">
         <div class="modal-content">

@@ -314,12 +314,25 @@ class NavyUIController {
     }
     
     continueInitialization() {
-        // Check login status - this will handle admin UI setup if needed
-        this.checkLoginStatus();
-        
         // Load data and setup listeners
         this.loadNavalProfile();
         this.setupEventListeners();
+        
+        // Check login status from centralized AuthManager
+        this.updateAuthUIState();
+        
+        // Listen for auth state changes
+        document.addEventListener('authStateChanged', () => {
+            this.updateAuthUIState();
+        });
+    }
+    
+    updateAuthUIState() {
+        if (window.AuthManager && window.AuthManager.isAuthenticated()) {
+            this.showAdminControls();
+        } else {
+            this.hideAdminControls();
+        }
     }
     
     async getApiClient() {
@@ -328,34 +341,28 @@ class NavyUIController {
             return window.api;
         } else {
             console.warn('API not available, waiting...');
-            // Wait for up to 2 seconds for API to be available
+            
+            // Wait for API to be available
             return new Promise((resolve, reject) => {
-                let attempts = 0;
-                const checkApi = setInterval(() => {
-                    attempts++;
-                    if (window.api) {
-                        clearInterval(checkApi);
-                        resolve(window.api);
-                    } else if (attempts > 20) { // 20 * 100ms = 2 seconds
-                        clearInterval(checkApi);
-                        reject(new Error('API not available after waiting'));
-                    }
-                }, 100);
+                // Setup timeout for API initialization
+                const timeout = setTimeout(() => {
+                    reject(new Error('API client initialization timed out'));
+                }, 5000);
+                
+                // Listen for API ready event
+                document.addEventListener('apiClientReady', function apiReady(event) {
+                    clearTimeout(timeout);
+                    document.removeEventListener('apiClientReady', apiReady);
+                    resolve(event.detail);
+                });
             });
         }
     }
     
     checkLoginStatus() {
-        console.log('Checking login status');
-        const isLoggedIn = localStorage.getItem('admin_authenticated') === 'true';
-        
-        if (isLoggedIn) {
-            document.body.classList.add('authenticated');
-            this.showAdminControls();
-        } else {
-            document.body.classList.remove('authenticated');
-            this.hideAdminControls();
-        }
+        // This is kept for backward compatibility but 
+        // we now use the centralized AuthManager
+        this.updateAuthUIState();
     }
     
     showAdminControls() {
@@ -400,27 +407,72 @@ class NavyUIController {
             this.reorderEvalsBtn.addEventListener('click', () => this.enableReorderMode());
         }
         
-        // Upload navigation
-        if (this.nextStepBtn) {
-            this.nextStepBtn.addEventListener('click', () => this.nextUploadStep());
+        // Settings panel buttons
+        // Edit About from settings
+        const settingsEditAbout = document.getElementById('settingsEditAbout');
+        if (settingsEditAbout) {
+            settingsEditAbout.addEventListener('click', () => {
+                this.openEditAboutModal();
+                if (window.SettingsManager) window.SettingsManager.closeSettings();
+            });
         }
         
+        // Upload Profile Photo from settings
+        const settingsUploadPhoto = document.getElementById('settingsUploadPhoto');
+        if (settingsUploadPhoto) {
+            settingsUploadPhoto.addEventListener('click', () => {
+                this.handleProfileImageUpload();
+                if (window.SettingsManager) window.SettingsManager.closeSettings();
+            });
+        }
+        
+        // Add Evaluation from settings
+        const settingsAddEval = document.getElementById('settingsAddEval');
+        if (settingsAddEval) {
+            settingsAddEval.addEventListener('click', () => {
+                this.openUploadEvalModal();
+                if (window.SettingsManager) window.SettingsManager.closeSettings();
+            });
+        }
+        
+        // Reorder Evaluations from settings
+        const settingsReorderEvals = document.getElementById('settingsReorderEvals');
+        if (settingsReorderEvals) {
+            settingsReorderEvals.addEventListener('click', () => {
+                this.enableReorderMode();
+                if (window.SettingsManager) window.SettingsManager.closeSettings();
+            });
+        }
+        
+        // Image viewer navigation
+        if (this.prevImageBtn) {
+            this.prevImageBtn.addEventListener('click', () => this.showPrevImage());
+        }
+        
+        if (this.nextImageBtn) {
+            this.nextImageBtn.addEventListener('click', () => this.showNextImage());
+        }
+        
+        // Upload evaluation steps
         if (this.prevStepBtn) {
             this.prevStepBtn.addEventListener('click', () => this.prevUploadStep());
+        }
+        
+        if (this.nextStepBtn) {
+            this.nextStepBtn.addEventListener('click', () => this.nextUploadStep());
         }
         
         if (this.uploadFinalBtn) {
             this.uploadFinalBtn.addEventListener('click', () => this.uploadEvaluation());
         }
         
-        // Evaluation upload area
+        // File upload handling
         if (this.evalUploadArea) {
             this.evalUploadArea.addEventListener('click', () => this.triggerFileInput());
             this.evalUploadArea.addEventListener('dragover', (e) => this.handleDragOver(e));
             this.evalUploadArea.addEventListener('drop', (e) => this.handleFileDrop(e));
         }
         
-        // Evaluation file input
         if (this.evalFileInput) {
             this.evalFileInput.addEventListener('change', () => this.handleFileSelection());
         }
@@ -440,15 +492,6 @@ class NavyUIController {
         
         if (this.zoomOutBtn) {
             this.zoomOutBtn.addEventListener('click', () => this.zoomCropper(-0.1));
-        }
-        
-        // Image viewer navigation
-        if (this.prevImageBtn) {
-            this.prevImageBtn.addEventListener('click', () => this.showPrevImage());
-        }
-        
-        if (this.nextImageBtn) {
-            this.nextImageBtn.addEventListener('click', () => this.showNextImage());
         }
     }
     
@@ -1009,23 +1052,19 @@ class AdminController {
         
         // Setup admin event listeners
         this.setupAdminEventListeners();
+        
+        // Listen for auth state changes
+        document.addEventListener('authStateChanged', (event) => {
+            if (event.detail.isAuthenticated) {
+                this.navyUI.showAdminControls();
+            } else {
+                this.navyUI.hideAdminControls();
+            }
+        });
     }
     
     setupAdminEventListeners() {
         console.log('Setting up admin event listeners');
-        
-        // Admin toggle click (show password modal)
-        if (this.adminToggle) {
-            this.adminToggle.addEventListener('click', (e) => {
-                e.stopPropagation();
-                if (this.passwordModal) {
-                    this.modalManager.openModal(this.passwordModal);
-                    if (this.passwordInput) {
-                        setTimeout(() => this.passwordInput.focus(), 100);
-                    }
-                }
-            });
-        }
         
         // Login form submit
         if (this.submitPassword) {
@@ -1050,64 +1089,30 @@ class AdminController {
         }
         
         const password = this.passwordInput.value;
-        console.log('Password entered:', password ? 'Value provided' : 'Empty');
-        
-        // Debug modal instances
-        console.log('Modal references:', {
-            passwordModal: this.passwordModal ? 'Found' : 'Missing',
-            modalManager: window.ModalManager ? 'Found in window' : 'Missing from window'
-        });
-        
-        // Clear the input field for security
-        this.passwordInput.value = '';
-        
-        // Check password
-        if (password === 'admin1234') { // In a real app, use a secure authentication method
-            console.log('Login successful - password matched');
-            
-            // Set authenticated flag
-            localStorage.setItem('admin_authenticated', 'true');
-            document.body.classList.add('authenticated');
-            
-            // Debug admin UI state
-            console.log('Added authenticated class to body:', document.body.classList.contains('authenticated'));
-            
-            // Show admin controls
-            this.navyUI.showAdminControls();
-            console.log('Admin controls should be visible now');
-            
-            // Close the modal
-            if (this.modalManager && this.passwordModal) {
-                this.modalManager.closeModal(this.passwordModal);
-                console.log('Modal should be closed now');
-            } else {
-                console.error('Could not close modal - missing references');
-            }
-            
-            // Show success message
-            if (this.navyUI) {
-                this.navyUI.showNotification('Login successful! Admin mode activated.', 'success');
-                console.log('Success notification sent');
-            } else {
-                console.error('NavyUI reference missing - cannot show notification');
-            }
-        } else {
-            console.log('Login failed - password didn\'t match expected value');
-            
-            // Show error message
-            if (this.navyUI) {
-                this.navyUI.showNotification('Incorrect password. Please try again.', 'error');
-                console.log('Error notification sent');
-            }
-            
-            // Focus the password input again
-            setTimeout(() => {
-                if (this.passwordInput) {
-                    this.passwordInput.focus();
-                    console.log('Password input refocused');
-                }
-            }, 100);
+        if (!password) {
+            this.navyUI.showNotification('Please enter a password', 'error');
+            return;
         }
+        
+        // Use the centralized AuthManager instead of directly manipulating localStorage
+        window.AuthManager.login(password)
+            .then(() => {
+                // Close the modal
+                if (this.passwordModal) {
+                    this.modalManager.closeModal(this.passwordModal);
+                }
+                
+                // Clear password field
+                if (this.passwordInput) {
+                    this.passwordInput.value = '';
+                }
+                
+                this.navyUI.showNotification('Login successful', 'success');
+            })
+            .catch(error => {
+                console.error('Login error:', error);
+                this.navyUI.showNotification('Invalid password', 'error');
+            });
     }
 }
 

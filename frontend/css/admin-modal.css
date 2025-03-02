@@ -126,4 +126,142 @@
 
 .notification.info {
     background-color: #3B82F6 !important;
+}
+
+/* Settings Panel Styles */
+.settings-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #3a3a3a;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 900;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.settings-toggle:hover {
+    background-color: #555;
+    transform: scale(1.05);
+}
+
+.settings-panel {
+    position: fixed;
+    top: 0;
+    right: -350px;
+    width: 350px;
+    height: 100vh;
+    background-color: #1e1e1e;
+    z-index: 1000;
+    transition: right 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.settings-panel.open {
+    right: 0;
+}
+
+.settings-header {
+    padding: 15px;
+    background-color: #121212;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #333;
+}
+
+.settings-header h3 {
+    margin: 0;
+    color: white;
+    font-weight: 600;
+}
+
+.settings-close {
+    background: none;
+    border: none;
+    color: #aaa;
+    font-size: 24px;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.settings-close:hover {
+    color: white;
+}
+
+.settings-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.settings-section {
+    margin-bottom: 20px;
+}
+
+.settings-section h4 {
+    color: #ddd;
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-weight: 500;
+    border-bottom: 1px solid #333;
+    padding-bottom: 8px;
+}
+
+.settings-options {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.settings-options li {
+    margin-bottom: 10px;
+}
+
+.settings-option {
+    width: 100%;
+    text-align: left;
+    padding: 10px 15px;
+    background-color: #2a2a2a;
+    border: none;
+    border-radius: 4px;
+    color: #ddd;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.settings-option:hover {
+    background-color: #3a3a3a;
+    transform: translateX(5px);
+}
+
+.settings-footer {
+    margin-top: auto;
+    padding-top: 15px;
+    border-top: 1px solid #333;
+}
+
+/* Authentication visibility classes */
+body:not(.authenticated) .authenticated-only {
+    display: none !important;
+}
+
+body.authenticated .non-authenticated-only {
+    display: none !important;
 } 
