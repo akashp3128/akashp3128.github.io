@@ -81,26 +81,60 @@ document.addEventListener('DOMContentLoaded', function() {
     function initializePage() {
         console.log('Initializing Navy Evaluations page');
         
+        // First check if ApiClient is globally available (from <script> tag)
+        if (typeof ApiClient !== 'undefined' && !window.ApiClient) {
+            console.log('Found global ApiClient, assigning to window');
+            window.ApiClient = ApiClient;
+        }
+        
         // Wait for ApiClient to be available (it's loaded separately)
         if (!window.ApiClient) {
             console.log('ApiClient not loaded yet, waiting...');
-            // Wait for ApiClient to be loaded
+            
+            // Try to find it in the global scope as fallback
+            if (typeof ApiClient !== 'undefined') {
+                console.log('Using global ApiClient');
+                window.ApiClient = ApiClient;
+                continueInitialization();
+                return;
+            }
+            
+            // If not found, wait for it to load
+            let waitTime = 0;
+            const waitInterval = 100; // ms
+            const maxWaitTime = 5000; // 5 seconds timeout
+            
             const waitForApi = setInterval(() => {
+                waitTime += waitInterval;
+                
+                // Check window.ApiClient first
                 if (window.ApiClient) {
                     clearInterval(waitForApi);
-                    console.log('ApiClient loaded, continuing initialization');
+                    console.log('ApiClient loaded on window, continuing initialization');
+                    continueInitialization();
+                    return;
+                }
+                
+                // If not in window, check global scope
+                if (typeof ApiClient !== 'undefined') {
+                    clearInterval(waitForApi);
+                    console.log('ApiClient found in global scope, continuing initialization');
+                    window.ApiClient = ApiClient;
+                    continueInitialization();
+                    return;
+                }
+                
+                // If we've waited too long, continue anyway but show a warning
+                if (waitTime >= maxWaitTime) {
+                    clearInterval(waitForApi);
+                    console.warn('ApiClient not available after timeout, continuing with limited functionality');
+                    // Don't alert here - it's annoying on page load
+                    // Just continue with whatever we have
                     continueInitialization();
                 }
-            }, 100);
-            
-            // Timeout after 5 seconds to prevent infinite waiting
-            setTimeout(() => {
-                clearInterval(waitForApi);
-                console.error('ApiClient not available after timeout');
-                alert('Failed to load authentication service. Some features may not work.');
-                continueInitialization();
-            }, 5000);
+            }, waitInterval);
         } else {
+            console.log('ApiClient already available, continuing initialization');
             continueInitialization();
         }
     }
@@ -125,43 +159,65 @@ document.addEventListener('DOMContentLoaded', function() {
         // Show login status in the debug area
         const loginStatusDiv = document.querySelector('.login-status');
         
-        // Early return if APIClient isn't available yet
-        if (!window.ApiClient || !window.ApiClient.auth) {
+        // First check if ApiClient is globally available (from <script> tag)
+        if (typeof ApiClient !== 'undefined' && !window.ApiClient) {
+            console.log('Found global ApiClient during status check, assigning to window');
+            window.ApiClient = ApiClient;
+        }
+        
+        // Try to use window.ApiClient first
+        let apiClient = window.ApiClient;
+        
+        // If not available on window, try global scope
+        if (!apiClient && typeof ApiClient !== 'undefined') {
+            console.log('Using global ApiClient for login check');
+            apiClient = ApiClient;
+            // Also set it on window for future use
+            window.ApiClient = ApiClient;
+        }
+        
+        // Early return if APIClient isn't available in any scope
+        if (!apiClient || !apiClient.auth) {
             console.warn('ApiClient not available for auth check');
             if (loginStatusDiv) loginStatusDiv.textContent = 'Auth service not available';
             return;
         }
         
-        const isAuthenticated = window.ApiClient.auth.isAuthenticated();
-        console.log('Authentication status:', isAuthenticated);
-        
-        if (loginStatusDiv) {
-            loginStatusDiv.textContent = isAuthenticated ? 
-                'Status: Logged in as Admin' : 
-                'Status: Not logged in';
-        }
-        
-        if (isAuthenticated) {
-            document.body.classList.add('authenticated');
-            if (adminToggle) adminToggle.classList.add('admin-active');
+        try {
+            const isAuthenticated = apiClient.auth.isAuthenticated();
+            console.log('Authentication status:', isAuthenticated);
             
-            // Show all admin-only elements
-            document.querySelectorAll('.admin-only').forEach(el => {
-                el.style.display = el.tagName.toLowerCase() === 'button' || 
-                                  el.tagName.toLowerCase() === 'a' ? 
-                                  'inline-block' : 'block';
-            });
+            if (loginStatusDiv) {
+                loginStatusDiv.textContent = isAuthenticated ? 
+                    'Status: Logged in as Admin' : 
+                    'Status: Not logged in';
+            }
             
-            // Hide password modal if it's open
-            if (passwordModal) passwordModal.style.display = 'none';
-        } else {
-            document.body.classList.remove('authenticated');
-            if (adminToggle) adminToggle.classList.remove('admin-active');
-            
-            // Hide all admin-only elements
-            document.querySelectorAll('.admin-only').forEach(el => {
-                el.style.display = 'none';
-            });
+            if (isAuthenticated) {
+                document.body.classList.add('authenticated');
+                if (adminToggle) adminToggle.classList.add('admin-active');
+                
+                // Show all admin-only elements
+                document.querySelectorAll('.admin-only').forEach(el => {
+                    el.style.display = el.tagName.toLowerCase() === 'button' || 
+                                      el.tagName.toLowerCase() === 'a' ? 
+                                      'inline-block' : 'block';
+                });
+                
+                // Hide password modal if it's open
+                if (passwordModal) passwordModal.style.display = 'none';
+            } else {
+                document.body.classList.remove('authenticated');
+                if (adminToggle) adminToggle.classList.remove('admin-active');
+                
+                // Hide all admin-only elements
+                document.querySelectorAll('.admin-only').forEach(el => {
+                    el.style.display = 'none';
+                });
+            }
+        } catch (e) {
+            console.error('Error checking authentication status:', e);
+            if (loginStatusDiv) loginStatusDiv.textContent = 'Error checking auth status';
         }
     }
     
@@ -473,60 +529,85 @@ document.addEventListener('DOMContentLoaded', function() {
         
         console.log('Attempting login with password');
         
-        // Make sure ApiClient is available
-        if (!window.ApiClient || !window.ApiClient.auth) {
-            console.error('ApiClient not available');
+        // Check for ApiClient in window and global scope
+        let apiClient = window.ApiClient;
+        
+        // If ApiClient isn't available yet, create a fallback version
+        if (!apiClient) {
+            console.warn('ApiClient not found in window. Attempting to find global scope ApiClient');
+            if (typeof ApiClient !== 'undefined') {
+                console.log('Using global ApiClient');
+                apiClient = ApiClient;
+                // Also set it on window for future use
+                window.ApiClient = ApiClient;
+            } else {
+                console.error('ApiClient not available in any scope');
+                if (loginStatusDiv) loginStatusDiv.textContent = 'Error: Auth service not initialized';
+                alert('Login system not initialized properly. Please refresh the page and try again.');
+                return;
+            }
+        }
+        
+        // Make sure ApiClient is available and has auth module
+        if (!apiClient || !apiClient.auth) {
+            console.error('ApiClient auth module not available');
             if (loginStatusDiv) loginStatusDiv.textContent = 'Error: Auth service not available';
             alert('Login system not available. Please refresh the page and try again.');
             return;
         }
         
-        window.ApiClient.auth.login(password)
-            .then(response => {
-                console.log('Login response:', response);
-                if (response.success) {
-                    // Hide the password modal
-                    if (passwordModal) {
-                        passwordModal.style.display = 'none';
+        try {
+            apiClient.auth.login(password)
+                .then(response => {
+                    console.log('Login response:', response);
+                    if (response.success) {
+                        // Hide the password modal
+                        if (passwordModal) {
+                            passwordModal.style.display = 'none';
+                        }
+                        
+                        // Update login status
+                        if (loginStatusDiv) loginStatusDiv.textContent = 'Success! Logged in as Admin';
+                        
+                        // Update UI based on new auth status
+                        checkLoginStatus();
+                        
+                        // Clear password field
+                        if (passwordInput) passwordInput.value = '';
+                        
+                        // Reload evaluations to show admin features
+                        loadEvaluations();
+                        loadNavalProfile();
+                        
+                        // Make admin elements visible
+                        document.querySelectorAll('.admin-only').forEach(el => {
+                            el.style.display = el.tagName.toLowerCase() === 'button' || 
+                                              el.tagName.toLowerCase() === 'a' ? 
+                                              'inline-block' : 'block';
+                        });
+                        
+                        // Apply authenticated class and styles
+                        document.body.classList.add('authenticated');
+                        if (adminToggle) adminToggle.classList.add('admin-active');
+                        
+                        console.log('Login successful, admin features enabled');
+                        alert('Login successful! Admin features enabled.');
+                    } else {
+                        console.error('Login failed: Invalid credentials');
+                        if (loginStatusDiv) loginStatusDiv.textContent = 'Error: Invalid password';
+                        alert('Invalid password. Please try again.');
                     }
-                    
-                    // Update login status
-                    if (loginStatusDiv) loginStatusDiv.textContent = 'Success! Logged in as Admin';
-                    
-                    // Update UI based on new auth status
-                    checkLoginStatus();
-                    
-                    // Clear password field
-                    if (passwordInput) passwordInput.value = '';
-                    
-                    // Reload evaluations to show admin features
-                    loadEvaluations();
-                    loadNavalProfile();
-                    
-                    // Make admin elements visible
-                    document.querySelectorAll('.admin-only').forEach(el => {
-                        el.style.display = el.tagName.toLowerCase() === 'button' || 
-                                          el.tagName.toLowerCase() === 'a' ? 
-                                          'inline-block' : 'block';
-                    });
-                    
-                    // Apply authenticated class and styles
-                    document.body.classList.add('authenticated');
-                    if (adminToggle) adminToggle.classList.add('admin-active');
-                    
-                    console.log('Login successful, admin features enabled');
-                    alert('Login successful! Admin features enabled.');
-                } else {
-                    console.error('Login failed: Invalid credentials');
-                    if (loginStatusDiv) loginStatusDiv.textContent = 'Error: Invalid password';
-                    alert('Invalid password. Please try again.');
-                }
-            })
-            .catch(err => {
-                console.error('Login error:', err);
-                if (loginStatusDiv) loginStatusDiv.textContent = 'Error: Login failed';
-                alert('Login failed. Please try again.');
-            });
+                })
+                .catch(err => {
+                    console.error('Login error:', err);
+                    if (loginStatusDiv) loginStatusDiv.textContent = 'Error: Login failed';
+                    alert('Login failed. Please try again.');
+                });
+        } catch (e) {
+            console.error('Exception during login process:', e);
+            if (loginStatusDiv) loginStatusDiv.textContent = 'Error: Login system error';
+            alert('Login system encountered an error. Please refresh the page and try again.');
+        }
     }
     
     // Function to handle profile image upload
