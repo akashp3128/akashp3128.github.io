@@ -12,6 +12,22 @@ document.addEventListener('DOMContentLoaded', function() {
     const reorderEvalsBtn = document.getElementById('reorderEvalsBtn');
     const evaluationsGallery = document.getElementById('evaluationsGallery');
     
+    // Apply direct click handler to admin toggle for maximum compatibility
+    const directAdminToggle = document.getElementById('adminToggle');
+    if (directAdminToggle) {
+        console.log('Adding direct click handler to admin toggle');
+        directAdminToggle.onclick = function() {
+            console.log('Admin toggle clicked directly');
+            const pwdModal = document.getElementById('passwordModal');
+            if (pwdModal) {
+                console.log('Showing password modal directly');
+                pwdModal.style.display = 'block';
+                const pwdInput = document.getElementById('passwordInput');
+                if (pwdInput) pwdInput.focus();
+            }
+        };
+    }
+    
     // Modal References
     const imageViewerModal = document.getElementById('imageViewerModal');
     const uploadEvalModal = document.getElementById('uploadEvalModal');
@@ -58,53 +74,72 @@ document.addEventListener('DOMContentLoaded', function() {
     let evaluations = [];
     let currentUploadStep = 1;
     
-    // Make sure ApiClient is available before proceeding
-    if (typeof window.ApiClient === 'undefined') {
-        console.error('ApiClient not available. Waiting for it to be defined...');
+    // Start initialization
+    initializePage();
+    
+    // Initialize the page
+    function initializePage() {
+        console.log('Initializing Navy Evaluations page');
         
-        // Check if api.js is loaded
-        const apiScript = document.querySelector('script[src="js/api.js"]');
-        if (!apiScript) {
-            console.error('api.js script tag not found!');
+        // Wait for ApiClient to be available (it's loaded separately)
+        if (!window.ApiClient) {
+            console.log('ApiClient not loaded yet, waiting...');
+            // Wait for ApiClient to be loaded
+            const waitForApi = setInterval(() => {
+                if (window.ApiClient) {
+                    clearInterval(waitForApi);
+                    console.log('ApiClient loaded, continuing initialization');
+                    continueInitialization();
+                }
+            }, 100);
+            
+            // Timeout after 5 seconds to prevent infinite waiting
+            setTimeout(() => {
+                clearInterval(waitForApi);
+                console.error('ApiClient not available after timeout');
+                alert('Failed to load authentication service. Some features may not work.');
+                continueInitialization();
+            }, 5000);
+        } else {
+            continueInitialization();
         }
-        
-        // Wait for ApiClient to be defined
-        const waitForApiClient = setInterval(() => {
-            if (typeof window.ApiClient !== 'undefined') {
-                console.log('ApiClient now available, initializing page');
-                clearInterval(waitForApiClient);
-                initializePage();
-            }
-        }, 100);
-    } else {
-        console.log('ApiClient available, initializing page');
-        initializePage();
     }
     
-    // Function to initialize the page
-    function initializePage() {
-        // Check login status
+    function continueInitialization() {
+        // Check login status first
         checkLoginStatus();
         
-        // Load naval profile content
+        // Set up all event listeners
+        setupEventListeners();
+        
+        // Load naval profile info
         loadNavalProfile();
         
-        // Load evaluations
+        // Load evaluations data
         loadEvaluations();
-        
-        // Setup event listeners
-        setupEventListeners();
     }
     
     // Function to check login status and update UI
     function checkLoginStatus() {
+        console.log('Checking login status...');
+        // Show login status in the debug area
+        const loginStatusDiv = document.querySelector('.login-status');
+        
+        // Early return if APIClient isn't available yet
         if (!window.ApiClient || !window.ApiClient.auth) {
-            console.error('Auth client not available');
+            console.warn('ApiClient not available for auth check');
+            if (loginStatusDiv) loginStatusDiv.textContent = 'Auth service not available';
             return;
         }
         
         const isAuthenticated = window.ApiClient.auth.isAuthenticated();
         console.log('Authentication status:', isAuthenticated);
+        
+        if (loginStatusDiv) {
+            loginStatusDiv.textContent = isAuthenticated ? 
+                'Status: Logged in as Admin' : 
+                'Status: Not logged in';
+        }
         
         if (isAuthenticated) {
             document.body.classList.add('authenticated');
@@ -134,58 +169,60 @@ document.addEventListener('DOMContentLoaded', function() {
     function setupEventListeners() {
         console.log('Setting up event listeners');
         
-        // Admin toggle - use both approaches for maximum compatibility
-        if (adminToggle) {
-            console.log('Adding click event to admin toggle');
-            // Keep the original event listener, but make it backup
-            adminToggle.addEventListener('click', function(e) {
-                console.log('Admin toggle clicked via event listener');
-                // The inline onclick should handle this now, this is just backup
-                if (passwordModal) {
-                    passwordModal.style.display = 'block';
-                    if (passwordInput) passwordInput.focus();
-                }
-            });
-        } else {
-            console.error('Admin toggle button not found!');
-        }
-        
         // Close modal button
         if (closeModalBtn) {
+            console.log('Adding click handler to close modal button');
             closeModalBtn.addEventListener('click', function() {
+                console.log('Close modal button clicked');
                 if (passwordModal) {
                     passwordModal.style.display = 'none';
                 }
             });
+        } else {
+            console.error('Close modal button not found!');
         }
         
-        // Close modal when clicking outside
+        // Close modals on outside click
         window.addEventListener('click', function(event) {
             if (event.target === passwordModal) {
                 passwordModal.style.display = 'none';
             }
-            if (event.target === imageViewerModal) {
-                closeModal(imageViewerModal);
-            }
+            
             if (event.target === uploadEvalModal) {
                 closeModal(uploadEvalModal);
             }
+            
+            if (event.target === imageViewerModal) {
+                closeModal(imageViewerModal);
+            }
+            
             if (event.target === editAboutModal) {
                 closeModal(editAboutModal);
             }
         });
         
-        // Login form
+        // Login form - Ensure these handlers are properly attached
+        console.log('Setting up login form handlers');
         if (submitPassword) {
-            submitPassword.addEventListener('click', handleLogin);
+            console.log('Adding click handler to submitPassword button');
+            submitPassword.addEventListener('click', function() {
+                console.log('Submit password button clicked');
+                handleLogin();
+            });
+        } else {
+            console.error('Submit password button not found!');
         }
         
         if (passwordInput) {
+            console.log('Adding keypress handler to passwordInput');
             passwordInput.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
+                    console.log('Enter key pressed in password input');
                     handleLogin();
                 }
             });
+        } else {
+            console.error('Password input field not found!');
         }
         
         // Navy profile image upload
@@ -422,26 +459,45 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Function to handle login
     function handleLogin() {
-        const password = passwordInput.value;
+        console.log('Handle login called');
+        const loginStatusDiv = document.querySelector('.login-status');
+        if (loginStatusDiv) loginStatusDiv.textContent = 'Logging in...';
+        
+        const password = passwordInput ? passwordInput.value : '';
         
         if (!password) {
+            if (loginStatusDiv) loginStatusDiv.textContent = 'Error: Password required';
             alert('Please enter a password');
+            return;
+        }
+        
+        console.log('Attempting login with password');
+        
+        // Make sure ApiClient is available
+        if (!window.ApiClient || !window.ApiClient.auth) {
+            console.error('ApiClient not available');
+            if (loginStatusDiv) loginStatusDiv.textContent = 'Error: Auth service not available';
+            alert('Login system not available. Please refresh the page and try again.');
             return;
         }
         
         window.ApiClient.auth.login(password)
             .then(response => {
+                console.log('Login response:', response);
                 if (response.success) {
                     // Hide the password modal
                     if (passwordModal) {
                         passwordModal.style.display = 'none';
                     }
                     
+                    // Update login status
+                    if (loginStatusDiv) loginStatusDiv.textContent = 'Success! Logged in as Admin';
+                    
                     // Update UI based on new auth status
                     checkLoginStatus();
                     
                     // Clear password field
-                    passwordInput.value = '';
+                    if (passwordInput) passwordInput.value = '';
                     
                     // Reload evaluations to show admin features
                     loadEvaluations();
@@ -459,12 +515,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (adminToggle) adminToggle.classList.add('admin-active');
                     
                     console.log('Login successful, admin features enabled');
+                    alert('Login successful! Admin features enabled.');
                 } else {
-                    alert('Invalid password');
+                    console.error('Login failed: Invalid credentials');
+                    if (loginStatusDiv) loginStatusDiv.textContent = 'Error: Invalid password';
+                    alert('Invalid password. Please try again.');
                 }
             })
             .catch(err => {
                 console.error('Login error:', err);
+                if (loginStatusDiv) loginStatusDiv.textContent = 'Error: Login failed';
                 alert('Login failed. Please try again.');
             });
     }
