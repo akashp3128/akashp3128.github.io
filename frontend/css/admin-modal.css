@@ -1,0 +1,20 @@
+/* Settings toggle button - critical fix */
+.settings-toggle {
+    position: fixed !important;
+    bottom: 20px !important;
+    right: 20px !important;
+    background-color: #3a3a3a !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 50% !important;
+    width: 50px !important;
+    height: 50px !important;
+    font-size: 24px !important;
+    cursor: pointer !important;
+    z-index: 9999 !important; /* Crucial fix - must be above everything */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3) !important;
+    transition: all 0.3s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+} 
