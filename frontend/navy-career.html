@@ -5,18 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#121212">
     <title>Akash Patel - Navy Career</title>
-    <!-- EMERGENCY CSS - must be first -->
-    <link rel="stylesheet" href="css/emergency.css">
-    <!-- EMERGENCY JS - must be early -->
-    <script src="js/emergency-auth.js"></script>
-    <!-- Regular CSS -->
     <link rel="stylesheet" href="css/styles.css">
     <!-- Add Cropper.js for image cropping -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <!-- Load API script early to ensure it's available -->
     <script src="js/api.js"></script>
-    <script src="js/init.js"></script>
 </head>
 <body class="navy-page">
     <div class="background">
@@ -168,11 +162,11 @@
     </div>
     
     <!-- Admin Login Panel (Reused from main page) -->
-    <button id="adminToggle" class="admin-toggle" onclick="document.getElementById('passwordModal').style.display='block';">⚙️</button>
+    <button id="adminToggle" class="admin-toggle">⚙️</button>
     
     <div id="passwordModal" class="modal">
         <div class="modal-content">
-            <span id="closeModal" class="close-modal">&times;</span>
+            <span class="close-modal">&times;</span>
             <h2>Enter Admin Password</h2>
             <div class="form-group">
                 <label for="passwordInput">Admin Password</label>
@@ -189,7 +183,83 @@
     
     <!-- Scripts -->
     <script src="js/navy-evaluations.js"></script>
-    <!-- Emergency scripts -->
-    <script src="js/emergency-settings.js"></script>
+    
+    <!-- Simple fix for the modal close button -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Fix modal close buttons
+            document.querySelectorAll('.close-modal').forEach(function(closeBtn) {
+                closeBtn.addEventListener('click', function() {
+                    // Find the parent modal
+                    const modal = this.closest('.modal');
+                    if (modal) {
+                        modal.style.display = 'none';
+                    }
+                });
+            });
+            
+            // Fix admin toggle button
+            const adminToggle = document.getElementById('adminToggle');
+            if (adminToggle) {
+                adminToggle.addEventListener('click', function() {
+                    // Check if logged in via localStorage
+                    if (localStorage.getItem('admin_authenticated') === 'true') {
+                        // Do whatever authenticated users should do
+                        document.body.classList.add('authenticated');
+                        document.querySelectorAll('.admin-only').forEach(function(el) {
+                            el.style.display = '';
+                        });
+                    } else {
+                        // Show login modal
+                        const passwordModal = document.getElementById('passwordModal');
+                        if (passwordModal) {
+                            passwordModal.style.display = 'block';
+                        }
+                    }
+                });
+            }
+            
+            // Fix submit password button
+            const submitPassword = document.getElementById('submitPassword');
+            if (submitPassword) {
+                submitPassword.addEventListener('click', function() {
+                    const passwordInput = document.getElementById('passwordInput');
+                    if (passwordInput && passwordInput.value === 'admin1234') {
+                        // Set authentication in localStorage
+                        localStorage.setItem('admin_authenticated', 'true');
+                        
+                        // Hide the modal
+                        const modal = document.getElementById('passwordModal');
+                        if (modal) {
+                            modal.style.display = 'none';
+                        }
+                        
+                        // Update UI for authenticated user
+                        document.body.classList.add('authenticated');
+                        document.querySelectorAll('.admin-only').forEach(function(el) {
+                            el.style.display = '';
+                        });
+                        
+                        // Show a message
+                        alert('Login successful!');
+                    } else {
+                        alert('Incorrect password. Try admin1234');
+                    }
+                });
+            }
+            
+            // Check if already authenticated
+            if (localStorage.getItem('admin_authenticated') === 'true') {
+                document.body.classList.add('authenticated');
+                document.querySelectorAll('.admin-only').forEach(function(el) {
+                    el.style.display = '';
+                });
+            } else {
+                document.querySelectorAll('.admin-only').forEach(function(el) {
+                    el.style.display = 'none';
+                });
+            }
+        });
+    </script>
 </body>
 </html> 
