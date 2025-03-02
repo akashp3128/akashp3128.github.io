@@ -914,6 +914,22 @@ document.addEventListener('DOMContentLoaded', function() {
     function openModal(modal) {
         if (modal) {
             modal.style.display = 'block';
+            
+            // Add admin modal class if user is authenticated
+            if (document.body.classList.contains('authenticated')) {
+                modal.classList.add('admin-modal');
+                
+                // Make modal content draggable in admin mode
+                const modalContent = modal.querySelector('.modal-content');
+                if (modalContent) {
+                    modalContent.classList.add('draggable');
+                    
+                    // Add modal controls if they don't exist
+                    if (!modalContent.querySelector('.modal-controls')) {
+                        addModalControls(modalContent);
+                    }
+                }
+            }
         }
     }
     
@@ -921,6 +937,16 @@ document.addEventListener('DOMContentLoaded', function() {
     function closeModal(modal) {
         if (modal) {
             modal.style.display = 'none';
+            modal.classList.remove('admin-modal');
+            
+            // Reset modal content position if it was draggable
+            const modalContent = modal.querySelector('.modal-content');
+            if (modalContent) {
+                modalContent.classList.remove('draggable', 'compact');
+                modalContent.style.top = '';
+                modalContent.style.left = '';
+                modalContent.style.transform = '';
+            }
         }
     }
     
@@ -929,5 +955,109 @@ document.addEventListener('DOMContentLoaded', function() {
         closeModal(imageViewerModal);
         closeModal(uploadEvalModal);
         closeModal(editAboutModal);
+    }
+    
+    // Add modal controls for admin mode
+    function addModalControls(modalContent) {
+        // Create modal header if it doesn't exist
+        let modalHeader = modalContent.querySelector('.modal-header');
+        if (!modalHeader) {
+            modalHeader = document.createElement('div');
+            modalHeader.className = 'modal-header';
+            
+            // Add title
+            const title = document.createElement('h3');
+            title.textContent = 'Admin Mode';
+            
+            // Create controls
+            const controls = document.createElement('div');
+            controls.className = 'modal-controls';
+            
+            // Add controls to header
+            modalHeader.appendChild(title);
+            modalHeader.appendChild(controls);
+            
+            // Prepend to modal content
+            modalContent.prepend(modalHeader);
+        }
+        
+        // Add controls if they don't exist
+        let controls = modalContent.querySelector('.modal-controls');
+        if (!controls) {
+            controls = document.createElement('div');
+            controls.className = 'modal-controls';
+            modalHeader.appendChild(controls);
+        }
+        
+        // Add compact toggle button
+        const compactBtn = document.createElement('button');
+        compactBtn.className = 'modal-control-btn compact-toggle';
+        compactBtn.innerHTML = '🔍';
+        compactBtn.title = 'Toggle compact mode';
+        compactBtn.onclick = function(e) {
+            e.stopPropagation();
+            modalContent.classList.toggle('compact');
+        };
+        
+        controls.appendChild(compactBtn);
+        
+        // Make modal draggable
+        makeElementDraggable(modalContent);
+    }
+    
+    // Make an element draggable
+    function makeElementDraggable(element) {
+        if (!element) return;
+        
+        let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+        
+        // If the header exists, use it as drag handle
+        const header = element.querySelector('.modal-header');
+        
+        if (header) {
+            header.onmousedown = dragMouseDown;
+            // Add visual cue that it's draggable
+            header.style.cursor = 'move';
+        } else {
+            // Otherwise use the element itself
+            element.onmousedown = dragMouseDown;
+        }
+        
+        function dragMouseDown(e) {
+            e = e || window.event;
+            e.preventDefault();
+            
+            // Get the mouse position at startup
+            pos3 = e.clientX;
+            pos4 = e.clientY;
+            
+            document.onmouseup = closeDragElement;
+            document.onmousemove = elementDrag;
+        }
+        
+        function elementDrag(e) {
+            e = e || window.event;
+            e.preventDefault();
+            
+            // Calculate the new position
+            pos1 = pos3 - e.clientX;
+            pos2 = pos4 - e.clientY;
+            pos3 = e.clientX;
+            pos4 = e.clientY;
+            
+            // Set the element's new position
+            const top = (element.offsetTop - pos2);
+            const left = (element.offsetLeft - pos1);
+            
+            element.style.top = top + "px";
+            element.style.left = left + "px";
+            element.style.transform = 'none'; // Remove centering transform
+        }
+        
+        function closeDragElement() {
+            // Stop moving when mouse button is released
+            document.onmouseup = null;
+            document.onmousemove = null;
+        }
     }
 });
