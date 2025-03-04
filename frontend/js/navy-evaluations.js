@@ -161,6 +161,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Load evaluations data
         loadEvaluations();
+        
+        // Ensure all modals are closed after initialization
+        closeAllModals();
     }
     
     // Function to check login status and update UI
@@ -397,11 +400,16 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Load naval profile content
     function loadNavalProfile() {
+        console.log('Loading naval profile...');
+        
         // Load profile image
         loadProfileImage();
         
         // Load about content
         loadAboutContent();
+        
+        // Ensure no modals are open after loading profile
+        closeAllModals();
     }
     
     // Function to load the profile image
@@ -649,6 +657,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         // Apply authenticated class and styles
                         document.body.classList.add('authenticated');
                         if (adminToggle) adminToggle.classList.add('admin-active');
+                        
+                        // Ensure all modals are closed after login
+                        closeAllModals();
                         
                         console.log('Login successful, admin features enabled');
                         alert('Login successful! Admin features enabled.');
