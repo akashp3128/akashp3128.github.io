@@ -68,6 +68,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const passwordInput = document.getElementById('passwordInput');
     const submitPassword = document.getElementById('submitPassword');
     
+    // Navy Admin Panel References
+    const navyAdminPanel = document.getElementById('navyAdminPanel');
+    const uploadNavyProfileBtn = document.getElementById('uploadNavyProfileBtn');
+    const editAboutSectionBtn = document.getElementById('editAboutSectionBtn');
+    const uploadEvaluationBtn = document.getElementById('uploadEvaluationBtn');
+    const reorderEvaluationsBtn = document.getElementById('reorderEvaluationsBtn');
+    const deleteEvaluationBtn = document.getElementById('deleteEvaluationBtn');
+    const logoutAdminBtn = document.getElementById('logoutAdminBtn');
+    const loginStatusPanel = document.querySelector('.login-status-panel');
+    
     // Variables
     let cropper = null;
     let currentEvaluationIndex = 0;
@@ -206,6 +216,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Hide password modal if it's open
                 if (passwordModal) passwordModal.style.display = 'none';
+                
+                // Show the admin panel
+                if (navyAdminPanel) {
+                    navyAdminPanel.classList.add('visible');
+                    if (loginStatusPanel) {
+                        loginStatusPanel.textContent = 'Currently logged in as Admin';
+                    }
+                }
             } else {
                 document.body.classList.remove('authenticated');
                 if (adminToggle) adminToggle.classList.remove('admin-active');
@@ -214,10 +232,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.querySelectorAll('.admin-only').forEach(el => {
                     el.style.display = 'none';
                 });
+                
+                // Hide admin panel
+                if (navyAdminPanel) {
+                    navyAdminPanel.classList.remove('visible');
+                }
             }
         } catch (e) {
             console.error('Error checking authentication status:', e);
             if (loginStatusDiv) loginStatusDiv.textContent = 'Error checking auth status';
+            
+            // Hide admin panel
+            if (navyAdminPanel) {
+                navyAdminPanel.classList.remove('visible');
+            }
         }
     }
     
@@ -229,76 +257,72 @@ document.addEventListener('DOMContentLoaded', function() {
         if (closeModalBtn) {
             console.log('Adding click handler to close modal button');
             closeModalBtn.addEventListener('click', function() {
-                console.log('Close modal button clicked');
-                if (passwordModal) {
-                    passwordModal.style.display = 'none';
-                }
+                closeModal(passwordModal);
             });
-        } else {
-            console.error('Close modal button not found!');
         }
         
-        // Close modals on outside click
-        window.addEventListener('click', function(event) {
-            if (event.target === passwordModal) {
-                passwordModal.style.display = 'none';
-            }
-            
-            if (event.target === uploadEvalModal) {
-                closeModal(uploadEvalModal);
-            }
-            
-            if (event.target === imageViewerModal) {
-                closeModal(imageViewerModal);
-            }
-            
-            if (event.target === editAboutModal) {
-                closeModal(editAboutModal);
-            }
+        // Closing modals on outer click
+        window.addEventListener('click', function(e) {
+            if (e.target === imageViewerModal) closeModal(imageViewerModal);
+            if (e.target === uploadEvalModal) closeModal(uploadEvalModal);
+            if (e.target === editAboutModal) closeModal(editAboutModal);
+            if (e.target === passwordModal) closeModal(passwordModal);
         });
         
-        // Login form - Ensure these handlers are properly attached
-        console.log('Setting up login form handlers');
+        // Login button click
         if (submitPassword) {
-            console.log('Adding click handler to submitPassword button');
-            submitPassword.addEventListener('click', function() {
-                console.log('Submit password button clicked');
-                handleLogin();
-            });
-        } else {
-            console.error('Submit password button not found!');
+            submitPassword.addEventListener('click', handleLogin);
         }
         
+        // Password input key press (enter key)
         if (passwordInput) {
-            console.log('Adding keypress handler to passwordInput');
             passwordInput.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
-                    console.log('Enter key pressed in password input');
                     handleLogin();
                 }
             });
-        } else {
-            console.error('Password input field not found!');
         }
         
-        // Navy profile image upload
+        // Profile image upload
         if (navyProfileUploadOverlay) {
             navyProfileUploadOverlay.addEventListener('click', handleProfileImageUpload);
         }
         
-        // About section edit
+        // Admin panel profile upload button (alternative to overlay)
+        if (uploadNavyProfileBtn) {
+            uploadNavyProfileBtn.addEventListener('click', handleProfileImageUpload);
+        }
+        
+        // Edit about content
         if (editNavyAboutBtn) {
             editNavyAboutBtn.addEventListener('click', openEditAboutModal);
         }
         
-        // Save about changes
+        // Admin panel edit about button (alternative to button in section)
+        if (editAboutSectionBtn) {
+            editAboutSectionBtn.addEventListener('click', openEditAboutModal);
+        }
+        
+        // Save about content
         if (saveAboutBtn) {
             saveAboutBtn.addEventListener('click', saveAboutContent);
         }
         
         // Upload evaluation button
         if (uploadEvalBtn) {
-            uploadEvalBtn.addEventListener('click', openUploadEvalModal);
+            uploadEvalBtn.addEventListener('click', function() {
+                openModal(uploadEvalModal);
+                showUploadStep(1);
+            });
+        }
+        
+        // Admin panel upload evaluation button (alternative to button in section)
+        if (uploadEvaluationBtn) {
+            uploadEvaluationBtn.addEventListener('click', function() {
+                openModal(uploadEvalModal);
+                showUploadStep(1);
+                resetUploadForm();
+            });
         }
         
         // Reorder evaluations button
@@ -306,22 +330,54 @@ document.addEventListener('DOMContentLoaded', function() {
             reorderEvalsBtn.addEventListener('click', enableReorderMode);
         }
         
-        // Evaluation upload area
-        if (evalUploadArea) {
-            evalUploadArea.addEventListener('click', triggerFileInput);
-            evalUploadArea.addEventListener('dragover', handleDragOver);
-            evalUploadArea.addEventListener('drop', handleFileDrop);
+        // Admin panel reorder button (alternative to button in section)
+        if (reorderEvaluationsBtn) {
+            reorderEvaluationsBtn.addEventListener('click', enableReorderMode);
         }
         
-        // Evaluation file input
-        if (evalFileInput) {
-            evalFileInput.addEventListener('change', handleFileSelection);
+        // Admin panel delete evaluation button
+        if (deleteEvaluationBtn) {
+            deleteEvaluationBtn.addEventListener('click', function() {
+                if (evaluations.length === 0) {
+                    alert('No evaluations to delete.');
+                    return;
+                }
+                
+                const evalToDelete = prompt('Enter the number of the evaluation to delete (1-' + evaluations.length + '):');
+                const index = parseInt(evalToDelete) - 1;
+                
+                if (isNaN(index) || index < 0 || index >= evaluations.length) {
+                    alert('Invalid evaluation number.');
+                    return;
+                }
+                
+                if (confirm('Are you sure you want to delete evaluation #' + (index + 1) + '?')) {
+                    // Delete the evaluation with API call
+                    window.ApiClient.navy.deleteEvaluation(evaluations[index].id)
+                        .then(response => {
+                            if (response.success) {
+                                alert('Evaluation deleted successfully.');
+                                loadEvaluations(); // Reload the evaluations
+                            } else {
+                                alert('Failed to delete evaluation: ' + (response.error || 'Unknown error'));
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error deleting evaluation:', error);
+                            alert('Error deleting evaluation. Please try again.');
+                        });
+                }
+            });
         }
         
-        // Modal close buttons
-        document.querySelectorAll('.close-modal').forEach(btn => {
-            btn.addEventListener('click', closeAllModals);
-        });
+        // Admin panel logout button
+        if (logoutAdminBtn) {
+            logoutAdminBtn.addEventListener('click', function() {
+                window.ApiClient.auth.logout();
+                checkLoginStatus();
+                alert('You have been logged out.');
+            });
+        }
         
         // Cropper controls
         if (rotateLeftBtn) rotateLeftBtn.addEventListener('click', () => rotateCropper(-90));
@@ -666,11 +722,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Function to open the upload evaluation modal
     function openUploadEvalModal() {
-        // Reset the form
-        resetUploadForm();
-        
-        // Open the modal
         openModal(uploadEvalModal);
+        showUploadStep(1);
+        resetUploadForm();
     }
     
     // Function to reset the upload form
