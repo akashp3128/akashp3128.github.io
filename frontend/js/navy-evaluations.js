@@ -969,6 +969,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Function to close all modals
     function closeAllModals() {
+        console.log('Closing all modals to prevent unwanted redirects');
         closeModal(imageViewerModal);
         closeModal(uploadEvalModal);
         closeModal(editAboutModal);
