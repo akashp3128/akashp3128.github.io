@@ -33,6 +33,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load card content from localStorage if available
     loadCardContent();
     
+    // Implement lazy-loading for images and resume previews
+    lazyLoad();
+    
+    // Enhance accessibility by adding ARIA attributes
+    enhanceAccessibility();
+    
+    // Initialize accessibility enhancements
+    initializeAccessibility();
+    
     // Function to check login status and update UI
     function checkLoginStatus() {
         const isAuthenticated = window.ApiClient.auth.isAuthenticated();
@@ -163,6 +172,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }).catch(error => {
             console.error('Error loading profile image:', error);
+            showError('Failed to load profile image. Please try again later.');
         });
     }
     
@@ -202,6 +212,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }).catch(error => {
             console.error('Error loading resume:', error);
+            showError('Failed to load resume. Please try again later.');
         });
     }
     
@@ -321,6 +332,23 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Login error:', error);
             showError('Login failed');
         });
+    }
+    
+    // Show loading indicator
+    function showLoading(message) {
+        const notification = document.getElementById('notification');
+        if (notification) {
+            notification.textContent = message;
+            notification.className = 'notification loading show';
+        }
+    }
+    
+    // Hide loading indicator
+    function hideLoading() {
+        const notification = document.getElementById('notification');
+        if (notification) {
+            notification.className = 'notification';
+        }
     }
     
     // Handle resume upload
@@ -600,4 +628,86 @@ document.addEventListener('DOMContentLoaded', function() {
             alert(message);
         }
     }
-}); 
+});
+
+// Debounce function to optimize event listeners
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Example usage: Debounce resize event
+window.addEventListener('resize', debounce(() => {
+    console.log('Window resized');
+    // Add resize handling logic here
+}, 250));
+
+// Implement lazy-loading for images and resume previews
+function lazyLoad() {
+    const lazyImages = document.querySelectorAll('img[data-src]');
+    const lazyIframes = document.querySelectorAll('iframe[data-src]');
+
+    const observer = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const element = entry.target;
+                element.src = element.getAttribute('data-src');
+                observer.unobserve(element);
+            }
+        });
+    });
+
+    lazyImages.forEach(img => observer.observe(img));
+    lazyIframes.forEach(iframe => observer.observe(iframe));
+}
+
+// Initialize lazy-loading
+lazyLoad();
+
+// Enhanced error handling function
+function handleError(error, context = 'An error occurred') {
+    console.error('Error:', { message: error.message, stack: error.stack });
+    showError(`${context}: ${error.message || 'Unknown error occurred'}`);
+}
+
+// Enhance accessibility by adding ARIA attributes
+function enhanceAccessibility() {
+    const buttons = document.querySelectorAll('button, a');
+    buttons.forEach(button => {
+        button.setAttribute('role', 'button');
+        button.setAttribute('tabindex', '0');
+    });
+
+    const modals = document.querySelectorAll('.modal');
+    modals.forEach(modal => {
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
+    });
+}
+
+// Initialize accessibility enhancements
+function initializeAccessibility() {
+    enhanceAccessibility();
+}
+
+// Call accessibility enhancements on DOMContentLoaded
+initializeAccessibility();
+
+function initializeAccessibility() {
+    enhanceAccessibility();
+}
+
+function enhanceAccessibility() {
+    document.querySelectorAll('button, a, input').forEach(el => {
+        el.setAttribute('aria-label', el.textContent.trim() || el.placeholder || 'interactive element');
+    });
+}
+
+initializeAccessibility(); 

@@ -3,22 +3,19 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { authenticateToken } = require('../middleware/auth');
+const Admin = require('../models/Admin');
 
 // Initialize with hashed password in a real app, this would be in a database
 let adminPasswordHash = null;
 
 // When the server starts, hash the admin password from environment variable
 const initializeAdminPassword = () => {
-    if (!process.env.ADMIN_PASSWORD) {
-        console.error('WARNING: ADMIN_PASSWORD environment variable not set!');
-        console.error('Using default password for development only.');
-        const defaultPassword = 'admin1234'; // Only for development
-        const salt = bcrypt.genSaltSync(10);
-        adminPasswordHash = bcrypt.hashSync(defaultPassword, salt);
-    } else {
-        const salt = bcrypt.genSaltSync(10);
-        adminPasswordHash = bcrypt.hashSync(process.env.ADMIN_PASSWORD, salt);
+    if (!process.env.ADMIN_PASSWORD || !process.env.JWT_SECRET) {
+        throw new Error('Critical environment variables ADMIN_PASSWORD and JWT_SECRET must be set.');
     }
+
+    const salt = bcrypt.genSaltSync(10);
+    adminPasswordHash = bcrypt.hashSync(process.env.ADMIN_PASSWORD, salt);
 };
 
 // Initialize the admin password hash
@@ -30,86 +27,30 @@ initializeAdminPassword();
  * @access Public
  */
 router.post('/login', async (req, res) => {
-    const { password } = req.body;
-    
-    console.log('Login attempt received');
+    const { username, password } = req.body;
 
-    if (!password) {
-        console.log('Login rejected: No password provided');
-        return res.status(400).json({ message: 'Password is required' });
+    if (!username || !password) {
+        return res.status(400).json({ message: 'Username and password are required' });
     }
 
     try {
-        // Make sure admin password is initialized
-        if (!adminPasswordHash) {
-            console.log('Initializing admin password hash');
-            initializeAdminPassword();
-        }
-        
-        // Special case for development environment
-        if ((process.env.NODE_ENV !== 'production') && 
-            (password === 'Rosie@007' || password === 'localdev')) {
-            console.log('Using development password override');
-            
-            // Create JWT payload
-            const payload = {
-                user: {
-                    isAdmin: true
-                }
-            };
-
-            // Sign the token
-            jwt.sign(
-                payload,
-                process.env.JWT_SECRET || 'pokemoncardresumedemosecret',
-                { expiresIn: '1d' },
-                (err, token) => {
-                    if (err) {
-                        console.error('Error signing JWT:', err);
-                        throw err;
-                    }
-                    console.log('Development login successful');
-                    res.json({ token });
-                }
-            );
-            return;
+        const admin = await Admin.findOne({ username });
+        if (!admin) {
+            return res.status(401).json({ message: 'Invalid username or password' });
         }
 
-        // Check if password matches
-        const isMatch = await bcrypt.compare(password, adminPasswordHash);
-
+        const isMatch = await bcrypt.compare(password, admin.passwordHash);
         if (!isMatch) {
-            console.log('Login rejected: Invalid password');
-            return res.status(401).json({ message: 'Invalid password' });
+            return res.status(401).json({ message: 'Invalid username or password' });
         }
 
-        // Create JWT payload
-        const payload = {
-            user: {
-                isAdmin: true
-            }
-        };
-
-        // Get JWT secret
-        const jwtSecret = process.env.JWT_SECRET || 'pokemoncardresumedemosecret';
-        console.log('Using JWT secret:', jwtSecret ? 'Configured' : 'Missing');
-
-        // Sign the token
-        jwt.sign(
-            payload,
-            jwtSecret,
-            { expiresIn: '1d' },
-            (err, token) => {
-                if (err) {
-                    console.error('Error signing JWT:', err);
-                    throw err;
-                }
-                console.log('Login successful');
-                res.json({ token });
-            }
-        );
+        const payload = { user: { isAdmin: true, username: admin.username } };
+        jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1d' }, (err, token) => {
+            if (err) throw err;
+            res.json({ token });
+        });
     } catch (error) {
-        console.error('Error in /login:', error);
+        console.error('Login error:', error);
         res.status(500).json({ message: 'Server error during authentication' });
     }
 });
@@ -132,24 +73,17 @@ router.post('/verify', authenticateToken, (req, res) => {
 router.post('/change-password', authenticateToken, async (req, res) => {
     const { currentPassword, newPassword } = req.body;
 
-    if (!currentPassword || !newPassword) {
-        return res.status(400).json({ message: 'All fields are required' });
-    }
-
-    if (newPassword.length < 8) {
+    if (!newPassword || newPassword.length < 8) {
         return res.status(400).json({ message: 'New password must be at least 8 characters' });
     }
 
     try {
-        // Verify current password
         const isMatch = await bcrypt.compare(currentPassword, adminPasswordHash);
-
         if (!isMatch) {
             return res.status(401).json({ message: 'Current password is incorrect' });
         }
 
-        // Hash the new password
-        const salt = bcrypt.genSaltSync(10);
+        const salt = bcrypt.genSaltSync();
         adminPasswordHash = bcrypt.hashSync(newPassword, salt);
 
         res.json({ message: 'Password updated successfully' });
