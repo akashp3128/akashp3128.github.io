@@ -683,6 +683,53 @@ const ApiClient = (function() {
                 // Fall back to localStorage in case of error
                 return localStorage.getItem('navy_about_content') || '';
             }
+        },
+        
+        // Delete an evaluation
+        deleteEvaluation: async function(evalId) {
+            // Check for emergency mode
+            if (isEmergencyMode) {
+                debugLog('Using localStorage for evaluation deletion (emergency mode)');
+                
+                // Get evaluations from localStorage
+                let evaluations = [];
+                try {
+                    evaluations = JSON.parse(localStorage.getItem('navy_evaluations') || '[]');
+                } catch (e) {
+                    evaluations = [];
+                }
+                
+                // Filter out the evaluation to delete
+                evaluations = evaluations.filter(eval => eval.id !== evalId);
+                
+                // Save the updated evaluations back to localStorage
+                localStorage.setItem('navy_evaluations', JSON.stringify(evaluations));
+                return { success: true };
+            }
+            
+            try {
+                debugLog('Deleting evaluation with ID:', evalId);
+                
+                const response = await fetch(`${API_ENDPOINTS.NAVY}/evaluations/${evalId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.message || `Failed to delete evaluation: ${response.status}`);
+                }
+                
+                return { success: true };
+            } catch (error) {
+                debugLog('Error deleting evaluation:', error);
+                return { 
+                    success: false, 
+                    error: error.message || 'Failed to delete evaluation'
+                };
+            }
         }
     };
     

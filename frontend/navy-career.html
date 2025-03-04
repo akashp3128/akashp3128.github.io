@@ -270,6 +270,29 @@
         <p>&copy; 2023 Akash Patel. All rights reserved.</p>
     </footer>
     
+    <!-- Admin Panel - Will be shown when logged in -->
+    <div id="navyAdminPanel" class="admin-panel">
+        <h2>Navy Career Admin Panel</h2>
+        <div class="admin-section">
+            <h3>Profile Management</h3>
+            <button id="uploadNavyProfileBtn" class="btn btn-primary">Change Profile Photo</button>
+            <button id="editAboutSectionBtn" class="btn btn-primary">Edit About Section</button>
+        </div>
+        
+        <div class="admin-section">
+            <h3>Evaluations Management</h3>
+            <button id="uploadEvaluationBtn" class="btn btn-primary">Upload New Evaluation</button>
+            <button id="reorderEvaluationsBtn" class="btn btn-accent">Reorder Evaluations</button>
+            <button id="deleteEvaluationBtn" class="btn btn-secondary">Delete Evaluation</button>
+        </div>
+        
+        <div class="admin-section">
+            <h3>Admin Actions</h3>
+            <button id="logoutAdminBtn" class="btn btn-secondary">Logout</button>
+            <div class="login-status-panel">Currently logged in as Admin</div>
+        </div>
+    </div>
+    
     <!-- Scripts -->
     <script src="js/ensure-emergency.js"></script>
     <script src="js/init.js"></script>

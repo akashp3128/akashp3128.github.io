@@ -1,5 +1,9 @@
 // Navy Evaluations Page JavaScript
 
+// Import crypto-js for password hashing
+import CryptoJS from 'crypto-js';
+import { AuthManager } from './auth';
+
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Navy evaluations page initialized');
     
@@ -85,6 +89,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const notification = document.getElementById('notification');
     const notificationMessage = document.getElementById('notificationMessage');
     
+    // Navy Admin Panel References
+    const navyAdminPanel = document.getElementById('navyAdminPanel');
+    const uploadNavyProfileBtn = document.getElementById('uploadNavyProfileBtn');
+    const editAboutSectionBtn = document.getElementById('editAboutSectionBtn');
+    const uploadEvaluationBtn = document.getElementById('uploadEvaluationBtn');
+    const reorderEvaluationsBtn = document.getElementById('reorderEvaluationsBtn');
+    const deleteEvaluationBtn = document.getElementById('deleteEvaluationBtn');
+    const logoutAdminBtn = document.getElementById('logoutAdminBtn');
+    const loginStatusPanel = document.querySelector('.login-status-panel');
+    
     // Variables
     let cropperEval = null;
     let cropperProfile = null;
@@ -96,173 +110,151 @@ document.addEventListener('DOMContentLoaded', function() {
     initializePage();
     
     // Initialize the page
-    function initializePage() {
-        console.log('Initializing Navy evaluations page');
-        
-        // Check login status
+    async function initializePage() {
+        console.log('Initializing Navy Evaluations page');
+        try {
+            await loadApiClient();
+            console.log('ApiClient loaded, continuing initialization');
+            continueInitialization();
+        } catch (error) {
+            console.error('Error loading ApiClient:', error);
+            alert('Failed to load necessary services. Please refresh the page.');
+        }
+    }
+    
+    function continueInitialization() {
         checkLoginStatus();
-        
-        // Setup event listeners for this page
         setupEventListeners();
-        
-        // Setup rich text editor
         setupRichTextEditor();
-        
-        // Load naval profile content
         loadNavalProfile();
-        
-        // Load evaluations
         loadEvaluations();
+        closeAllModals();
     }
     
-    // Check if user is authenticated
-    function checkLoginStatus() {
-        console.log('Checking login status');
-        
-        // This is now done in init.js, but we still need to track admin state
-        const isAuthenticated = localStorage.getItem('admin_authenticated') === 'true';
-        
-        console.log('User authenticated:', isAuthenticated);
+    // Function to load ApiClient
+    async function loadApiClient() {
+        return new Promise((resolve, reject) => {
+            if (typeof ApiClient !== 'undefined') {
+                window.ApiClient = ApiClient;
+                resolve();
+            } else {
+                let waitTime = 0;
+                const waitInterval = 100;
+                const maxWaitTime = 5000;
+                const waitForApi = setInterval(() => {
+                    waitTime += waitInterval;
+                    if (window.ApiClient || typeof ApiClient !== 'undefined') {
+                        clearInterval(waitForApi);
+                        window.ApiClient = ApiClient;
+                        resolve();
+                    }
+                    if (waitTime >= maxWaitTime) {
+                        clearInterval(waitForApi);
+                        reject('ApiClient not available after timeout');
+                    }
+                }, waitInterval);
+            }
+        });
     }
     
-    // Set up page-specific event listeners
+    // Function to check login status and update UI
+    async function checkLoginStatus() {
+        console.log('Checking login status...');
+        const isAuthenticated = AuthManager.isAuthenticated();
+        document.body.classList.toggle('authenticated', isAuthenticated);
+        adminToggle.classList.toggle('admin-active', isAuthenticated);
+
+        document.querySelectorAll('.admin-only').forEach(el => {
+            el.style.display = isAuthenticated ? 'block' : 'none';
+        });
+
+        navyAdminPanel.classList.toggle('visible', isAuthenticated);
+        loginStatusPanel.textContent = isAuthenticated ? 'Logged in as Admin' : 'Not logged in';
+    }
+    
+    // Function to show loading indicator
+    function showLoadingIndicator(message) {
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'loading-indicator';
+        loadingDiv.textContent = message;
+        document.body.appendChild(loadingDiv);
+    }
+    
+    // Function to hide loading indicator
+    function hideLoadingIndicator() {
+        const loadingDiv = document.querySelector('.loading-indicator');
+        if (loadingDiv) {
+            document.body.removeChild(loadingDiv);
+        }
+    }
+    
+    // Optimize event listeners using event delegation
     function setupEventListeners() {
         console.log('Setting up event listeners');
-
-        // Only bind event listeners for elements that don't have handlers in init.js
-        
-        // For evaluation-specific functions that aren't in init.js
-        if (uploadEvalBtn) {
-            uploadEvalBtn.addEventListener('click', openUploadEvalModal);
-        }
-        
-        if (reorderEvalsBtn) {
-            reorderEvalsBtn.addEventListener('click', enableReorderMode);
-        }
-
-        // Since we're already in the Navy career page, we need these event listeners
-        // Profile upload area
-        if (profileUploadArea) {
-            profileUploadArea.addEventListener('click', function() {
-                profileFileInput.click();
-            });
-            profileUploadArea.addEventListener('dragover', handleDragOver);
-            profileUploadArea.addEventListener('drop', function(e) {
-                handleFileDrop(e, profileFileInput);
-            });
-        }
-        
-        // File inputs
-        if (evalFileInput) {
-            evalFileInput.addEventListener('change', function() {
-                handleFileSelection(this, cropperImage, 'evaluation');
-            });
-        }
-        
-        if (profileFileInput) {
-            profileFileInput.addEventListener('change', function() {
-                handleFileSelection(this, profileCropperImage, 'profile');
-            });
-        }
-        
-        // Profile upload buttons
-        if (uploadProfileBtn) {
-            uploadProfileBtn.addEventListener('click', uploadProfileImage);
-        }
-        
-        if (cancelProfileUploadBtn) {
-            cancelProfileUploadBtn.addEventListener('click', function() {
-                closeModal(profileImageModal);
-            });
-        }
-        
-        // Evaluation upload wizard navigation
-        if (prevStepBtn) prevStepBtn.addEventListener('click', prevUploadStep);
-        if (nextStepBtn) nextStepBtn.addEventListener('click', nextUploadStep);
-        if (uploadFinalBtn) uploadFinalBtn.addEventListener('click', uploadEvaluation);
-        
-        // Cropper controls - evaluation
-        if (rotateLeftBtn) rotateLeftBtn.addEventListener('click', () => rotateCropper(cropperEval, -90));
-        if (rotateRightBtn) rotateRightBtn.addEventListener('click', () => rotateCropper(cropperEval, 90));
-        if (zoomInBtn) zoomInBtn.addEventListener('click', () => zoomCropper(cropperEval, 0.1));
-        if (zoomOutBtn) zoomOutBtn.addEventListener('click', () => zoomCropper(cropperEval, -0.1));
-        
-        // Cropper controls - profile
-        if (profileRotateLeftBtn) profileRotateLeftBtn.addEventListener('click', () => rotateCropper(cropperProfile, -90));
-        if (profileRotateRightBtn) profileRotateRightBtn.addEventListener('click', () => rotateCropper(cropperProfile, 90));
-        if (profileZoomInBtn) profileZoomInBtn.addEventListener('click', () => zoomCropper(cropperProfile, 0.1));
-        if (profileZoomOutBtn) profileZoomOutBtn.addEventListener('click', () => zoomCropper(cropperProfile, -0.1));
-        
-        // Image viewer navigation
-        if (prevImageBtn) prevImageBtn.addEventListener('click', showPrevImage);
-        if (nextImageBtn) nextImageBtn.addEventListener('click', showNextImage);
-
-        // IMPORTANT: Add the save button listener that was missing before
-        if (saveAboutBtn) {
-            saveAboutBtn.addEventListener('click', saveAboutContent);
-        }
-    }
-    
-    // Toggle settings panel
-    function toggleSettingsPanel() {
-        if (settingsPanel) {
-            settingsPanel.classList.toggle('visible');
-        }
-    }
-    
-    // Show notification
-    function showNotification(message, type = 'success', duration = 3000) {
-        // Use the Notification system from init.js
-        if (window.Notifications && window.Notifications.show) {
-            window.Notifications.show(message, type, duration);
-            return;
-        }
-        
-        // Fallback if the global notification system isn't available
-        const notification = document.getElementById('notification');
-        const notificationMessage = document.getElementById('notificationMessage');
-        
-        if (notification && notificationMessage) {
-            notificationMessage.textContent = message;
-            notification.className = 'notification ' + type;
-            notification.classList.add('visible');
-            
-            setTimeout(() => {
-                notification.classList.remove('visible');
-            }, duration);
-        }
-    }
-    
-    // Setup rich text editor
-    function setupRichTextEditor() {
-        if (!richTextControls || !aboutTextEditor) return;
-        console.log('Setting up rich text editor');
-        
-        richTextControls.querySelectorAll('button').forEach(button => {
-            button.addEventListener('click', function() {
-                const format = this.dataset.format;
-                
-                if (!format) return;
-                
-                if (['bold', 'italic', 'underline'].includes(format)) {
-                    document.execCommand(format, false, null);
-                } else if (['p', 'h3', 'h4'].includes(format)) {
-                    document.execCommand('formatBlock', false, format);
-                }
-                
-                // Focus the editor after applying formatting
-                aboutTextEditor.focus();
-            });
+        document.body.addEventListener('click', function(e) {
+            if (e.target.matches('#closeModal')) {
+                closeModal(passwordModal);
+            } else if (e.target.matches('#submitPassword')) {
+                handleLogin();
+            } else if (e.target.matches('#navyProfileUploadOverlay, #uploadNavyProfileBtn')) {
+                handleProfileImageUpload();
+            } else if (e.target.matches('#editNavyAboutBtn, #editAboutSectionBtn')) {
+                openEditAboutModal();
+            } else if (e.target.matches('#saveAboutBtn')) {
+                saveAboutContent();
+            } else if (e.target.matches('#uploadEvalBtn, #uploadEvaluationBtn')) {
+                openUploadEvalModal();
+            } else if (e.target.matches('#reorderEvalsBtn, #reorderEvaluationsBtn')) {
+                enableReorderMode();
+            } else if (e.target.matches('#deleteEvaluationBtn')) {
+                deleteEvaluation();
+            } else if (e.target.matches('#logoutAdminBtn')) {
+                AuthManager.logout();
+                checkLoginStatus();
+                alert('Logged out successfully.');
+            } else if (e.target.matches('#rotateLeftBtn')) {
+                rotateCropper(-90);
+            } else if (e.target.matches('#rotateRightBtn')) {
+                rotateCropper(90);
+            } else if (e.target.matches('#zoomInBtn')) {
+                zoomCropper(0.1);
+            } else if (e.target.matches('#zoomOutBtn')) {
+                zoomCropper(-0.1);
+            } else if (e.target.matches('#prevStepBtn')) {
+                prevUploadStep();
+            } else if (e.target.matches('#nextStepBtn')) {
+                nextUploadStep();
+            } else if (e.target.matches('#uploadFinalBtn')) {
+                uploadEvaluation();
+            } else if (e.target.matches('#prevImageBtn')) {
+                showPrevImage();
+            } else if (e.target.matches('#nextImageBtn')) {
+                showNextImage();
+            } else if (e.target.matches('#adminToggle')) {
+                openModal(passwordModal);
+                passwordInput.focus();
+            }
+        });
+        window.addEventListener('click', function(e) {
+            if (e.target === imageViewerModal) closeModal(imageViewerModal);
+            if (e.target === uploadEvalModal) closeModal(uploadEvalModal);
+            if (e.target === editAboutModal) closeModal(editAboutModal);
+            if (e.target === passwordModal) closeModal(passwordModal);
         });
     }
     
     // Load naval profile content
     function loadNavalProfile() {
+        console.log('Loading naval profile...');
+        
         // Load profile image
         loadProfileImage();
         
         // Load about content
         loadAboutContent();
+        
+        // Ensure no modals are open after loading profile
+        closeAllModals();
     }
     
     // Function to load the profile image
@@ -280,6 +272,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (savedContent && navyAboutContent) {
             navyAboutContent.innerHTML = savedContent;
+        } else {
+            // Don't automatically open the edit modal, just use the default content
+            console.log('No saved about content found, using default content');
+            // The default content is already in the HTML, so we don't need to do anything
         }
     }
     
