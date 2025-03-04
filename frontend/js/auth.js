@@ -1,5 +1,3 @@
-import CryptoJS from 'crypto-js';
-
 export const AuthManager = {
     async initialize() {
         if (typeof ApiClient === 'undefined') {
