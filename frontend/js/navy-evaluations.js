@@ -4,9 +4,25 @@
 import CryptoJS from 'crypto-js';
 import { AuthManager } from './auth';
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     console.log('Navy evaluations page initialized');
     
+    // Initialize AuthManager
+    try {
+        await AuthManager.initialize();
+    } catch (error) {
+        console.error('Error initializing AuthManager:', error);
+        alert('Failed to initialize authentication. Please refresh the page.');
+        return;
+    }
+
+    // Check authentication status
+    if (!AuthManager.isAuthenticated()) {
+        alert('You are not logged in. Redirecting to login page.');
+        window.location.href = '/login.html'; // Redirect to login page
+        return;
+    }
+
     // DOM References
     const navyProfileImage = document.getElementById('navyProfileImage');
     const navyProfileUploadOverlay = document.getElementById('navyProfileUploadOverlay');
