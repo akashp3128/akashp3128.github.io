@@ -1,5 +1,9 @@
 // Navy Evaluations Page JavaScript
 
+// Import crypto-js for password hashing
+import CryptoJS from 'crypto-js';
+import { AuthManager } from './auth';
+
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Navy evaluations page initialized');
     
@@ -88,65 +92,42 @@ document.addEventListener('DOMContentLoaded', function() {
     initializePage();
     
     // Initialize the page
-    function initializePage() {
+    async function initializePage() {
         console.log('Initializing Navy Evaluations page');
-        
-        // First check if ApiClient is globally available (from <script> tag)
-        if (typeof ApiClient !== 'undefined' && !window.ApiClient) {
-            console.log('Found global ApiClient, assigning to window');
-            window.ApiClient = ApiClient;
-        }
-        
-        // Wait for ApiClient to be available (it's loaded separately)
-        if (!window.ApiClient) {
-            console.log('ApiClient not loaded yet, waiting...');
-            
-            // Try to find it in the global scope as fallback
-            if (typeof ApiClient !== 'undefined') {
-                console.log('Using global ApiClient');
-                window.ApiClient = ApiClient;
-                continueInitialization();
-                return;
-            }
-            
-            // If not found, wait for it to load
-            let waitTime = 0;
-            const waitInterval = 100; // ms
-            const maxWaitTime = 5000; // 5 seconds timeout
-            
-            const waitForApi = setInterval(() => {
-                waitTime += waitInterval;
-                
-                // Check window.ApiClient first
-                if (window.ApiClient) {
-                    clearInterval(waitForApi);
-                    console.log('ApiClient loaded on window, continuing initialization');
-                    continueInitialization();
-                    return;
-                }
-                
-                // If not in window, check global scope
-                if (typeof ApiClient !== 'undefined') {
-                    clearInterval(waitForApi);
-                    console.log('ApiClient found in global scope, continuing initialization');
-                    window.ApiClient = ApiClient;
-                    continueInitialization();
-                    return;
-                }
-                
-                // If we've waited too long, continue anyway but show a warning
-                if (waitTime >= maxWaitTime) {
-                    clearInterval(waitForApi);
-                    console.warn('ApiClient not available after timeout, continuing with limited functionality');
-                    // Don't alert here - it's annoying on page load
-                    // Just continue with whatever we have
-                    continueInitialization();
-                }
-            }, waitInterval);
-        } else {
-            console.log('ApiClient already available, continuing initialization');
+        try {
+            await loadApiClient();
+            console.log('ApiClient loaded, continuing initialization');
             continueInitialization();
+        } catch (error) {
+            console.error('Error loading ApiClient:', error);
+            alert('Failed to load necessary services. Please refresh the page.');
         }
+    }
+    
+    // Function to load ApiClient
+    async function loadApiClient() {
+        return new Promise((resolve, reject) => {
+            if (typeof ApiClient !== 'undefined') {
+                window.ApiClient = ApiClient;
+                resolve();
+            } else {
+                let waitTime = 0;
+                const waitInterval = 100;
+                const maxWaitTime = 5000;
+                const waitForApi = setInterval(() => {
+                    waitTime += waitInterval;
+                    if (window.ApiClient || typeof ApiClient !== 'undefined') {
+                        clearInterval(waitForApi);
+                        window.ApiClient = ApiClient;
+                        resolve();
+                    }
+                    if (waitTime >= maxWaitTime) {
+                        clearInterval(waitForApi);
+                        reject('ApiClient not available after timeout');
+                    }
+                }, waitInterval);
+            }
+        });
     }
     
     function continueInitialization() {
@@ -167,235 +148,89 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Function to check login status and update UI
-    function checkLoginStatus() {
+    async function checkLoginStatus() {
         console.log('Checking login status...');
-        // Show login status in the debug area
-        const loginStatusDiv = document.querySelector('.login-status');
-        
-        // First check if ApiClient is globally available (from <script> tag)
-        if (typeof ApiClient !== 'undefined' && !window.ApiClient) {
-            console.log('Found global ApiClient during status check, assigning to window');
-            window.ApiClient = ApiClient;
-        }
-        
-        // Try to use window.ApiClient first
-        let apiClient = window.ApiClient;
-        
-        // If not available on window, try global scope
-        if (!apiClient && typeof ApiClient !== 'undefined') {
-            console.log('Using global ApiClient for login check');
-            apiClient = ApiClient;
-            // Also set it on window for future use
-            window.ApiClient = ApiClient;
-        }
-        
-        // Early return if APIClient isn't available in any scope
-        if (!apiClient || !apiClient.auth) {
-            console.warn('ApiClient not available for auth check');
-            if (loginStatusDiv) loginStatusDiv.textContent = 'Auth service not available';
-            return;
-        }
-        
-        try {
-            const isAuthenticated = apiClient.auth.isAuthenticated();
-            console.log('Authentication status:', isAuthenticated);
-            
-            if (loginStatusDiv) {
-                loginStatusDiv.textContent = isAuthenticated ? 
-                    'Status: Logged in as Admin' : 
-                    'Status: Not logged in';
-            }
-            
-            if (isAuthenticated) {
-                document.body.classList.add('authenticated');
-                if (adminToggle) adminToggle.classList.add('admin-active');
-                
-                // Show all admin-only elements
-                document.querySelectorAll('.admin-only').forEach(el => {
-                    el.style.display = el.tagName.toLowerCase() === 'button' || 
-                                      el.tagName.toLowerCase() === 'a' ? 
-                                      'inline-block' : 'block';
-                });
-                
-                // Hide password modal if it's open
-                if (passwordModal) passwordModal.style.display = 'none';
-                
-                // Show the admin panel
-                if (navyAdminPanel) {
-                    navyAdminPanel.classList.add('visible');
-                    if (loginStatusPanel) {
-                        loginStatusPanel.textContent = 'Currently logged in as Admin';
-                    }
-                }
-            } else {
-                document.body.classList.remove('authenticated');
-                if (adminToggle) adminToggle.classList.remove('admin-active');
-                
-                // Hide all admin-only elements
-                document.querySelectorAll('.admin-only').forEach(el => {
-                    el.style.display = 'none';
-                });
-                
-                // Hide admin panel
-                if (navyAdminPanel) {
-                    navyAdminPanel.classList.remove('visible');
-                }
-            }
-        } catch (e) {
-            console.error('Error checking authentication status:', e);
-            if (loginStatusDiv) loginStatusDiv.textContent = 'Error checking auth status';
-            
-            // Hide admin panel
-            if (navyAdminPanel) {
-                navyAdminPanel.classList.remove('visible');
-            }
+        const isAuthenticated = AuthManager.isAuthenticated();
+        document.body.classList.toggle('authenticated', isAuthenticated);
+        adminToggle.classList.toggle('admin-active', isAuthenticated);
+
+        document.querySelectorAll('.admin-only').forEach(el => {
+            el.style.display = isAuthenticated ? 'block' : 'none';
+        });
+
+        navyAdminPanel.classList.toggle('visible', isAuthenticated);
+        loginStatusPanel.textContent = isAuthenticated ? 'Logged in as Admin' : 'Not logged in';
+    }
+    
+    // Function to show loading indicator
+    function showLoadingIndicator(message) {
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'loading-indicator';
+        loadingDiv.textContent = message;
+        document.body.appendChild(loadingDiv);
+    }
+    
+    // Function to hide loading indicator
+    function hideLoadingIndicator() {
+        const loadingDiv = document.querySelector('.loading-indicator');
+        if (loadingDiv) {
+            document.body.removeChild(loadingDiv);
         }
     }
     
-    // Setup all event listeners
+    // Optimize event listeners using event delegation
     function setupEventListeners() {
         console.log('Setting up event listeners');
-        
-        // Close modal button
-        if (closeModalBtn) {
-            console.log('Adding click handler to close modal button');
-            closeModalBtn.addEventListener('click', function() {
+        document.body.addEventListener('click', function(e) {
+            if (e.target.matches('#closeModal')) {
                 closeModal(passwordModal);
-            });
-        }
-        
-        // Closing modals on outer click
+            } else if (e.target.matches('#submitPassword')) {
+                handleLogin();
+            } else if (e.target.matches('#navyProfileUploadOverlay, #uploadNavyProfileBtn')) {
+                handleProfileImageUpload();
+            } else if (e.target.matches('#editNavyAboutBtn, #editAboutSectionBtn')) {
+                openEditAboutModal();
+            } else if (e.target.matches('#saveAboutBtn')) {
+                saveAboutContent();
+            } else if (e.target.matches('#uploadEvalBtn, #uploadEvaluationBtn')) {
+                openUploadEvalModal();
+            } else if (e.target.matches('#reorderEvalsBtn, #reorderEvaluationsBtn')) {
+                enableReorderMode();
+            } else if (e.target.matches('#deleteEvaluationBtn')) {
+                deleteEvaluation();
+            } else if (e.target.matches('#logoutAdminBtn')) {
+                AuthManager.logout();
+                checkLoginStatus();
+                alert('Logged out successfully.');
+            } else if (e.target.matches('#rotateLeftBtn')) {
+                rotateCropper(-90);
+            } else if (e.target.matches('#rotateRightBtn')) {
+                rotateCropper(90);
+            } else if (e.target.matches('#zoomInBtn')) {
+                zoomCropper(0.1);
+            } else if (e.target.matches('#zoomOutBtn')) {
+                zoomCropper(-0.1);
+            } else if (e.target.matches('#prevStepBtn')) {
+                prevUploadStep();
+            } else if (e.target.matches('#nextStepBtn')) {
+                nextUploadStep();
+            } else if (e.target.matches('#uploadFinalBtn')) {
+                uploadEvaluation();
+            } else if (e.target.matches('#prevImageBtn')) {
+                showPrevImage();
+            } else if (e.target.matches('#nextImageBtn')) {
+                showNextImage();
+            } else if (e.target.matches('#adminToggle')) {
+                openModal(passwordModal);
+                passwordInput.focus();
+            }
+        });
         window.addEventListener('click', function(e) {
             if (e.target === imageViewerModal) closeModal(imageViewerModal);
             if (e.target === uploadEvalModal) closeModal(uploadEvalModal);
             if (e.target === editAboutModal) closeModal(editAboutModal);
             if (e.target === passwordModal) closeModal(passwordModal);
         });
-        
-        // Login button click
-        if (submitPassword) {
-            submitPassword.addEventListener('click', handleLogin);
-        }
-        
-        // Password input key press (enter key)
-        if (passwordInput) {
-            passwordInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    handleLogin();
-                }
-            });
-        }
-        
-        // Profile image upload
-        if (navyProfileUploadOverlay) {
-            navyProfileUploadOverlay.addEventListener('click', handleProfileImageUpload);
-        }
-        
-        // Admin panel profile upload button (alternative to overlay)
-        if (uploadNavyProfileBtn) {
-            uploadNavyProfileBtn.addEventListener('click', handleProfileImageUpload);
-        }
-        
-        // Edit about content
-        if (editNavyAboutBtn) {
-            editNavyAboutBtn.addEventListener('click', openEditAboutModal);
-        }
-        
-        // Admin panel edit about button (alternative to button in section)
-        if (editAboutSectionBtn) {
-            editAboutSectionBtn.addEventListener('click', openEditAboutModal);
-        }
-        
-        // Save about content
-        if (saveAboutBtn) {
-            saveAboutBtn.addEventListener('click', saveAboutContent);
-        }
-        
-        // Upload evaluation button
-        if (uploadEvalBtn) {
-            uploadEvalBtn.addEventListener('click', function() {
-                openModal(uploadEvalModal);
-                showUploadStep(1);
-            });
-        }
-        
-        // Admin panel upload evaluation button (alternative to button in section)
-        if (uploadEvaluationBtn) {
-            uploadEvaluationBtn.addEventListener('click', function() {
-                openModal(uploadEvalModal);
-                showUploadStep(1);
-                resetUploadForm();
-            });
-        }
-        
-        // Reorder evaluations button
-        if (reorderEvalsBtn) {
-            reorderEvalsBtn.addEventListener('click', enableReorderMode);
-        }
-        
-        // Admin panel reorder button (alternative to button in section)
-        if (reorderEvaluationsBtn) {
-            reorderEvaluationsBtn.addEventListener('click', enableReorderMode);
-        }
-        
-        // Admin panel delete evaluation button
-        if (deleteEvaluationBtn) {
-            deleteEvaluationBtn.addEventListener('click', function() {
-                if (evaluations.length === 0) {
-                    alert('No evaluations to delete.');
-                    return;
-                }
-                
-                const evalToDelete = prompt('Enter the number of the evaluation to delete (1-' + evaluations.length + '):');
-                const index = parseInt(evalToDelete) - 1;
-                
-                if (isNaN(index) || index < 0 || index >= evaluations.length) {
-                    alert('Invalid evaluation number.');
-                    return;
-                }
-                
-                if (confirm('Are you sure you want to delete evaluation #' + (index + 1) + '?')) {
-                    // Delete the evaluation with API call
-                    window.ApiClient.navy.deleteEvaluation(evaluations[index].id)
-                        .then(response => {
-                            if (response.success) {
-                                alert('Evaluation deleted successfully.');
-                                loadEvaluations(); // Reload the evaluations
-                            } else {
-                                alert('Failed to delete evaluation: ' + (response.error || 'Unknown error'));
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error deleting evaluation:', error);
-                            alert('Error deleting evaluation. Please try again.');
-                        });
-                }
-            });
-        }
-        
-        // Admin panel logout button
-        if (logoutAdminBtn) {
-            logoutAdminBtn.addEventListener('click', function() {
-                window.ApiClient.auth.logout();
-                checkLoginStatus();
-                alert('You have been logged out.');
-            });
-        }
-        
-        // Cropper controls
-        if (rotateLeftBtn) rotateLeftBtn.addEventListener('click', () => rotateCropper(-90));
-        if (rotateRightBtn) rotateRightBtn.addEventListener('click', () => rotateCropper(90));
-        if (zoomInBtn) zoomInBtn.addEventListener('click', () => zoomCropper(0.1));
-        if (zoomOutBtn) zoomOutBtn.addEventListener('click', () => zoomCropper(-0.1));
-        
-        // Upload wizard navigation
-        if (prevStepBtn) prevStepBtn.addEventListener('click', prevUploadStep);
-        if (nextStepBtn) nextStepBtn.addEventListener('click', nextUploadStep);
-        if (uploadFinalBtn) uploadFinalBtn.addEventListener('click', uploadEvaluation);
-        
-        // Image viewer navigation
-        if (prevImageBtn) prevImageBtn.addEventListener('click', showPrevImage);
-        if (nextImageBtn) nextImageBtn.addEventListener('click', showNextImage);
     }
     
     // Load naval profile content
@@ -582,102 +417,29 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Function to handle login
-    function handleLogin() {
-        console.log('Handle login called');
-        const loginStatusDiv = document.querySelector('.login-status');
-        if (loginStatusDiv) loginStatusDiv.textContent = 'Logging in...';
-        
-        const password = passwordInput ? passwordInput.value : '';
-        
+    async function handleLogin() {
+        const password = passwordInput.value;
         if (!password) {
-            if (loginStatusDiv) loginStatusDiv.textContent = 'Error: Password required';
-            alert('Please enter a password');
+            alert('Please enter a password.');
             return;
         }
-        
-        console.log('Attempting login with password');
-        
-        // Check for ApiClient in window and global scope
-        let apiClient = window.ApiClient;
-        
-        // If ApiClient isn't available yet, create a fallback version
-        if (!apiClient) {
-            console.warn('ApiClient not found in window. Attempting to find global scope ApiClient');
-            if (typeof ApiClient !== 'undefined') {
-                console.log('Using global ApiClient');
-                apiClient = ApiClient;
-                // Also set it on window for future use
-                window.ApiClient = ApiClient;
-            } else {
-                console.error('ApiClient not available in any scope');
-                if (loginStatusDiv) loginStatusDiv.textContent = 'Error: Auth service not initialized';
-                alert('Login system not initialized properly. Please refresh the page and try again.');
-                return;
-            }
-        }
-        
-        // Make sure ApiClient is available and has auth module
-        if (!apiClient || !apiClient.auth) {
-            console.error('ApiClient auth module not available');
-            if (loginStatusDiv) loginStatusDiv.textContent = 'Error: Auth service not available';
-            alert('Login system not available. Please refresh the page and try again.');
-            return;
-        }
-        
+
+        showLoadingIndicator('Logging in...');
         try {
-            apiClient.auth.login(password)
-                .then(response => {
-                    console.log('Login response:', response);
-                    if (response.success) {
-                        // Hide the password modal
-                        if (passwordModal) {
-                            passwordModal.style.display = 'none';
-                        }
-                        
-                        // Update login status
-                        if (loginStatusDiv) loginStatusDiv.textContent = 'Success! Logged in as Admin';
-                        
-                        // Update UI based on new auth status
-                        checkLoginStatus();
-                        
-                        // Clear password field
-                        if (passwordInput) passwordInput.value = '';
-                        
-                        // Reload evaluations to show admin features
-                        loadEvaluations();
-                        loadNavalProfile();
-                        
-                        // Make admin elements visible
-                        document.querySelectorAll('.admin-only').forEach(el => {
-                            el.style.display = el.tagName.toLowerCase() === 'button' || 
-                                              el.tagName.toLowerCase() === 'a' ? 
-                                              'inline-block' : 'block';
-                        });
-                        
-                        // Apply authenticated class and styles
-                        document.body.classList.add('authenticated');
-                        if (adminToggle) adminToggle.classList.add('admin-active');
-                        
-                        // Ensure all modals are closed after login
-                        closeAllModals();
-                        
-                        console.log('Login successful, admin features enabled');
-                        alert('Login successful! Admin features enabled.');
-                    } else {
-                        console.error('Login failed: Invalid credentials');
-                        if (loginStatusDiv) loginStatusDiv.textContent = 'Error: Invalid password';
-                        alert('Invalid password. Please try again.');
-                    }
-                })
-                .catch(err => {
-                    console.error('Login error:', err);
-                    if (loginStatusDiv) loginStatusDiv.textContent = 'Error: Login failed';
-                    alert('Login failed. Please try again.');
-                });
-        } catch (e) {
-            console.error('Exception during login process:', e);
-            if (loginStatusDiv) loginStatusDiv.textContent = 'Error: Login system error';
-            alert('Login system encountered an error. Please refresh the page and try again.');
+            const success = await AuthManager.login(password);
+            hideLoadingIndicator();
+            if (success) {
+                closeModal(passwordModal);
+                checkLoginStatus();
+                alert('Login successful!');
+            } else {
+                alert('Incorrect password. Please try again.');
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            alert('Login failed. Please try again.');
+        } finally {
+            hideLoadingIndicator();
         }
     }
     
