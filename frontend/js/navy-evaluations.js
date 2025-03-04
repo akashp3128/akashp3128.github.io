@@ -424,6 +424,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (savedContent) {
             navyAboutContent.innerHTML = savedContent;
+        } else {
+            // Don't automatically open the edit modal, just use the default content
+            console.log('No saved about content found, using default content');
+            // The default content is already in the HTML, so we don't need to do anything
         }
         
         // In a real implementation, you would load this from the API
