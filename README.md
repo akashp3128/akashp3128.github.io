@@ -1,4 +1,4 @@
-# Pokemon Card Resume Website
+# Resume Website
 
 A creative resume website styled as a Pokemon card with interactive features. The website allows for card flipping, image uploads, and resume management.
 
