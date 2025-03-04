@@ -204,25 +204,30 @@ router.get('/evaluations/:filename', async (req, res) => {
     }
 });
 
-// DELETE /api/navy/evaluations/:id - Delete an evaluation (requires authentication)
-router.delete('/evaluations/:id', authenticateToken, async (req, res) => {
+// DELETE /api/navy/evaluations/:filename - Delete a specific evaluation (requires authentication)
+router.delete('/evaluations/:filename', authenticateToken, async (req, res) => {
     try {
-        const id = req.params.id;
+        const filename = req.params.filename;
         
         if (isProduction) {
-            // Delete from Vercel Blob
-            await deleteFile(`navy-evals/${id}`);
+            // For Vercel Blob, delete from blob storage
+            const deleted = await deleteFile(`navy-evals/${filename}`);
+            if (deleted) {
+                return res.json({ success: true, message: 'Evaluation deleted successfully' });
+            } else {
+                return res.status(404).json({ error: 'Evaluation not found or could not be deleted' });
+            }
         } else {
-            // Delete from local storage
-            const filePath = path.join(__dirname, '../uploads/navy-evals', id);
+            // For local storage, delete the file
+            const filePath = path.join(__dirname, '../uploads/navy-evals', filename);
+            
             if (fs.existsSync(filePath)) {
                 fs.unlinkSync(filePath);
+                return res.json({ success: true, message: 'Evaluation deleted successfully' });
             } else {
                 return res.status(404).json({ error: 'Evaluation not found' });
             }
         }
-        
-        res.json({ success: true });
     } catch (error) {
         console.error('Error deleting evaluation:', error);
         res.status(500).json({ error: 'Failed to delete evaluation' });
