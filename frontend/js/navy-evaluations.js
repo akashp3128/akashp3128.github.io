@@ -12,28 +12,44 @@ document.addEventListener('DOMContentLoaded', function() {
     const reorderEvalsBtn = document.getElementById('reorderEvalsBtn');
     const evaluationsGallery = document.getElementById('evaluationsGallery');
     
-    // Apply direct click handler to admin toggle for maximum compatibility
-    const directAdminToggle = document.getElementById('adminToggle');
-    if (directAdminToggle) {
-        console.log('Adding direct click handler to admin toggle');
-        directAdminToggle.onclick = function() {
-            console.log('Admin toggle clicked directly');
-            const pwdModal = document.getElementById('passwordModal');
-            if (pwdModal) {
-                console.log('Showing password modal directly');
-                pwdModal.style.display = 'block';
-                const pwdInput = document.getElementById('passwordInput');
-                if (pwdInput) pwdInput.focus();
-            }
-        };
-    }
+    // Admin Toggle & Settings Panel
+    const adminToggle = document.getElementById('adminToggle');
+    const settingsPanel = document.getElementById('settingsPanel');
+    const closeSettings = document.getElementById('closeSettings');
+    
+    // Settings Panel Buttons
+    const settingsEditAbout = document.getElementById('settingsEditAbout');
+    const settingsUploadProfile = document.getElementById('settingsUploadProfile');
+    const settingsUploadEval = document.getElementById('settingsUploadEval');
+    const settingsReorderEvals = document.getElementById('settingsReorderEvals');
+    const settingsLogout = document.getElementById('settingsLogout');
     
     // Modal References
     const imageViewerModal = document.getElementById('imageViewerModal');
     const uploadEvalModal = document.getElementById('uploadEvalModal');
     const editAboutModal = document.getElementById('editAboutModal');
+    const profileImageModal = document.getElementById('profileImageModal');
+    const passwordModal = document.getElementById('passwordModal');
+    
+    // About Editor References
     const aboutTextEditor = document.getElementById('aboutTextEditor');
+    const richTextControls = document.getElementById('richTextControls');
     const saveAboutBtn = document.getElementById('saveAboutBtn');
+    
+    // Profile Image Upload References
+    const profileUploadArea = document.getElementById('profileUploadArea');
+    const profileFileInput = document.getElementById('profileFileInput');
+    const profileCropperImage = document.getElementById('profileCropperImage');
+    const uploadProfileBtn = document.getElementById('uploadProfileBtn');
+    const cancelProfileUploadBtn = document.getElementById('cancelProfileUploadBtn');
+    const profileCropperContainer = document.querySelector('#profileImageModal .cropper-container');
+    const profileCropperControls = document.querySelector('#profileImageModal .cropper-controls');
+    
+    // Profile Image Cropper Controls
+    const profileRotateLeftBtn = document.getElementById('profileRotateLeftBtn');
+    const profileRotateRightBtn = document.getElementById('profileRotateRightBtn');
+    const profileZoomInBtn = document.getElementById('profileZoomInBtn');
+    const profileZoomOutBtn = document.getElementById('profileZoomOutBtn');
     
     // Image Viewer Modal References
     const enlargedImage = document.getElementById('enlargedImage');
@@ -61,15 +77,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const zoomInBtn = document.getElementById('zoomInBtn');
     const zoomOutBtn = document.getElementById('zoomOutBtn');
     
-    // Admin Panel Controls (Reused from main page)
-    const adminToggle = document.getElementById('adminToggle');
-    const passwordModal = document.getElementById('passwordModal');
-    const closeModalBtn = document.getElementById('closeModal');
+    // Admin Panel Controls
     const passwordInput = document.getElementById('passwordInput');
     const submitPassword = document.getElementById('submitPassword');
     
+    // Notification
+    const notification = document.getElementById('notification');
+    const notificationMessage = document.getElementById('notificationMessage');
+    
     // Variables
-    let cropper = null;
+    let cropperEval = null;
+    let cropperProfile = null;
     let currentEvaluationIndex = 0;
     let evaluations = [];
     let currentUploadStep = 1;
@@ -79,264 +97,163 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize the page
     function initializePage() {
-        console.log('Initializing Navy Evaluations page');
+        console.log('Initializing Navy evaluations page');
         
-        // First check if ApiClient is globally available (from <script> tag)
-        if (typeof ApiClient !== 'undefined' && !window.ApiClient) {
-            console.log('Found global ApiClient, assigning to window');
-            window.ApiClient = ApiClient;
-        }
-        
-        // Wait for ApiClient to be available (it's loaded separately)
-        if (!window.ApiClient) {
-            console.log('ApiClient not loaded yet, waiting...');
-            
-            // Try to find it in the global scope as fallback
-            if (typeof ApiClient !== 'undefined') {
-                console.log('Using global ApiClient');
-                window.ApiClient = ApiClient;
-                continueInitialization();
-                return;
-            }
-            
-            // If not found, wait for it to load
-            let waitTime = 0;
-            const waitInterval = 100; // ms
-            const maxWaitTime = 5000; // 5 seconds timeout
-            
-            const waitForApi = setInterval(() => {
-                waitTime += waitInterval;
-                
-                // Check window.ApiClient first
-                if (window.ApiClient) {
-                    clearInterval(waitForApi);
-                    console.log('ApiClient loaded on window, continuing initialization');
-                    continueInitialization();
-                    return;
-                }
-                
-                // If not in window, check global scope
-                if (typeof ApiClient !== 'undefined') {
-                    clearInterval(waitForApi);
-                    console.log('ApiClient found in global scope, continuing initialization');
-                    window.ApiClient = ApiClient;
-                    continueInitialization();
-                    return;
-                }
-                
-                // If we've waited too long, continue anyway but show a warning
-                if (waitTime >= maxWaitTime) {
-                    clearInterval(waitForApi);
-                    console.warn('ApiClient not available after timeout, continuing with limited functionality');
-                    // Don't alert here - it's annoying on page load
-                    // Just continue with whatever we have
-                    continueInitialization();
-                }
-            }, waitInterval);
-        } else {
-            console.log('ApiClient already available, continuing initialization');
-            continueInitialization();
-        }
-    }
-    
-    function continueInitialization() {
-        // Check login status first
+        // Check login status
         checkLoginStatus();
         
-        // Set up all event listeners
+        // Setup event listeners for this page
         setupEventListeners();
         
-        // Load naval profile info
+        // Setup rich text editor
+        setupRichTextEditor();
+        
+        // Load naval profile content
         loadNavalProfile();
         
-        // Load evaluations data
+        // Load evaluations
         loadEvaluations();
     }
     
-    // Function to check login status and update UI
+    // Check if user is authenticated
     function checkLoginStatus() {
-        console.log('Checking login status...');
-        // Show login status in the debug area
-        const loginStatusDiv = document.querySelector('.login-status');
+        console.log('Checking login status');
         
-        // First check if ApiClient is globally available (from <script> tag)
-        if (typeof ApiClient !== 'undefined' && !window.ApiClient) {
-            console.log('Found global ApiClient during status check, assigning to window');
-            window.ApiClient = ApiClient;
-        }
+        // This is now done in init.js, but we still need to track admin state
+        const isAuthenticated = localStorage.getItem('admin_authenticated') === 'true';
         
-        // Try to use window.ApiClient first
-        let apiClient = window.ApiClient;
-        
-        // If not available on window, try global scope
-        if (!apiClient && typeof ApiClient !== 'undefined') {
-            console.log('Using global ApiClient for login check');
-            apiClient = ApiClient;
-            // Also set it on window for future use
-            window.ApiClient = ApiClient;
-        }
-        
-        // Early return if APIClient isn't available in any scope
-        if (!apiClient || !apiClient.auth) {
-            console.warn('ApiClient not available for auth check');
-            if (loginStatusDiv) loginStatusDiv.textContent = 'Auth service not available';
-            return;
-        }
-        
-        try {
-            const isAuthenticated = apiClient.auth.isAuthenticated();
-            console.log('Authentication status:', isAuthenticated);
-            
-            if (loginStatusDiv) {
-                loginStatusDiv.textContent = isAuthenticated ? 
-                    'Status: Logged in as Admin' : 
-                    'Status: Not logged in';
-            }
-            
-            if (isAuthenticated) {
-                document.body.classList.add('authenticated');
-                if (adminToggle) adminToggle.classList.add('admin-active');
-                
-                // Show all admin-only elements
-                document.querySelectorAll('.admin-only').forEach(el => {
-                    el.style.display = el.tagName.toLowerCase() === 'button' || 
-                                      el.tagName.toLowerCase() === 'a' ? 
-                                      'inline-block' : 'block';
-                });
-                
-                // Hide password modal if it's open
-                if (passwordModal) passwordModal.style.display = 'none';
-            } else {
-                document.body.classList.remove('authenticated');
-                if (adminToggle) adminToggle.classList.remove('admin-active');
-                
-                // Hide all admin-only elements
-                document.querySelectorAll('.admin-only').forEach(el => {
-                    el.style.display = 'none';
-                });
-            }
-        } catch (e) {
-            console.error('Error checking authentication status:', e);
-            if (loginStatusDiv) loginStatusDiv.textContent = 'Error checking auth status';
-        }
+        console.log('User authenticated:', isAuthenticated);
     }
     
-    // Setup all event listeners
+    // Set up page-specific event listeners
     function setupEventListeners() {
         console.log('Setting up event listeners');
+
+        // Only bind event listeners for elements that don't have handlers in init.js
         
-        // Close modal button
-        if (closeModalBtn) {
-            console.log('Adding click handler to close modal button');
-            closeModalBtn.addEventListener('click', function() {
-                console.log('Close modal button clicked');
-                if (passwordModal) {
-                    passwordModal.style.display = 'none';
-                }
-            });
-        } else {
-            console.error('Close modal button not found!');
-        }
-        
-        // Close modals on outside click
-        window.addEventListener('click', function(event) {
-            if (event.target === passwordModal) {
-                passwordModal.style.display = 'none';
-            }
-            
-            if (event.target === uploadEvalModal) {
-                closeModal(uploadEvalModal);
-            }
-            
-            if (event.target === imageViewerModal) {
-                closeModal(imageViewerModal);
-            }
-            
-            if (event.target === editAboutModal) {
-                closeModal(editAboutModal);
-            }
-        });
-        
-        // Login form - Ensure these handlers are properly attached
-        console.log('Setting up login form handlers');
-        if (submitPassword) {
-            console.log('Adding click handler to submitPassword button');
-            submitPassword.addEventListener('click', function() {
-                console.log('Submit password button clicked');
-                handleLogin();
-            });
-        } else {
-            console.error('Submit password button not found!');
-        }
-        
-        if (passwordInput) {
-            console.log('Adding keypress handler to passwordInput');
-            passwordInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    console.log('Enter key pressed in password input');
-                    handleLogin();
-                }
-            });
-        } else {
-            console.error('Password input field not found!');
-        }
-        
-        // Navy profile image upload
-        if (navyProfileUploadOverlay) {
-            navyProfileUploadOverlay.addEventListener('click', handleProfileImageUpload);
-        }
-        
-        // About section edit
-        if (editNavyAboutBtn) {
-            editNavyAboutBtn.addEventListener('click', openEditAboutModal);
-        }
-        
-        // Save about changes
-        if (saveAboutBtn) {
-            saveAboutBtn.addEventListener('click', saveAboutContent);
-        }
-        
-        // Upload evaluation button
+        // For evaluation-specific functions that aren't in init.js
         if (uploadEvalBtn) {
             uploadEvalBtn.addEventListener('click', openUploadEvalModal);
         }
         
-        // Reorder evaluations button
         if (reorderEvalsBtn) {
             reorderEvalsBtn.addEventListener('click', enableReorderMode);
         }
-        
-        // Evaluation upload area
-        if (evalUploadArea) {
-            evalUploadArea.addEventListener('click', triggerFileInput);
-            evalUploadArea.addEventListener('dragover', handleDragOver);
-            evalUploadArea.addEventListener('drop', handleFileDrop);
+
+        // Since we're already in the Navy career page, we need these event listeners
+        // Profile upload area
+        if (profileUploadArea) {
+            profileUploadArea.addEventListener('click', function() {
+                profileFileInput.click();
+            });
+            profileUploadArea.addEventListener('dragover', handleDragOver);
+            profileUploadArea.addEventListener('drop', function(e) {
+                handleFileDrop(e, profileFileInput);
+            });
         }
         
-        // Evaluation file input
+        // File inputs
         if (evalFileInput) {
-            evalFileInput.addEventListener('change', handleFileSelection);
+            evalFileInput.addEventListener('change', function() {
+                handleFileSelection(this, cropperImage, 'evaluation');
+            });
         }
         
-        // Modal close buttons
-        document.querySelectorAll('.close-modal').forEach(btn => {
-            btn.addEventListener('click', closeAllModals);
-        });
+        if (profileFileInput) {
+            profileFileInput.addEventListener('change', function() {
+                handleFileSelection(this, profileCropperImage, 'profile');
+            });
+        }
         
-        // Cropper controls
-        if (rotateLeftBtn) rotateLeftBtn.addEventListener('click', () => rotateCropper(-90));
-        if (rotateRightBtn) rotateRightBtn.addEventListener('click', () => rotateCropper(90));
-        if (zoomInBtn) zoomInBtn.addEventListener('click', () => zoomCropper(0.1));
-        if (zoomOutBtn) zoomOutBtn.addEventListener('click', () => zoomCropper(-0.1));
+        // Profile upload buttons
+        if (uploadProfileBtn) {
+            uploadProfileBtn.addEventListener('click', uploadProfileImage);
+        }
         
-        // Upload wizard navigation
+        if (cancelProfileUploadBtn) {
+            cancelProfileUploadBtn.addEventListener('click', function() {
+                closeModal(profileImageModal);
+            });
+        }
+        
+        // Evaluation upload wizard navigation
         if (prevStepBtn) prevStepBtn.addEventListener('click', prevUploadStep);
         if (nextStepBtn) nextStepBtn.addEventListener('click', nextUploadStep);
         if (uploadFinalBtn) uploadFinalBtn.addEventListener('click', uploadEvaluation);
         
+        // Cropper controls - evaluation
+        if (rotateLeftBtn) rotateLeftBtn.addEventListener('click', () => rotateCropper(cropperEval, -90));
+        if (rotateRightBtn) rotateRightBtn.addEventListener('click', () => rotateCropper(cropperEval, 90));
+        if (zoomInBtn) zoomInBtn.addEventListener('click', () => zoomCropper(cropperEval, 0.1));
+        if (zoomOutBtn) zoomOutBtn.addEventListener('click', () => zoomCropper(cropperEval, -0.1));
+        
+        // Cropper controls - profile
+        if (profileRotateLeftBtn) profileRotateLeftBtn.addEventListener('click', () => rotateCropper(cropperProfile, -90));
+        if (profileRotateRightBtn) profileRotateRightBtn.addEventListener('click', () => rotateCropper(cropperProfile, 90));
+        if (profileZoomInBtn) profileZoomInBtn.addEventListener('click', () => zoomCropper(cropperProfile, 0.1));
+        if (profileZoomOutBtn) profileZoomOutBtn.addEventListener('click', () => zoomCropper(cropperProfile, -0.1));
+        
         // Image viewer navigation
         if (prevImageBtn) prevImageBtn.addEventListener('click', showPrevImage);
         if (nextImageBtn) nextImageBtn.addEventListener('click', showNextImage);
+
+        // IMPORTANT: Add the save button listener that was missing before
+        if (saveAboutBtn) {
+            saveAboutBtn.addEventListener('click', saveAboutContent);
+        }
+    }
+    
+    // Toggle settings panel
+    function toggleSettingsPanel() {
+        if (settingsPanel) {
+            settingsPanel.classList.toggle('visible');
+        }
+    }
+    
+    // Show notification
+    function showNotification(message, type = 'success', duration = 3000) {
+        // Use the Notification system from init.js
+        if (window.Notifications && window.Notifications.show) {
+            window.Notifications.show(message, type, duration);
+            return;
+        }
+        
+        // Fallback if the global notification system isn't available
+        const notification = document.getElementById('notification');
+        const notificationMessage = document.getElementById('notificationMessage');
+        
+        if (notification && notificationMessage) {
+            notificationMessage.textContent = message;
+            notification.className = 'notification ' + type;
+            notification.classList.add('visible');
+            
+            setTimeout(() => {
+                notification.classList.remove('visible');
+            }, duration);
+        }
+    }
+    
+    // Setup rich text editor
+    function setupRichTextEditor() {
+        if (!richTextControls || !aboutTextEditor) return;
+        console.log('Setting up rich text editor');
+        
+        richTextControls.querySelectorAll('button').forEach(button => {
+            button.addEventListener('click', function() {
+                const format = this.dataset.format;
+                
+                if (!format) return;
+                
+                if (['bold', 'italic', 'underline'].includes(format)) {
+                    document.execCommand(format, false, null);
+                } else if (['p', 'h3', 'h4'].includes(format)) {
+                    document.execCommand('formatBlock', false, format);
+                }
+                
+                // Focus the editor after applying formatting
+                aboutTextEditor.focus();
+            });
+        });
     }
     
     // Load naval profile content
@@ -350,37 +267,136 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Function to load the profile image
     function loadProfileImage() {
-        // Try to load the navy profile image
-        window.ApiClient.image.getNavyProfileImage()
-            .then(imageUrl => {
-                if (imageUrl) {
-                    navyProfileImage.src = imageUrl;
-                }
-            })
-            .catch(error => {
-                console.error('Error loading profile image:', error);
-            });
+        const savedImageUrl = localStorage.getItem('navy_profile_image');
+        
+        if (savedImageUrl && navyProfileImage) {
+            navyProfileImage.src = savedImageUrl;
+        }
     }
     
     // Function to load about content
     function loadAboutContent() {
         const savedContent = localStorage.getItem('navy_about_content');
         
-        if (savedContent) {
+        if (savedContent && navyAboutContent) {
             navyAboutContent.innerHTML = savedContent;
         }
-        
-        // In a real implementation, you would load this from the API
-        // ApiClient.getNavyContent().then(content => { ... });
     }
     
-    // Function to load evaluations
+    // Function to open the profile image modal
+    function openProfileImageModal() {
+        if (!profileImageModal) return;
+        
+        // Reset the form
+        if (profileCropperContainer) profileCropperContainer.style.display = 'none';
+        if (profileCropperControls) profileCropperControls.style.display = 'none';
+        if (profileUploadArea) profileUploadArea.style.display = 'block';
+        if (uploadProfileBtn) uploadProfileBtn.style.display = 'none';
+        if (cancelProfileUploadBtn) cancelProfileUploadBtn.style.display = 'block';
+        
+        // Destroy previous cropper
+        if (cropperProfile) {
+            cropperProfile.destroy();
+            cropperProfile = null;
+        }
+        
+        // Open the modal
+        openModal(profileImageModal);
+    }
+    
+    // Function to open the edit about modal
+    function openEditAboutModal() {
+        if (!aboutTextEditor || !navyAboutContent || !editAboutModal) return;
+        console.log('Opening edit about modal');
+        
+        // Load content from the about section into the editor
+        aboutTextEditor.innerHTML = navyAboutContent.innerHTML;
+        
+        // Open the modal
+        openModal(editAboutModal);
+    }
+    
+    // Function to save about content
+    function saveAboutContent() {
+        if (!aboutTextEditor || !navyAboutContent) return;
+        console.log('Saving about content');
+        
+        const content = aboutTextEditor.innerHTML;
+        
+        // Update the content
+        navyAboutContent.innerHTML = content;
+        
+        // Save to localStorage
+        localStorage.setItem('navy_about_content', content);
+        
+        // Close the modal
+        closeModal(editAboutModal);
+        
+        // Show success notification
+        showNotification('Content updated successfully!', 'success');
+    }
+    
+    // Function to upload profile image
+    function uploadProfileImage() {
+        if (!cropperProfile || !navyProfileImage) {
+            showNotification('Please select and crop an image first', 'error');
+            return;
+        }
+        
+        // Get cropped canvas
+        const canvas = cropperProfile.getCroppedCanvas({
+            width: 300,
+            height: 300
+        });
+        
+        if (!canvas) {
+            showNotification('Error processing image', 'error');
+            return;
+        }
+        
+        // Convert to data URL
+        const imageUrl = canvas.toDataURL('image/jpeg', 0.9);
+        
+        // Update profile image
+        navyProfileImage.src = imageUrl;
+        
+        // Save to localStorage
+        localStorage.setItem('navy_profile_image', imageUrl);
+        
+        // Close modal
+        closeModal(profileImageModal);
+        
+        // Show success notification
+        showNotification('Profile image updated successfully!', 'success');
+    }
+    
+    // Function to open a modal
+    function openModal(modal) {
+        if (modal) {
+            modal.style.display = 'block';
+        }
+    }
+    
+    // Function to close a modal
+    function closeModal(modal) {
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+    
+    // Function to close all modals
+    function closeAllModals() {
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.style.display = 'none';
+        });
+    }
+    
+    // Load evaluations & Render (using the existing methods)
     function loadEvaluations() {
         // Clear existing evaluations
-        evaluationsGallery.innerHTML = '';
+        if (evaluationsGallery) evaluationsGallery.innerHTML = '';
         
-        // In the real implementation, you would load these from your backend API
-        // For now, let's use localStorage for the demo
+        // Load from localStorage
         const savedEvaluations = localStorage.getItem('navy_evaluations');
         
         if (savedEvaluations) {
@@ -397,8 +413,10 @@ document.addEventListener('DOMContentLoaded', function() {
         renderEvaluations();
     }
     
-    // Function to render evaluations
+    // Function to render evaluations (from original code)
     function renderEvaluations() {
+        if (!evaluationsGallery) return;
+        
         if (evaluations.length === 0) {
             // Display a message if no evaluations
             const emptyMessage = document.createElement('div');
@@ -461,9 +479,245 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Function to open the upload evaluation modal
+    function openUploadEvalModal() {
+        // Reset the form
+        resetUploadForm();
+        
+        // Open the modal
+        openModal(uploadEvalModal);
+    }
+    
+    // Function to reset the upload form
+    function resetUploadForm() {
+        if (!evalFileInput) return;
+        
+        // Reset file input
+        evalFileInput.value = '';
+        
+        // Reset cropper
+        if (cropperEval) {
+            cropperEval.destroy();
+            cropperEval = null;
+        }
+        
+        // Reset date and description
+        if (evalDate) evalDate.value = '';
+        if (evalDescription) evalDescription.value = '';
+        
+        // Show step 1
+        showUploadStep(1);
+    }
+    
+    // Function to show a specific upload step
+    function showUploadStep(step) {
+        currentUploadStep = step;
+        
+        // Hide all steps
+        if (uploadStep1) uploadStep1.style.display = 'none';
+        if (uploadStep2) uploadStep2.style.display = 'none';
+        if (uploadStep3) uploadStep3.style.display = 'none';
+        
+        // Show buttons based on step
+        if (prevStepBtn) prevStepBtn.style.display = step > 1 ? 'block' : 'none';
+        if (nextStepBtn) nextStepBtn.style.display = step < 3 ? 'block' : 'none';
+        if (uploadFinalBtn) uploadFinalBtn.style.display = step === 3 ? 'block' : 'none';
+        
+        // Show the current step
+        if (step === 1 && uploadStep1) {
+            uploadStep1.style.display = 'block';
+        } else if (step === 2 && uploadStep2) {
+            uploadStep2.style.display = 'block';
+        } else if (step === 3 && uploadStep3) {
+            uploadStep3.style.display = 'block';
+        }
+    }
+    
+    // Function to go to the previous upload step
+    function prevUploadStep() {
+        if (currentUploadStep > 1) {
+            showUploadStep(currentUploadStep - 1);
+        }
+    }
+    
+    // Function to go to the next upload step
+    function nextUploadStep() {
+        if (currentUploadStep === 1) {
+            // Check if file is selected
+            if (!evalFileInput || !evalFileInput.files || !evalFileInput.files[0]) {
+                showNotification('Please select an image file first', 'error');
+                return;
+            }
+            
+            // Initialize cropper
+            showUploadStep(2);
+            initCropper(cropperImage, 'evaluation');
+        } else if (currentUploadStep === 2) {
+            // Move to the final step
+            showUploadStep(3);
+        }
+    }
+    
+    // Function to handle drag over
+    function handleDragOver(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.classList.add('drag-over');
+    }
+    
+    // Function to handle file drop
+    function handleFileDrop(e, fileInput) {
+        e.preventDefault();
+        e.stopPropagation();
+        const dropArea = e.currentTarget;
+        dropArea.classList.remove('drag-over');
+        
+        if (e.dataTransfer.files && e.dataTransfer.files[0] && fileInput) {
+            fileInput.files = e.dataTransfer.files;
+            handleFileSelection(fileInput, fileInput === evalFileInput ? cropperImage : profileCropperImage, 
+                               fileInput === evalFileInput ? 'evaluation' : 'profile');
+        }
+    }
+    
+    // Function to handle file selection
+    function handleFileSelection(fileInput, cropperTarget, type) {
+        if (!fileInput || !fileInput.files || !fileInput.files[0] || !cropperTarget) return;
+        
+        const file = fileInput.files[0];
+        
+        // Check if it's an image
+        if (!file.type.match('image.*')) {
+            showNotification('Please select an image file', 'error');
+            return;
+        }
+        
+        // Read the file
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            // Set the image source for cropping
+            cropperTarget.src = e.target.result;
+            
+            if (type === 'profile') {
+                // For profile, show cropper immediately
+                profileUploadArea.style.display = 'none';
+                profileCropperContainer.style.display = 'block';
+                profileCropperControls.style.display = 'flex';
+                uploadProfileBtn.style.display = 'block';
+                
+                // Initialize cropper after the image is loaded
+                setTimeout(() => {
+                    initCropper(profileCropperImage, 'profile');
+                }, 100);
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+    
+    // Function to initialize the cropper
+    function initCropper(target, type) {
+        if (!target) return;
+        
+        const options = {
+            aspectRatio: type === 'profile' ? 1 : 3/4, // Square for profile, 3:4 for evaluations
+            viewMode: 1,
+            responsive: true,
+            restore: true
+        };
+        
+        // Destroy previous cropper if it exists
+        if (type === 'evaluation' && cropperEval) {
+            cropperEval.destroy();
+        } else if (type === 'profile' && cropperProfile) {
+            cropperProfile.destroy();
+        }
+        
+        // Initialize new cropper
+        if (type === 'evaluation') {
+            cropperEval = new Cropper(target, options);
+        } else {
+            cropperProfile = new Cropper(target, options);
+        }
+    }
+    
+    // Function to rotate the cropper
+    function rotateCropper(cropper, degree) {
+        if (cropper) {
+            cropper.rotate(degree);
+        }
+    }
+    
+    // Function to zoom the cropper
+    function zoomCropper(cropper, ratio) {
+        if (cropper) {
+            cropper.zoom(ratio);
+        }
+    }
+    
+    // Function to upload evaluation
+    function uploadEvaluation() {
+        // Check if date is selected
+        if (!evalDate || !evalDate.value) {
+            showNotification('Please select a date for this evaluation', 'error');
+            return;
+        }
+        
+        // Get cropped canvas
+        if (!cropperEval) {
+            showNotification('Please select and crop an image first', 'error');
+            return;
+        }
+        
+        // Get cropped image
+        const canvas = cropperEval.getCroppedCanvas({
+            width: 600,
+            height: 800
+        });
+        
+        if (!canvas) {
+            showNotification('Error processing image', 'error');
+            return;
+        }
+        
+        // Convert canvas to blob
+        canvas.toBlob(function(blob) {
+            // In a real implementation, you would upload this blob to your server
+            // For now, we'll convert to data URL and store locally
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // Create evaluation object
+                const newEvaluation = {
+                    id: Date.now().toString(), // Generate a unique ID
+                    imageUrl: e.target.result,
+                    date: evalDate.value,
+                    description: evalDescription && evalDescription.value ? evalDescription.value : '',
+                    createdAt: new Date().toISOString()
+                };
+                
+                // Add to evaluations array
+                evaluations.push(newEvaluation);
+                
+                // Sort by date (newest first)
+                evaluations.sort((a, b) => new Date(b.date) - new Date(a.date));
+                
+                // Save to localStorage
+                localStorage.setItem('navy_evaluations', JSON.stringify(evaluations));
+                
+                // Re-render evaluations
+                loadEvaluations();
+                
+                // Close modal
+                closeModal(uploadEvalModal);
+                
+                // Show success message
+                showNotification('Evaluation uploaded successfully!', 'success');
+            };
+            reader.readAsDataURL(blob);
+        }, 'image/jpeg', 0.9);
+    }
+    
     // Function to open the image viewer
     function openImageViewer(index) {
-        if (evaluations.length === 0) return;
+        if (evaluations.length === 0 || !imageViewerModal || !enlargedImage) return;
         
         currentEvaluationIndex = index;
         
@@ -478,8 +732,8 @@ document.addEventListener('DOMContentLoaded', function() {
             day: 'numeric'
         });
         
-        imageDate.textContent = `Date: ${formattedDate}`;
-        imageIndex.textContent = `${currentEvaluationIndex + 1} of ${evaluations.length}`;
+        if (imageDate) imageDate.textContent = `Date: ${formattedDate}`;
+        if (imageIndex) imageIndex.textContent = `${currentEvaluationIndex + 1} of ${evaluations.length}`;
         
         // Show the modal
         openModal(imageViewerModal);
@@ -488,8 +742,16 @@ document.addEventListener('DOMContentLoaded', function() {
         updateImageNavigation();
     }
     
+    // Function to enable reorder mode
+    function enableReorderMode() {
+        // Not implemented in this version
+        showNotification('Reorder functionality will be implemented in a future update.', 'warning');
+    }
+    
     // Function to update image navigation buttons state
     function updateImageNavigation() {
+        if (!prevImageBtn || !nextImageBtn) return;
+        
         prevImageBtn.disabled = currentEvaluationIndex === 0;
         nextImageBtn.disabled = currentEvaluationIndex === evaluations.length - 1;
         
@@ -511,397 +773,5 @@ document.addEventListener('DOMContentLoaded', function() {
             currentEvaluationIndex++;
             openImageViewer(currentEvaluationIndex);
         }
-    }
-    
-    // Function to handle login
-    function handleLogin() {
-        console.log('Handle login called');
-        const loginStatusDiv = document.querySelector('.login-status');
-        if (loginStatusDiv) loginStatusDiv.textContent = 'Logging in...';
-        
-        const password = passwordInput ? passwordInput.value : '';
-        
-        if (!password) {
-            if (loginStatusDiv) loginStatusDiv.textContent = 'Error: Password required';
-            alert('Please enter a password');
-            return;
-        }
-        
-        console.log('Attempting login with password');
-        
-        // Check for ApiClient in window and global scope
-        let apiClient = window.ApiClient;
-        
-        // If ApiClient isn't available yet, create a fallback version
-        if (!apiClient) {
-            console.warn('ApiClient not found in window. Attempting to find global scope ApiClient');
-            if (typeof ApiClient !== 'undefined') {
-                console.log('Using global ApiClient');
-                apiClient = ApiClient;
-                // Also set it on window for future use
-                window.ApiClient = ApiClient;
-            } else {
-                console.error('ApiClient not available in any scope');
-                if (loginStatusDiv) loginStatusDiv.textContent = 'Error: Auth service not initialized';
-                alert('Login system not initialized properly. Please refresh the page and try again.');
-                return;
-            }
-        }
-        
-        // Make sure ApiClient is available and has auth module
-        if (!apiClient || !apiClient.auth) {
-            console.error('ApiClient auth module not available');
-            if (loginStatusDiv) loginStatusDiv.textContent = 'Error: Auth service not available';
-            alert('Login system not available. Please refresh the page and try again.');
-            return;
-        }
-        
-        try {
-            apiClient.auth.login(password)
-                .then(response => {
-                    console.log('Login response:', response);
-                    if (response.success) {
-                        // Hide the password modal
-                        if (passwordModal) {
-                            passwordModal.style.display = 'none';
-                        }
-                        
-                        // Update login status
-                        if (loginStatusDiv) loginStatusDiv.textContent = 'Success! Logged in as Admin';
-                        
-                        // Update UI based on new auth status
-                        checkLoginStatus();
-                        
-                        // Clear password field
-                        if (passwordInput) passwordInput.value = '';
-                        
-                        // Reload evaluations to show admin features
-                        loadEvaluations();
-                        loadNavalProfile();
-                        
-                        // Make admin elements visible
-                        document.querySelectorAll('.admin-only').forEach(el => {
-                            el.style.display = el.tagName.toLowerCase() === 'button' || 
-                                              el.tagName.toLowerCase() === 'a' ? 
-                                              'inline-block' : 'block';
-                        });
-                        
-                        // Apply authenticated class and styles
-                        document.body.classList.add('authenticated');
-                        if (adminToggle) adminToggle.classList.add('admin-active');
-                        
-                        console.log('Login successful, admin features enabled');
-                        alert('Login successful! Admin features enabled.');
-                    } else {
-                        console.error('Login failed: Invalid credentials');
-                        if (loginStatusDiv) loginStatusDiv.textContent = 'Error: Invalid password';
-                        alert('Invalid password. Please try again.');
-                    }
-                })
-                .catch(err => {
-                    console.error('Login error:', err);
-                    if (loginStatusDiv) loginStatusDiv.textContent = 'Error: Login failed';
-                    alert('Login failed. Please try again.');
-                });
-        } catch (e) {
-            console.error('Exception during login process:', e);
-            if (loginStatusDiv) loginStatusDiv.textContent = 'Error: Login system error';
-            alert('Login system encountered an error. Please refresh the page and try again.');
-        }
-    }
-    
-    // Function to handle profile image upload
-    function handleProfileImageUpload() {
-        // Create a file input element
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.accept = 'image/*';
-        
-        // Handle file selection
-        fileInput.addEventListener('change', function() {
-            if (fileInput.files && fileInput.files[0]) {
-                const file = fileInput.files[0];
-                
-                // Upload file
-                const formData = new FormData();
-                formData.append('image', file);
-                
-                // You would send this to your API
-                // For now, we'll simulate with local storage
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    // Store the image URL
-                    localStorage.setItem('navy_profile_image', e.target.result);
-                    
-                    // Update the image
-                    navyProfileImage.src = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-        
-        // Trigger file selection
-        fileInput.click();
-    }
-    
-    // Function to open the edit about modal
-    function openEditAboutModal() {
-        aboutTextEditor.value = navyAboutContent.innerHTML;
-        openModal(editAboutModal);
-    }
-    
-    // Function to save about content
-    function saveAboutContent() {
-        const content = aboutTextEditor.value;
-        
-        // Update the content
-        navyAboutContent.innerHTML = content;
-        
-        // Save to localStorage (or your API in a real implementation)
-        localStorage.setItem('navy_about_content', content);
-        
-        // Close the modal
-        closeModal(editAboutModal);
-    }
-    
-    // Function to open the upload evaluation modal
-    function openUploadEvalModal() {
-        // Reset the form
-        resetUploadForm();
-        
-        // Open the modal
-        openModal(uploadEvalModal);
-    }
-    
-    // Function to reset the upload form
-    function resetUploadForm() {
-        // Reset file input
-        evalFileInput.value = '';
-        
-        // Reset cropper
-        if (cropper) {
-            cropper.destroy();
-            cropper = null;
-        }
-        
-        // Reset date and description
-        evalDate.value = '';
-        evalDescription.value = '';
-        
-        // Show step 1
-        showUploadStep(1);
-    }
-    
-    // Function to show a specific upload step
-    function showUploadStep(step) {
-        currentUploadStep = step;
-        
-        // Hide all steps
-        uploadStep1.style.display = 'none';
-        uploadStep2.style.display = 'none';
-        uploadStep3.style.display = 'none';
-        
-        // Show buttons based on step
-        prevStepBtn.style.display = step > 1 ? 'block' : 'none';
-        nextStepBtn.style.display = step < 3 ? 'block' : 'none';
-        uploadFinalBtn.style.display = step === 3 ? 'block' : 'none';
-        
-        // Show the current step
-        if (step === 1) {
-            uploadStep1.style.display = 'block';
-        } else if (step === 2) {
-            uploadStep2.style.display = 'block';
-        } else if (step === 3) {
-            uploadStep3.style.display = 'block';
-        }
-    }
-    
-    // Function to go to the previous upload step
-    function prevUploadStep() {
-        if (currentUploadStep > 1) {
-            showUploadStep(currentUploadStep - 1);
-        }
-    }
-    
-    // Function to go to the next upload step
-    function nextUploadStep() {
-        if (currentUploadStep === 1) {
-            // Check if file is selected
-            if (!evalFileInput.files || !evalFileInput.files[0]) {
-                alert('Please select an image file first');
-                return;
-            }
-            
-            // Initialize cropper
-            showUploadStep(2);
-            initCropper();
-        } else if (currentUploadStep === 2) {
-            // Move to the final step
-            showUploadStep(3);
-        }
-    }
-    
-    // Function to trigger file input click
-    function triggerFileInput() {
-        evalFileInput.click();
-    }
-    
-    // Function to handle drag over
-    function handleDragOver(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        evalUploadArea.classList.add('drag-over');
-    }
-    
-    // Function to handle file drop
-    function handleFileDrop(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        evalUploadArea.classList.remove('drag-over');
-        
-        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-            evalFileInput.files = e.dataTransfer.files;
-            handleFileSelection();
-        }
-    }
-    
-    // Function to handle file selection
-    function handleFileSelection() {
-        if (evalFileInput.files && evalFileInput.files[0]) {
-            const file = evalFileInput.files[0];
-            
-            // Check if it's an image
-            if (!file.type.match('image.*')) {
-                alert('Please select an image file');
-                return;
-            }
-            
-            // Read the file
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                // Set the image source for cropping
-                cropperImage.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-    }
-    
-    // Function to initialize the cropper
-    function initCropper() {
-        // Destroy previous cropper if it exists
-        if (cropper) {
-            cropper.destroy();
-        }
-        
-        // Initialize new cropper
-        cropper = new Cropper(cropperImage, {
-            aspectRatio: 3 / 4, // Match the aspect ratio of the evaluation cards
-            viewMode: 1,
-            responsive: true,
-            restore: true
-        });
-    }
-    
-    // Function to rotate the cropper
-    function rotateCropper(degree) {
-        if (cropper) {
-            cropper.rotate(degree);
-        }
-    }
-    
-    // Function to zoom the cropper
-    function zoomCropper(ratio) {
-        if (cropper) {
-            cropper.zoom(ratio);
-        }
-    }
-    
-    // Function to upload evaluation
-    function uploadEvaluation() {
-        // Check if date is selected
-        if (!evalDate.value) {
-            alert('Please select a date for this evaluation');
-            return;
-        }
-        
-        // Get cropped canvas
-        if (!cropper) {
-            alert('Please select and crop an image first');
-            return;
-        }
-        
-        // Get cropped image
-        const canvas = cropper.getCroppedCanvas({
-            width: 600,
-            height: 800
-        });
-        
-        if (!canvas) {
-            alert('Error processing image');
-            return;
-        }
-        
-        // Convert canvas to blob
-        canvas.toBlob(function(blob) {
-            // In a real implementation, you would upload this blob to your server
-            // For now, we'll convert to data URL and store locally
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                // Create evaluation object
-                const newEvaluation = {
-                    id: Date.now().toString(), // Generate a unique ID
-                    imageUrl: e.target.result,
-                    date: evalDate.value,
-                    description: evalDescription.value || '',
-                    createdAt: new Date().toISOString()
-                };
-                
-                // Add to evaluations array
-                evaluations.push(newEvaluation);
-                
-                // Sort by date (newest first)
-                evaluations.sort((a, b) => new Date(b.date) - new Date(a.date));
-                
-                // Save to localStorage
-                localStorage.setItem('navy_evaluations', JSON.stringify(evaluations));
-                
-                // Re-render evaluations
-                loadEvaluations();
-                
-                // Close modal
-                closeModal(uploadEvalModal);
-                
-                // Show success message
-                alert('Evaluation uploaded successfully!');
-            };
-            reader.readAsDataURL(blob);
-        }, 'image/jpeg', 0.9);
-    }
-    
-    // Function to enable reorder mode
-    function enableReorderMode() {
-        // Not implemented in this version
-        alert('Reorder functionality will be implemented in a future update.');
-    }
-    
-    // Function to open a modal
-    function openModal(modal) {
-        if (modal) {
-            modal.style.display = 'block';
-        }
-    }
-    
-    // Function to close a modal
-    function closeModal(modal) {
-        if (modal) {
-            modal.style.display = 'none';
-        }
-    }
-    
-    // Function to close all modals
-    function closeAllModals() {
-        closeModal(imageViewerModal);
-        closeModal(uploadEvalModal);
-        closeModal(editAboutModal);
     }
 });

@@ -2103,4 +2103,55 @@ body .debug-console-btn {
     font-size: 1rem;
 }
 
-/* Main nav styling is already consistent across pages */ 
+/* Main nav styling is already consistent across pages */
+
+/* Admin and Login Panel Consistency */
+.admin-panel, .modal-content {
+    background-color: #1a1a1a;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.admin-panel button, .modal-content button {
+    background: linear-gradient(135deg, #1e6b52, #00b06b);
+    color: white;
+    border-radius: 5px;
+    padding: 10px 15px;
+    transition: all 0.3s ease;
+}
+
+.admin-panel button:hover, .modal-content button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 176, 107, 0.4);
+}
+
+input[type="text"], input[type="password"], textarea {
+    background-color: #222;
+    color: #fff;
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: 8px;
+    width: 100%;
+    margin-bottom: 15px;
+}
+
+.notification {
+    background-color: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    padding: 10px;
+    border-radius: 5px;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    display: none;
+}
+
+.notification.success {
+    background-color: #00b06b;
+}
+
+.notification.error {
+    background-color: #C01C27;
+} 

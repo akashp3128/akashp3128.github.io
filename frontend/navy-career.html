@@ -6,10 +6,12 @@
     <meta name="theme-color" content="#121212">
     <title>Akash Patel - Navy Career</title>
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/admin-modal.css">
     <!-- Add Cropper.js for image cropping -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
-    <!-- API Scripts will be loaded at the end of the body -->
+    <!-- Load API script early to ensure it's available -->
+    <script src="js/api.js"></script>
 </head>
 <body class="navy-page">
     <div class="background">
@@ -29,10 +31,10 @@
     
     <header>
         <h1>Akash Patel</h1>
-        <p>Software Engineer // Secret Clearance</p>
+        <p>Naval Career // Hull Maintenance Technician</p>
         <nav class="main-nav">
-            <a href="/">Home</a>
-            <a href="/navy-career" class="active">Navy Career</a>
+            <a href="index.html">Home</a>
+            <a href="navy-career.html" class="active">Navy Career</a>
         </nav>
     </header>
     
@@ -82,7 +84,7 @@
     </div>
     
     <!-- Image Viewer Modal -->
-    <div id="imageViewerModal" class="modal">
+    <div id="imageViewerModal" class="modal modal-modern">
         <div class="modal-content">
             <span class="close-modal">&times;</span>
             <div class="image-viewer-container">
@@ -100,7 +102,7 @@
     </div>
     
     <!-- Upload Modal with Cropping -->
-    <div id="uploadEvalModal" class="modal admin-only">
+    <div id="uploadEvalModal" class="modal modal-modern admin-only">
         <div class="modal-content upload-modal">
             <span class="close-modal">&times;</span>
             <h3>Upload Evaluation</h3>
@@ -109,7 +111,15 @@
                 <div class="upload-step" id="uploadStep1">
                     <h4>Step 1: Select Image</h4>
                     <div class="upload-area" id="evalUploadArea">
-                        <p>Drag & drop your evaluation image here or click to select</p>
+                        <div class="upload-icon">
+                            <svg width="50" height="50" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 16L12 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M9 11L12 8 15 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M8 16H16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M3 20H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <p>Drag & drop your evaluation image here<br>or click to select</p>
                         <input type="file" id="evalFileInput" style="display: none" accept="image/*">
                     </div>
                 </div>
@@ -149,30 +159,110 @@
     </div>
     
     <!-- Edit About Modal -->
-    <div id="editAboutModal" class="modal admin-only">
+    <div id="editAboutModal" class="modal modal-modern admin-only">
         <div class="modal-content">
             <span class="close-modal">&times;</span>
             <h3>Edit About Section</h3>
             <div class="form-group">
-                <textarea id="aboutTextEditor" rows="10"></textarea>
+                <div id="richTextControls" class="rich-text-controls">
+                    <button type="button" data-format="bold"><b>B</b></button>
+                    <button type="button" data-format="italic"><i>I</i></button>
+                    <button type="button" data-format="underline"><u>U</u></button>
+                    <button type="button" data-format="p">P</button>
+                    <button type="button" data-format="h3">H3</button>
+                    <button type="button" data-format="h4">H4</button>
+                </div>
+                <div id="aboutTextEditor" class="rich-text-editor" contenteditable="true"></div>
             </div>
             <button id="saveAboutBtn" class="btn btn-accent">Save Changes</button>
         </div>
     </div>
     
-    <!-- Admin Login Panel (Reused from main page) -->
-    <button id="adminToggle" class="admin-toggle" onclick="document.getElementById('passwordModal').style.display='block';">⚙️</button>
+    <!-- Profile Image Upload Modal -->
+    <div id="profileImageModal" class="modal modal-modern admin-only">
+        <div class="modal-content upload-modal">
+            <span class="close-modal">&times;</span>
+            <h3>Upload Profile Photo</h3>
+            
+            <div class="upload-steps">
+                <div class="upload-step active">
+                    <div class="upload-area" id="profileUploadArea">
+                        <div class="upload-icon">
+                            <svg width="50" height="50" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 16L12 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M9 11L12 8 15 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M8 16H16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M3 20H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <p>Drag & drop your profile photo here<br>or click to select</p>
+                        <input type="file" id="profileFileInput" style="display: none" accept="image/*">
+                    </div>
+                    
+                    <div class="cropper-container" style="display: none;">
+                        <img id="profileCropperImage" src="" alt="Profile image to crop">
+                    </div>
+                    
+                    <div class="cropper-controls" style="display: none;">
+                        <button id="profileRotateLeftBtn" class="btn btn-sm">↺ Rotate Left</button>
+                        <button id="profileRotateRightBtn" class="btn btn-sm">↻ Rotate Right</button>
+                        <button id="profileZoomInBtn" class="btn btn-sm">+ Zoom In</button>
+                        <button id="profileZoomOutBtn" class="btn btn-sm">- Zoom Out</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button id="cancelProfileUploadBtn" class="btn btn-secondary">Cancel</button>
+                <button id="uploadProfileBtn" class="btn btn-accent" style="display: none;">Upload Photo</button>
+            </div>
+        </div>
+    </div>
     
-    <div id="passwordModal" class="modal">
+    <!-- Admin Login Panel -->
+    <button id="adminToggle" class="admin-toggle">⚙️</button>
+    
+    <div id="passwordModal" class="modal modal-modern">
         <div class="modal-content">
-            <span id="closeModal" class="close-modal">&times;</span>
+            <span class="close-modal">&times;</span>
             <h2>Enter Admin Password</h2>
             <div class="form-group">
                 <label for="passwordInput">Admin Password</label>
                 <input type="password" id="passwordInput" placeholder="Enter password">
             </div>
-            <button id="submitPassword" class="btn">Login</button>
+            <button id="submitPassword" class="btn btn-accent">Login</button>
             <div class="login-status" style="margin-top: 10px; text-align: center; color: #666;"></div>
+        </div>
+    </div>
+    
+    <!-- Settings Panel -->
+    <div id="settingsPanel" class="settings-panel">
+        <div class="settings-header">
+            <h3>Admin Settings</h3>
+            <button id="closeSettings" class="close-settings">&times;</button>
+        </div>
+        <div class="settings-content">
+            <div class="settings-section">
+                <h4>Navy Profile</h4>
+                <button id="settingsEditAbout" class="settings-btn">Edit About Section</button>
+                <button id="settingsUploadProfile" class="settings-btn">Upload Profile Photo</button>
+            </div>
+            <div class="settings-section">
+                <h4>Evaluations</h4>
+                <button id="settingsUploadEval" class="settings-btn">Upload Evaluation</button>
+                <button id="settingsReorderEvals" class="settings-btn">Reorder Evaluations</button>
+            </div>
+            <div class="settings-section">
+                <h4>Account</h4>
+                <button id="settingsLogout" class="settings-btn logout-btn">Logout</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notification Toast -->
+    <div id="notification" class="notification">
+        <div class="notification-content">
+            <span id="notificationMessage"></span>
         </div>
     </div>
     
@@ -183,7 +273,6 @@
     <!-- Scripts -->
     <script src="js/ensure-emergency.js"></script>
     <script src="js/init.js"></script>
-    <script src="js/api.js"></script>
     <script src="js/navy-evaluations.js"></script>
     <script src="js/debug.js"></script>
 </body>

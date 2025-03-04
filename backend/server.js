@@ -10,6 +10,7 @@ const {
     ensureUploadDirExists, 
     isProduction
 } = require('./utils/storage');
+const mongoose = require('mongoose');
 
 // Load environment variables
 dotenv.config();
@@ -27,26 +28,16 @@ app.use(helmet()); // Security headers
 
 // CORS middleware
 const allowedOrigins = process.env.NODE_ENV === 'production' 
-    ? [process.env.FRONTEND_URL, 'https://akashp3128.github.io', 'https://akashp3128-github-io.vercel.app', 'https://batman-akashp3128-github-io.vercel.app', 'https://akashp3128.vercel.app', 'https://akashp3128-github-io-git-main-batman.vercel.app'] 
-    : ['http://localhost:8080', 'http://localhost:3000', 'http://127.0.0.1:8080', 'http://127.0.0.1:3000', 'null'];
+    ? [process.env.FRONTEND_URL, 'https://akashp3128.github.io', 'https://akashp3128-github-io.vercel.app', 'https://batman-akashp3128-github-io.vercel.app', 'https://akashp3128.vercel.app', 'https://akashp3128-github-io.vercel.app']
+    : ['http://localhost:8080', 'http://localhost:3000', 'http://127.0.0.1:8080', 'http://127.0.0.1:3000'];
 
 app.use(cors({
     origin: function (origin, callback) {
-        // Allow requests with no origin (like mobile apps, curl requests, etc.)
-        if (!origin) {
-            console.log('Request with no origin');
-            return callback(null, true);
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
         }
-        
-        console.log('Request from origin:', origin);
-        
-        if (process.env.NODE_ENV !== 'production') {
-            // In development mode, allow any origin
-            return callback(null, true);
-        }
-        
-        // In production, always allow any origin for now to ensure it works
-        return callback(null, true);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -156,6 +147,14 @@ app.use((req, res, next) => {
     next();
 });
 
+// Middleware to set caching headers
+app.use((req, res, next) => {
+    if (req.method === 'GET') {
+        res.set('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+    }
+    next();
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);
@@ -164,6 +163,23 @@ app.use((err, req, res, next) => {
         error: process.env.NODE_ENV === 'development' ? err.message : 'Server error'
     });
 });
+
+// MongoDB connection setup
+const connectDB = async () => {
+    try {
+        await mongoose.connect(process.env.MONGODB_URI, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+        });
+        console.log('MongoDB connected successfully');
+    } catch (error) {
+        console.error('MongoDB connection error:', error);
+        process.exit(1);
+    }
+};
+
+// Connect to MongoDB
+connectDB();
 
 // Start the server
 app.listen(PORT, () => {
