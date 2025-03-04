@@ -40,7 +40,8 @@ const ApiClient = (function() {
         RESUME: `${API_URL}/api/resume`,
         AUTH: `${API_URL}/api/auth`,
         IMAGE: `${API_URL}/api/image`,
-        PLACEHOLDER: `${API_URL}/api/placeholder`
+        PLACEHOLDER: `${API_URL}/api/placeholder`,
+        NAVY: `${API_URL}/api/navy`
     };
 
     // Check if a backend connection is available
@@ -397,6 +398,95 @@ const ApiClient = (function() {
                 debugLog('Image delete error:', error);
                 return { success: false, error: error.message };
             }
+        },
+        
+        // Get Navy profile image
+        getNavyProfileImage: async function() {
+            // Check for emergency mode
+            if (isEmergencyMode) {
+                debugLog('Using localStorage for Navy profile image (emergency mode)');
+                return localStorage.getItem('navy_profile_image') || null;
+            }
+            
+            try {
+                const response = await fetch(`${API_ENDPOINTS.IMAGE}/navy-profile`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    // If we get a 404, the image doesn't exist yet
+                    if (response.status === 404) {
+                        return null;
+                    }
+                    
+                    throw new Error(`Failed to fetch Navy profile image: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                return data.url;
+            } catch (error) {
+                debugLog('Error getting Navy profile image:', error);
+                
+                // Fall back to localStorage in case of error
+                return localStorage.getItem('navy_profile_image') || null;
+            }
+        },
+        
+        // Upload Navy profile image
+        uploadNavyProfileImage: async function(file) {
+            // Check for emergency mode
+            if (isEmergencyMode) {
+                debugLog('Using localStorage for Navy profile image upload (emergency mode)');
+                
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        localStorage.setItem('navy_profile_image', e.target.result);
+                        resolve({
+                            success: true,
+                            url: e.target.result
+                        });
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+            
+            try {
+                const formData = new FormData();
+                formData.append('image', file);
+                
+                const response = await fetch(`${API_ENDPOINTS.IMAGE}/navy-profile`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    },
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to upload Navy profile image: ${response.status}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                debugLog('Error uploading Navy profile image:', error);
+                
+                // Fall back to localStorage in case of error
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        localStorage.setItem('navy_profile_image', e.target.result);
+                        resolve({
+                            success: true,
+                            url: e.target.result
+                        });
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
         }
     };
     
@@ -408,13 +498,202 @@ const ApiClient = (function() {
         }
     };
     
+    // Navy API
+    const navy = {
+        // Get Navy evaluations
+        getEvaluations: async function() {
+            // Check for emergency mode
+            if (isEmergencyMode) {
+                debugLog('Using localStorage for Navy evaluations (emergency mode)');
+                const evaluations = localStorage.getItem('navy_evaluations');
+                return evaluations ? JSON.parse(evaluations) : [];
+            }
+            
+            try {
+                const response = await fetch(`${API_ENDPOINTS.NAVY}/evaluations`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch Navy evaluations: ${response.status}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                debugLog('Error getting Navy evaluations:', error);
+                
+                // Fall back to localStorage in case of error
+                const evaluations = localStorage.getItem('navy_evaluations');
+                return evaluations ? JSON.parse(evaluations) : [];
+            }
+        },
+        
+        // Upload a Navy evaluation
+        uploadEvaluation: async function(imageBlob, date, description) {
+            // Check for emergency mode
+            if (isEmergencyMode) {
+                debugLog('Using localStorage for Navy evaluation upload (emergency mode)');
+                
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        // Get existing evaluations
+                        let evaluations = localStorage.getItem('navy_evaluations');
+                        evaluations = evaluations ? JSON.parse(evaluations) : [];
+                        
+                        // Create new evaluation
+                        const newEvaluation = {
+                            id: Date.now().toString(),
+                            imageUrl: e.target.result,
+                            date: date,
+                            description: description || '',
+                            createdAt: new Date().toISOString()
+                        };
+                        
+                        // Add to list and save
+                        evaluations.push(newEvaluation);
+                        localStorage.setItem('navy_evaluations', JSON.stringify(evaluations));
+                        
+                        resolve({
+                            success: true,
+                            evaluation: newEvaluation
+                        });
+                    };
+                    reader.readAsDataURL(imageBlob);
+                });
+            }
+            
+            try {
+                const formData = new FormData();
+                formData.append('image', imageBlob);
+                formData.append('date', date);
+                
+                if (description) {
+                    formData.append('description', description);
+                }
+                
+                const response = await fetch(`${API_ENDPOINTS.NAVY}/evaluations`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    },
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to upload Navy evaluation: ${response.status}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                debugLog('Error uploading Navy evaluation:', error);
+                
+                // Fall back to localStorage in case of error
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        // Get existing evaluations
+                        let evaluations = localStorage.getItem('navy_evaluations');
+                        evaluations = evaluations ? JSON.parse(evaluations) : [];
+                        
+                        // Create new evaluation
+                        const newEvaluation = {
+                            id: Date.now().toString(),
+                            imageUrl: e.target.result,
+                            date: date,
+                            description: description || '',
+                            createdAt: new Date().toISOString()
+                        };
+                        
+                        // Add to list and save
+                        evaluations.push(newEvaluation);
+                        localStorage.setItem('navy_evaluations', JSON.stringify(evaluations));
+                        
+                        resolve({
+                            success: true,
+                            evaluation: newEvaluation
+                        });
+                    };
+                    reader.readAsDataURL(imageBlob);
+                });
+            }
+        },
+        
+        // Save Navy about content
+        saveAboutContent: async function(content) {
+            // Check for emergency mode
+            if (isEmergencyMode) {
+                debugLog('Using localStorage for Navy about content (emergency mode)');
+                localStorage.setItem('navy_about_content', content);
+                return { success: true };
+            }
+            
+            try {
+                const response = await fetch(`${API_ENDPOINTS.NAVY}/about`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    },
+                    body: JSON.stringify({ content })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to save Navy about content: ${response.status}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                debugLog('Error saving Navy about content:', error);
+                
+                // Fall back to localStorage in case of error
+                localStorage.setItem('navy_about_content', content);
+                return { success: true };
+            }
+        },
+        
+        // Get Navy about content
+        getAboutContent: async function() {
+            // Check for emergency mode
+            if (isEmergencyMode) {
+                debugLog('Using localStorage for Navy about content (emergency mode)');
+                return localStorage.getItem('navy_about_content') || '';
+            }
+            
+            try {
+                const response = await fetch(`${API_ENDPOINTS.NAVY}/about`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch Navy about content: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                return data.content;
+            } catch (error) {
+                debugLog('Error getting Navy about content:', error);
+                
+                // Fall back to localStorage in case of error
+                return localStorage.getItem('navy_about_content') || '';
+            }
+        }
+    };
+    
     // Public API
     return {
         checkBackendConnection,
         auth,
         resume,
         image,
-        placeholder
+        placeholder,
+        navy
     };
 })();
 

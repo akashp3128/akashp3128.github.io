@@ -62,14 +62,17 @@ if (!isProduction) {
     ensureUploadDirExists();
 }
 
-// API routes
+// Import routes
 const authRoutes = require('./routes/auth');
 const resumeRoutes = require('./routes/resume');
 const imageRoutes = require('./routes/image');
+const navyRoutes = require('./routes/navy');
 
+// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/resume', resumeRoutes);
 app.use('/api/image', imageRoutes);
+app.use('/api/navy', navyRoutes);
 
 // Add a route to serve files from Vercel Blob in production
 if (isProduction) {
