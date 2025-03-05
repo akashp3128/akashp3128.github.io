@@ -148,7 +148,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Reset to placeholder if no image found
                 const cardImage = document.querySelector('.card-image img');
                 if (cardImage) {
-                    cardImage.src = '/api/placeholder/300/155';
+                    cardImage.src = 'https://via.placeholder.com/300x155';
                     cardImage.classList.remove('custom-image');
                 }
                 
