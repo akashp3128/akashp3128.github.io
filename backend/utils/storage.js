@@ -31,7 +31,20 @@ const createLocalDiskStorage = (fileType) => {
     
     return multer.diskStorage({
         destination: function (req, file, cb) {
-            const uploadDir = path.join(__dirname, '../uploads');
+            let uploadDir = path.join(__dirname, '../uploads');
+            
+            // Create subdirectories based on file type
+            if (fileType === 'navy-evals') {
+                uploadDir = path.join(uploadDir, 'navy-evals');
+            } else if (fileType === 'navy-profile') {
+                uploadDir = path.join(uploadDir, 'navy-profile');
+            }
+            
+            // Ensure the directory exists
+            if (!fs.existsSync(uploadDir)) {
+                fs.mkdirSync(uploadDir, { recursive: true });
+            }
+            
             cb(null, uploadDir);
         },
         filename: function (req, file, cb) {
@@ -40,6 +53,15 @@ const createLocalDiskStorage = (fileType) => {
             } else if (fileType === 'image') {
                 const ext = path.extname(file.originalname).toLowerCase();
                 cb(null, 'profile' + ext);
+            } else if (fileType === 'navy-profile') {
+                const ext = path.extname(file.originalname).toLowerCase();
+                cb(null, 'profile' + ext);
+            } else if (fileType === 'navy-evals') {
+                // Generate a unique filename for evaluations
+                const date = req.body.date || new Date().toISOString().split('T')[0];
+                const timestamp = Date.now();
+                const ext = path.extname(file.originalname).toLowerCase();
+                cb(null, `navy-eval-${date}-${timestamp}${ext}`);
             } else {
                 cb(null, file.originalname);
             }
@@ -70,8 +92,8 @@ const createResumeStorage = () => {
 };
 
 // Create storage engine for image uploads
-const createImageStorage = () => {
-    return createStorage('image');
+const createImageStorage = (type = 'image') => {
+    return createStorage(type);
 };
 
 // Upload file to Vercel Blob

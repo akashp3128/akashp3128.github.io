@@ -1359,4 +1359,26 @@ body .debug-console-btn {
 
 .card.legendary-type:hover .card-inner {
     animation: card-pulse 1.5s infinite; /* Faster pulse for more intensity */
+}
+
+/* Add these styles to support the main navigation */
+.main-nav {
+    margin-top: 15px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.main-nav a {
+    color: #fff;
+    text-decoration: none;
+    padding: 5px 15px;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.main-nav a:hover, .main-nav a.active {
+    background-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
 } 

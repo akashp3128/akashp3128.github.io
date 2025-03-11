@@ -150,6 +150,12 @@ router.post('/evaluations', authenticateToken, upload.single('image'), async (re
             return res.status(400).json({ error: 'Evaluation date is required' });
         }
         
+        console.log('Received evaluation upload:', {
+            file: req.file,
+            date: req.body.date,
+            description: req.body.description || 'No description provided'
+        });
+        
         let evaluation = {
             id: req.file.filename || req.file.path,
             date: req.body.date,
@@ -162,6 +168,12 @@ router.post('/evaluations', authenticateToken, upload.single('image'), async (re
             evaluation.imageUrl = req.file.url;
         } else {
             // For local storage, create URL path
+            // Make sure the directory exists
+            const evalDir = path.join(__dirname, '../uploads/navy-evals');
+            if (!fs.existsSync(evalDir)) {
+                fs.mkdirSync(evalDir, { recursive: true });
+            }
+            
             evaluation.imageUrl = `/api/navy/evaluations/${req.file.filename}`;
         }
         
@@ -171,7 +183,7 @@ router.post('/evaluations', authenticateToken, upload.single('image'), async (re
         });
     } catch (error) {
         console.error('Error uploading evaluation:', error);
-        res.status(500).json({ error: 'Failed to upload evaluation' });
+        res.status(500).json({ error: 'Failed to upload evaluation', details: error.message });
     }
 });
 

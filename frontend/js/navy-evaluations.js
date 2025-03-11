@@ -389,24 +389,49 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Load evaluations & Render (using the existing methods)
     function loadEvaluations() {
-        // Clear existing evaluations
-        if (evaluationsGallery) evaluationsGallery.innerHTML = '';
+        console.log('Loading evaluations...');
+        showLoadingIndicator('Loading evaluations...');
         
-        // Load from localStorage
-        const savedEvaluations = localStorage.getItem('navy_evaluations');
+        // Determine API URL
+        const isLocalhost = window.location.hostname === 'localhost' || 
+                          window.location.hostname === '127.0.0.1';
+        const apiBaseUrl = isLocalhost ? 'http://localhost:3000' : window.location.origin;
+        const url = `${apiBaseUrl}/api/navy/evaluations`;
         
-        if (savedEvaluations) {
-            evaluations = JSON.parse(savedEvaluations);
-        } else {
-            // Initialize with empty array if none exist
-            evaluations = [];
-        }
-        
-        // Sort evaluations by date
-        evaluations.sort((a, b) => new Date(b.date) - new Date(a.date));
-        
-        // Render evaluations
-        renderEvaluations();
+        // Fetch evaluations from API
+        fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Failed to load evaluations (${response.status})`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Evaluations loaded:', data);
+                evaluations = data;
+                renderEvaluations();
+            })
+            .catch(error => {
+                console.error('Error loading evaluations:', error);
+                // Fallback to localStorage in case of server error
+                const savedEvaluations = localStorage.getItem('navy_evaluations');
+                if (savedEvaluations) {
+                    try {
+                        evaluations = JSON.parse(savedEvaluations);
+                    } catch (e) {
+                        evaluations = [];
+                    }
+                } else {
+                    evaluations = [];
+                }
+                renderEvaluations();
+                
+                // Show error message
+                showNotification('Could not load evaluations from server. Using local data.', 'warning');
+            })
+            .finally(() => {
+                hideLoadingIndicator();
+            });
     }
     
     // Function to render evaluations (from original code)
@@ -651,64 +676,109 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Function to upload evaluation
     function uploadEvaluation() {
-        // Check if date is selected
-        if (!evalDate || !evalDate.value) {
-            showNotification('Please select a date for this evaluation', 'error');
-            return;
-        }
-        
-        // Get cropped canvas
         if (!cropperEval) {
-            showNotification('Please select and crop an image first', 'error');
+            alert('Please select an image to upload.');
             return;
         }
-        
-        // Get cropped image
-        const canvas = cropperEval.getCroppedCanvas({
-            width: 600,
-            height: 800
-        });
-        
-        if (!canvas) {
-            showNotification('Error processing image', 'error');
-            return;
-        }
-        
-        // Convert canvas to blob
-        canvas.toBlob(function(blob) {
-            // In a real implementation, you would upload this blob to your server
-            // For now, we'll convert to data URL and store locally
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                // Create evaluation object
-                const newEvaluation = {
-                    id: Date.now().toString(), // Generate a unique ID
-                    imageUrl: e.target.result,
-                    date: evalDate.value,
-                    description: evalDescription && evalDescription.value ? evalDescription.value : '',
-                    createdAt: new Date().toISOString()
-                };
+
+        // Show loading indicator
+        showLoadingIndicator('Uploading evaluation...');
+
+        // Get the cropped image as a blob
+        cropperEval.getCroppedCanvas({
+            minWidth: 800,
+            minHeight: 1000,
+            maxWidth: 2000,
+            maxHeight: 2500,
+            fillColor: '#fff',
+            imageSmoothingEnabled: true,
+            imageSmoothingQuality: 'high',
+        }).toBlob(async function(blob) {
+            try {
+                // Create a File object from the blob
+                const file = new File([blob], `evaluation-${Date.now()}.jpg`, { type: 'image/jpeg' });
                 
-                // Add to evaluations array
-                evaluations.push(newEvaluation);
+                // Get date and description
+                const date = evalDate.value;
+                const description = evalDescription.value.trim();
                 
-                // Sort by date (newest first)
-                evaluations.sort((a, b) => new Date(b.date) - new Date(a.date));
-                
-                // Save to localStorage
-                localStorage.setItem('navy_evaluations', JSON.stringify(evaluations));
-                
-                // Re-render evaluations
-                loadEvaluations();
-                
-                // Close modal
-                closeModal(uploadEvalModal);
-                
-                // Show success message
-                showNotification('Evaluation uploaded successfully!', 'success');
-            };
-            reader.readAsDataURL(blob);
-        }, 'image/jpeg', 0.9);
+                if (!date) {
+                    hideLoadingIndicator();
+                    alert('Please select a date for this evaluation.');
+                    return;
+                }
+
+                // Create form data
+                const formData = new FormData();
+                formData.append('image', file);
+                formData.append('date', date);
+                if (description) {
+                    formData.append('description', description);
+                }
+
+                console.log('Uploading evaluation with data:', {
+                    date,
+                    description,
+                    fileSize: file.size,
+                    fileType: file.type
+                });
+
+                // Get authentication token
+                const token = localStorage.getItem('authToken');
+                if (!token) {
+                    hideLoadingIndicator();
+                    alert('Authentication required. Please log in.');
+                    return;
+                }
+
+                // Determine API URL
+                const isLocalhost = window.location.hostname === 'localhost' || 
+                                window.location.hostname === '127.0.0.1';
+                const apiBaseUrl = isLocalhost ? 'http://localhost:3000' : window.location.origin;
+                const url = `${apiBaseUrl}/api/navy/evaluations`;
+
+                // Upload the evaluation
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                // Handle response
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Evaluation uploaded successfully:', data);
+                    
+                    // Close the modal and reset the form
+                    closeModal(uploadEvalModal);
+                    resetUploadForm();
+                    
+                    // Reload evaluations to show the new one
+                    loadEvaluations();
+                    
+                    // Show success notification
+                    showNotification('Evaluation uploaded successfully!', 'success');
+                } else {
+                    let errorMsg = 'Failed to upload evaluation.';
+                    try {
+                        const errorData = await response.json();
+                        errorMsg = errorData.error || errorMsg;
+                        console.error('Upload error:', errorData);
+                    } catch (e) {
+                        console.error('Error parsing error response:', e);
+                    }
+                    
+                    alert(`Error: ${errorMsg}`);
+                }
+            } catch (error) {
+                console.error('Error uploading evaluation:', error);
+                alert(`Error uploading evaluation: ${error.message}`);
+            } finally {
+                hideLoadingIndicator();
+            }
+        }, 'image/jpeg', 0.92);
     }
     
     // Function to open the image viewer
@@ -769,5 +839,19 @@ document.addEventListener('DOMContentLoaded', function() {
             currentEvaluationIndex++;
             openImageViewer(currentEvaluationIndex);
         }
+    }
+
+    // Function to show notification
+    function showNotification(message, type = 'info') {
+        const notification = document.getElementById('notification');
+        if (!notification) return;
+        
+        notification.textContent = message;
+        notification.className = 'notification';
+        notification.classList.add(type, 'show');
+        
+        setTimeout(() => {
+            notification.classList.remove('show');
+        }, 5000);
     }
 });

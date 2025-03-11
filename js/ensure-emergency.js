@@ -20,6 +20,10 @@ document.addEventListener('DOMContentLoaded', async function() {
                     notificationElement.classList.remove('show');
                 }, 5000);
             }
+        } else {
+            console.log('Backend is reachable, emergency mode not needed');
+            // Explicitly disable emergency mode if backend is reachable
+            localStorage.removeItem('emergency_mode');
         }
     } catch (error) {
         console.error('Error checking backend reachability:', error);
@@ -31,12 +35,22 @@ document.addEventListener('DOMContentLoaded', async function() {
 // Function to check if backend is reachable
 async function checkBackendReachability() {
     try {
-        const origin = window.location.origin;
-        const response = await fetch(`${origin}/api/health`, {
+        // Use the actual backend URL instead of window.location.origin
+        const isLocalhost = window.location.hostname === 'localhost' || 
+                          window.location.hostname === '127.0.0.1';
+        
+        // Use the correct backend URL based on environment
+        const backendUrl = isLocalhost ? 'http://localhost:3000' : window.location.origin;
+        
+        console.log('Checking backend reachability at:', backendUrl);
+        
+        const response = await fetch(`${backendUrl}/api/health`, {
             method: 'GET',
             headers: { 'Accept': 'application/json' },
             signal: AbortSignal.timeout(3000) // 3 second timeout
         });
+        
+        console.log('Backend response status:', response.status);
         return response.ok;
     } catch (error) {
         console.warn('Backend connectivity check failed:', error);

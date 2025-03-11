@@ -24,7 +24,8 @@ const ApiClient = (function() {
                           window.location.hostname === '127.0.0.1';
         
         if (isLocalhost) {
-            // For local development
+            // For local development, always use port 3000
+            debugLog('Using local development API URL: http://localhost:3000');
             return 'http://localhost:3000';
         } else {
             // In production, use the same origin for API requests
@@ -96,26 +97,28 @@ const ApiClient = (function() {
                 const isLocalhost = window.location.hostname === 'localhost' || 
                                    window.location.hostname === '127.0.0.1';
                 
-                // If we're on localhost, we can use the hardcoded password
+                // If we're on localhost and using a development password
                 if (isLocalhost && (password === 'Rosie@007' || password === 'localdev')) {
-                    console.log('Using hardcoded password for local development');
-                    // Even in dev mode, let's use a more realistic token format
+                    console.log('Development environment detected - using hardcoded authentication');
+                    // Use a more realistic token format for consistency
                     const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlzQWRtaW4iOnRydWV9LCJpYXQiOjE2MTk4OTQ3NTEsImV4cCI6MTYxOTk4MTE1MX0.demo-token-' + Date.now();
                     setAuthToken(token);
+                    console.log('Login successful with development credentials');
                     return { success: true, token: token };
                 }
                 
-                // For production or other passwords, use the real backend authentication
+                // Try to connect to the backend authentication API
                 debugLog('Attempting server authentication');
                 const response = await fetch(`${API_ENDPOINTS.AUTH}/login`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ password })
+                    body: JSON.stringify({ password }),
+                    // Set a timeout to prevent long waiting
+                    signal: AbortSignal.timeout(5000)
                 });
                 
-                // Log response status for debugging
                 debugLog('Auth response status:', response.status);
                 
                 if (response.ok) {
@@ -123,6 +126,7 @@ const ApiClient = (function() {
                     if (data.token) {
                         debugLog('Received auth token from server');
                         setAuthToken(data.token);
+                        console.log('Login successful with server authentication');
                         return { success: true, token: data.token };
                     }
                 }
@@ -154,6 +158,7 @@ const ApiClient = (function() {
                     console.log('Backend unreachable, using fallback authentication');
                     const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlzQWRtaW4iOnRydWV9LCJpYXQiOjE2MTk4OTQ3NTEsImV4cCI6MTYxOTk4MTE1MX0.demo-token-fallback-' + Date.now();
                     setAuthToken(token);
+                    console.log('Login successful with fallback authentication');
                     return { success: true, token: token };
                 }
                 
