@@ -203,25 +203,53 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Setup event listeners
     function setupEventListeners() {
-        // Settings button click handler
-        if (settingsBtn) {
-            settingsBtn.addEventListener('click', function() {
-                const authDialog = document.getElementById('passwordModal');
-                if (authDialog) {
-                    authDialog.style.display = 'flex';
-                }
+        // Card flipping
+        if (cardInner) {
+            cardInner.addEventListener('click', function() {
+                cardInner.classList.toggle('is-flipped');
             });
+        }
+        
+        // Admin toggle button
+        if (settingsBtn) {
+            settingsBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Get the modal
+                const modal = document.getElementById('passwordModal');
+                
+                // Show the modal if it exists
+                if (modal) {
+                    modal.style.display = 'block';
+                    
+                    // Auto-focus the password input
+                    if (adminPasswordInput) {
+                        adminPasswordInput.focus();
+                        // Clear any previous password for security
+                        adminPasswordInput.value = '';
+                    }
+                }
+                
+                console.log('Admin toggle clicked, modal shown');
+            });
+        } else {
+            console.error('Admin toggle button not found');
         }
         
         // Admin login button
         if (adminLoginButton) {
-            adminLoginButton.addEventListener('click', handleAdminLogin);
+            adminLoginButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                handleAdminLogin();
+            });
         }
         
-        // Admin password input (handle Enter key)
+        // Password input field - listen for Enter key
         if (adminPasswordInput) {
-            adminPasswordInput.addEventListener('keydown', function(e) {
+            adminPasswordInput.addEventListener('keyup', function(e) {
                 if (e.key === 'Enter') {
+                    e.preventDefault();
                     handleAdminLogin();
                 }
             });
@@ -229,9 +257,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Admin logout button
         if (adminLogoutButton) {
-            adminLogoutButton.addEventListener('click', function() {
-                ApiClient.auth.logout();
+            adminLogoutButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                window.ApiClient.auth.logout();
                 hideAdminPanel();
+                showMessage('Logged out successfully');
             });
         }
         
@@ -263,10 +293,15 @@ document.addEventListener('DOMContentLoaded', function() {
             deleteImageButton.addEventListener('click', handleImageDelete);
         }
         
-        // Close dialog buttons
+        // Modal close button
         document.querySelectorAll('.close-modal').forEach(button => {
-            button.addEventListener('click', function() {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Get the parent modal
                 const modal = this.closest('.modal');
+                
+                // Hide the modal
                 if (modal) {
                     modal.style.display = 'none';
                 }
@@ -468,4 +503,112 @@ document.addEventListener('DOMContentLoaded', function() {
             alert(message);
         }
     }
+});
+
+// Main application functionality
+console.log('Loading main app functionality...');
+
+function setupCardFlipping() {
+    const card = document.getElementById('pokemonCard');
+    if (!card) {
+        console.log('Pokemon card not found on this page.');
+        return;
+    }
+    
+    const isMobile = document.body.classList.contains('mobile-device');
+    
+    if (isMobile) {
+        // For mobile, use tap to flip instead of hover
+        card.addEventListener('click', function() {
+            card.classList.toggle('flipped');
+        });
+        
+        console.log('Mobile card flipping enabled with tap');
+    } else {
+        // Desktop hover behavior
+        card.addEventListener('mouseenter', function() {
+            card.classList.add('flipped');
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            card.classList.remove('flipped');
+        });
+        
+        // Add mouse move effect for 3D rotation on desktop
+        setupCardRotation(card);
+        
+        console.log('Desktop card flipping enabled with hover');
+    }
+}
+
+function setupCardRotation(card) {
+    const container = document.querySelector('.card-container');
+    if (!container) return;
+    
+    container.addEventListener('mousemove', function(e) {
+        const rect = container.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        
+        // Calculate mouse position relative to center
+        const mouseX = e.clientX - centerX;
+        const mouseY = e.clientY - centerY;
+        
+        // Calculate rotation (limited range)
+        const rotateY = mouseX * 0.05; // Horizontal rotation
+        const rotateX = -mouseY * 0.05; // Vertical rotation
+        
+        // Apply rotation with damping
+        card.style.transform = `rotateY(${rotateY}deg) rotateX(${rotateX}deg)`;
+    });
+    
+    // Reset rotation when mouse leaves
+    container.addEventListener('mouseleave', function() {
+        card.style.transform = 'rotateY(0deg) rotateX(0deg)';
+    });
+}
+
+// Modal handling
+function setupModals() {
+    // Setup for any modals on the page
+    const modalTriggers = document.querySelectorAll('[data-modal-target]');
+    const closeButtons = document.querySelectorAll('.modal-close');
+    
+    // Open modal when trigger is clicked
+    modalTriggers.forEach(trigger => {
+        trigger.addEventListener('click', () => {
+            const modalId = trigger.getAttribute('data-modal-target');
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('active');
+            }
+        });
+    });
+    
+    // Close modal when close button is clicked
+    closeButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const modal = button.closest('.modal');
+            if (modal) {
+                modal.classList.remove('active');
+            }
+        });
+    });
+    
+    // Close modal when clicking outside content
+    document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('modal') && e.target.classList.contains('active')) {
+            e.target.classList.remove('active');
+        }
+    });
+}
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    setupModals();
+    
+    // Admin button handling is now in auth.js
+    
+    // Initialize anything else here
+    console.log('App fully initialized!');
 }); 

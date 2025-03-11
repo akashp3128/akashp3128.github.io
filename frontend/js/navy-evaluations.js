@@ -123,7 +123,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function continueInitialization() {
-        checkLoginStatus();
+        checkAuthState();
         setupEventListeners();
         setupRichTextEditor();
         loadNavalProfile();
@@ -157,19 +157,44 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Function to check login status and update UI
-    async function checkLoginStatus() {
-        console.log('Checking login status...');
-        const isAuthenticated = AuthManager.isAuthenticated();
-        document.body.classList.toggle('authenticated', isAuthenticated);
-        adminToggle.classList.toggle('admin-active', isAuthenticated);
-
-        document.querySelectorAll('.admin-only').forEach(el => {
-            el.style.display = isAuthenticated ? 'block' : 'none';
-        });
-
-        navyAdminPanel.classList.toggle('visible', isAuthenticated);
-        loginStatusPanel.textContent = isAuthenticated ? 'Logged in as Admin' : 'Not logged in';
+    // Function to check authentication state and update UI
+    function checkAuthState() {
+        console.log('Checking authentication state...');
+        const isAuthenticated = window.AuthManager && window.AuthManager.isAuthenticated();
+        
+        if (isAuthenticated) {
+            console.log('User is authenticated, showing admin elements');
+            document.body.classList.add('authenticated');
+            
+            // Show all admin-only elements
+            document.querySelectorAll('.admin-only').forEach(element => {
+                element.style.display = 'block';
+            });
+            
+            if (logoutAdminBtn) {
+                logoutAdminBtn.style.display = 'block';
+            }
+            
+            if (loginStatusPanel) {
+                loginStatusPanel.style.display = 'block';
+            }
+        } else {
+            console.log('User is not authenticated, hiding admin elements');
+            document.body.classList.remove('authenticated');
+            
+            // Hide all admin-only elements
+            document.querySelectorAll('.admin-only').forEach(element => {
+                element.style.display = 'none';
+            });
+            
+            if (logoutAdminBtn) {
+                logoutAdminBtn.style.display = 'none';
+            }
+            
+            if (loginStatusPanel) {
+                loginStatusPanel.style.display = 'none';
+            }
+        }
     }
     
     // Function to show loading indicator
@@ -195,7 +220,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (e.target.matches('#closeModal')) {
                 closeModal(passwordModal);
             } else if (e.target.matches('#submitPassword')) {
-                handleLogin();
+                handleAdminLogin();
             } else if (e.target.matches('#navyProfileUploadOverlay, #uploadNavyProfileBtn')) {
                 handleProfileImageUpload();
             } else if (e.target.matches('#editNavyAboutBtn, #editAboutSectionBtn')) {
@@ -210,8 +235,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 deleteEvaluation();
             } else if (e.target.matches('#logoutAdminBtn')) {
                 AuthManager.logout();
-                checkLoginStatus();
-                alert('Logged out successfully.');
+                checkAuthState();
+                showNotification('Logged out successfully');
             } else if (e.target.matches('#rotateLeftBtn')) {
                 rotateCropper(-90);
             } else if (e.target.matches('#rotateRightBtn')) {
@@ -241,6 +266,56 @@ document.addEventListener('DOMContentLoaded', function() {
             if (e.target === editAboutModal) closeModal(editAboutModal);
             if (e.target === passwordModal) closeModal(passwordModal);
         });
+    }
+    
+    // Handle admin login
+    function handleAdminLogin() {
+        if (!passwordInput) {
+            console.error('Password input not found');
+            showNotification('Error: Password input not found', 'error');
+            return;
+        }
+        
+        const password = passwordInput.value;
+        if (!password) {
+            showNotification('Please enter a password', 'error');
+            return;
+        }
+        
+        // Show loading state
+        showNotification('Logging in...', 'info');
+        
+        // Use the global AuthManager to handle login
+        if (window.AuthManager) {
+            window.AuthManager.login(password)
+                .then(response => {
+                    if (response.success) {
+                        // Update UI for authenticated state
+                        checkAuthState();
+                        
+                        // Clear password field and close modal
+                        passwordInput.value = '';
+                        closeModal(passwordModal);
+                        
+                        // Show success message
+                        showNotification('Login successful', 'success');
+                        
+                        // Reload naval profile and evaluations
+                        loadNavalProfile();
+                        loadEvaluations();
+                    } else {
+                        // Show error message
+                        showNotification(response.error || 'Invalid password', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Login error:', error);
+                    showNotification('Login failed: ' + error.message, 'error');
+                });
+        } else {
+            console.error('AuthManager not available');
+            showNotification('Authentication system not available', 'error');
+        }
     }
     
     // Load naval profile content
@@ -841,17 +916,38 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Function to show notification
+    // Show notification message to the user
     function showNotification(message, type = 'info') {
-        const notification = document.getElementById('notification');
-        if (!notification) return;
+        if (!notification) {
+            console.error('Notification element not found');
+            alert(message);
+            return;
+        }
         
+        // Set the message text
         notification.textContent = message;
-        notification.className = 'notification';
-        notification.classList.add(type, 'show');
         
+        // Clear any existing classes and add new ones
+        notification.className = 'notification';
+        notification.classList.add(type);
+        
+        // Show the notification
         setTimeout(() => {
+            notification.classList.add('show');
+        }, 10);
+        
+        // Hide after 5 seconds (or 10 in emergency mode)
+        const isEmergencyMode = localStorage.getItem('emergency_mode') === 'true';
+        const timeout = isEmergencyMode ? 10000 : 5000;
+        
+        // Clear any existing timeout
+        if (window.notificationTimeout) {
+            clearTimeout(window.notificationTimeout);
+        }
+        
+        // Set new timeout to hide notification
+        window.notificationTimeout = setTimeout(() => {
             notification.classList.remove('show');
-        }, 5000);
+        }, timeout);
     }
 });

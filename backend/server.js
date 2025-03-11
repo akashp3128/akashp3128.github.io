@@ -10,7 +10,15 @@ const {
     ensureUploadDirExists, 
     isProduction
 } = require('./utils/storage');
-const mongoose = require('mongoose');
+
+// Try to load mongoose, but continue if it's not available
+let mongoose = null;
+try {
+    mongoose = require('mongoose');
+    console.log('MongoDB module loaded successfully');
+} catch (err) {
+    console.log('MongoDB module not available, continuing without database functionality');
+}
 
 // Load environment variables
 dotenv.config();
@@ -21,7 +29,6 @@ const PORT = process.env.PORT || 3000;
 
 // Log storage type
 console.log(`Storage provider: ${isProduction ? 'Vercel Blob Storage' : 'Local File System'}`);
-console.log('MongoDB is NOT being used in this application');
 
 // Set up middleware
 app.use(helmet()); // Security headers
@@ -164,9 +171,19 @@ app.use((err, req, res, next) => {
     });
 });
 
-// MongoDB connection setup
+// MongoDB connection setup - only if mongoose is available
 const connectDB = async () => {
+    if (!mongoose) {
+        console.log('Skipping MongoDB connection - mongoose not available');
+        return;
+    }
+    
     try {
+        if (!process.env.MONGODB_URI) {
+            console.log('Skipping MongoDB connection - MONGODB_URI not set');
+            return;
+        }
+        
         await mongoose.connect(process.env.MONGODB_URI, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
@@ -174,11 +191,12 @@ const connectDB = async () => {
         console.log('MongoDB connected successfully');
     } catch (error) {
         console.error('MongoDB connection error:', error);
-        process.exit(1);
+        // Don't exit the process, let the server run without MongoDB
+        console.log('Continuing to run server without MongoDB connection');
     }
 };
 
-// Connect to MongoDB
+// Connect to MongoDB if possible
 connectDB();
 
 // Start the server

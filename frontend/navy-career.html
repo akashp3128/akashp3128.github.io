@@ -7,11 +7,13 @@
     <title>Akash Patel - Navy Career</title>
     <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="/css/admin-modal.css">
+    <link rel="stylesheet" href="/css/mobile.css">
     <!-- Add Cropper.js for image cropping -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <!-- Load API script early to ensure it's available -->
     <script src="/js/api.js"></script>
+    <script src="/js/api-client.js"></script>
 </head>
 <body class="navy-page">
     <div class="background">
@@ -29,12 +31,17 @@
         </div>
     </div>
     
+    <!-- Notification element -->
+    <div id="notification" class="notification">Backend API unavailable. Emergency mode enabled.</div>
+    
     <header>
         <h1>Akash Patel</h1>
         <p>Naval Career // Hull Maintenance Technician</p>
-        <nav class="main-nav">
-            <a href="/frontend/index.html">Home</a>
-            <a href="/frontend/navy-career.html" class="active">Navy Career</a>
+        <nav class="navbar">
+            <div class="nav-links">
+                <a href="/" class="nav-link">Home</a>
+                <a href="/navy-career" class="nav-link active">Navy Career</a>
+            </div>
         </nav>
     </header>
     
@@ -219,19 +226,22 @@
         </div>
     </div>
     
-    <!-- Admin Login Panel -->
-    <button id="adminToggle" class="admin-toggle">⚙️</button>
+    <!-- Admin settings button -->
+    <button id="adminToggle" aria-label="Admin Settings">⚙️</button>
     
-    <div id="passwordModal" class="modal modal-modern">
+    <!-- Admin login modal -->
+    <div id="passwordModal" class="modal">
         <div class="modal-content">
             <span class="close-modal">&times;</span>
-            <h2>Enter Admin Password</h2>
+            <h2>Admin Login</h2>
             <div class="form-group">
-                <label for="passwordInput">Admin Password</label>
-                <input type="password" id="passwordInput" placeholder="Enter password">
+                <label for="passwordInput">Password</label>
+                <input type="password" id="passwordInput" placeholder="Enter admin password">
+                <small class="password-help">Use "Rosie@007" to login (or "localdev" in development mode)</small>
             </div>
-            <button id="submitPassword" class="btn btn-accent">Login</button>
-            <div class="login-status" style="margin-top: 10px; text-align: center; color: #666;"></div>
+            <div class="btn-container">
+                <button id="submitPassword" class="btn btn-primary">Login</button>
+            </div>
         </div>
     </div>
     
@@ -259,20 +269,6 @@
         </div>
     </div>
     
-    <!-- Notification Toast -->
-    <div id="notification" class="notification">
-        <div class="notification-content">
-            <span id="notificationMessage"></span>
-        </div>
-    </div>
-    
-    <footer>
-        <div class="container">
-            <p>Akash Patel &copy; 2025</p>
-            <p>Addison, IL, 60101 • akashp3128@gmail.com • (630)506-2942</p>
-        </div>
-    </footer>
-    
     <!-- Admin Panel - Will be shown when logged in -->
     <div id="navyAdminPanel" class="admin-panel">
         <h2>Navy Career Admin Panel</h2>
@@ -296,9 +292,19 @@
         </div>
     </div>
     
-    <!-- Scripts -->
-    <script src="/js/api.js"></script>
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p>Akash Patel &copy; 2025</p>
+            <p>Addison, IL, 60101 • akashp3128@gmail.com • (630)506-2942</p>
+        </div>
+    </footer>
+    
+    <!-- Scripts at the bottom for performance -->
     <script src="/js/auth.js"></script>
+    <script src="/js/init.js"></script>
+    <script src="/js/app.js"></script>
+    <script src="/js/debug.js"></script>
     <script src="/frontend/js/navy-evaluations.js"></script>
 </body>
 </html> 
