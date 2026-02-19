@@ -1,219 +1,37 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#121212">
-    <title>Akash Patel - Software Engineer Resume</title>
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/admin-modal.css">
-    <link rel="stylesheet" href="css/mobile.css">
-</head>
-<body>
-    <div class="background">
-        <div class="bubbles">
-            <div class="bubble"></div>
-            <div class="bubble"></div>
-            <div class="bubble"></div>
-            <div class="bubble"></div>
-            <div class="bubble"></div>
-            <div class="bubble"></div>
-            <div class="bubble"></div>
-            <div class="bubble"></div>
-            <div class="bubble"></div>
-            <div class="bubble"></div>
-        </div>
-    </div>
-    
-    <!-- Notification element -->
-    <div id="notification" class="notification"></div>
-    
-    <header>
-        <h1>Akash Patel</h1>
-        <p>Software Engineer // Secret Clearance</p>
-        <nav class="main-nav">
-            <a href="/" class="active">Home</a>
-            <a href="/navy-career">Navy Career</a>
-        </nav>
-    </header>
-    
-    <div class="container">
-        <div class="card-container">
-            <div class="card legendary-type" id="pokemonCard">
-                <div class="card-inner">
-                    <div class="card-front">
-                        <div class="holo-overlay"></div>
-                        <div class="holo-effect"></div>
-                        <div class="sparkles"></div>
-                        <div class="legendary-marker">★</div>
-                        
-                        <div class="card-header">
-                            Akash Patel
-                            <div class="card-energy">✦✦✦✦✦</div>
-                        </div>
-                        
-                        <div class="card-image">
-                            <img src="https://via.placeholder.com/300x155" alt="Akash Patel">
-                            <!-- Resume badge will appear when a resume is available -->
-                            <div id="resumeBadge" class="resume-badge" style="display: none;">
-                                <span class="badge-icon">📄</span>
-                                <span class="badge-text">Resume Available</span>
-                            </div>
-                        </div>
-                        
-                        <div class="card-info">
-                            Software Engineer with a strong background in embedded systems, C++, and real-time applications. Former U.S. Navy Hull Maintenance Tech with Secret Clearance.
-                        </div>
-                        
-                        <div class="card-abilities">
-                            <div>
-                                <span class="ability-name">Algorithm Development</span>
-                                <span class="ability-cost">★★</span>
-                                <div class="ability-description">Optimized real-time systems by 30% using advanced scheduling algorithms.</div>
-                            </div>
-                            <br>
-                            <div>
-                                <span class="ability-name">Systems Integration</span>
-                                <span class="ability-cost">★★★</span>
-                                <div class="ability-description">Engineered seamless hardware-software integration with real-time data synchronization.</div>
-                            </div>
-                        </div>
-                        
-                        <div class="card-footer">
-                            <div class="card-type">Legendary Software Engineer</div>
-                            <div class="card-stats">HP 200 ⚡</div>
-                        </div>
-                    </div>
-                    
-                    <div class="card-back">
-                        <div class="holo-overlay"></div>
-                        <div class="holo-effect"></div>
-                        <div class="sparkles"></div>
-                        
-                        <h3>Technical Skills</h3>
-                        <div class="skills-list">
-                            <span class="skill-tag">C++ 11</span>
-                            <span class="skill-tag">C</span>
-                            <span class="skill-tag">Python</span>
-                            <span class="skill-tag">Linux</span>
-                            <span class="skill-tag">Embedded Software</span>
-                            <span class="skill-tag">Software Architecture</span>
-                            <span class="skill-tag">Algorithm Development</span>
-                            <span class="skill-tag">CI/CD</span>
-                            <span class="skill-tag">Operating Systems</span>
-                            <span class="skill-tag">DBMS</span>
-                            <span class="skill-tag">NDT</span>
-                        </div>
-                        
-                        <h3 style="margin-top: 15px;">Experience</h3>
-                        <p><strong>U.S. Navy</strong> - Hull Maintenance Tech 2nd Class (2015-2023)</p>
-                        <ul style="font-size: 12px; margin-left: 15px;">
-                            <li>Performed NDT on submarine systems across three vessels</li>
-                            <li>Implemented complex inspection protocols</li>
-                            <li>Streamlined fabrication processes for support vessels</li>
-                        </ul>
-                        
-                        <h3 style="margin-top: 10px;">Projects</h3>
-                        <p><strong>Trigger Interactive</strong> - Adaptive laser detection system</p>
-                        <p><strong>Roomba</strong> - Real-time navigation system with C++ and Arduino</p>
-                        <p><strong>Game Engine</strong> - Raycasting engine with optimized rendering</p>
-                        
-                        <h3 style="margin-top: 10px;">Education</h3>
-                        <p>Bachelor of Science, Software Engineering<br>Iowa State University (2018-2023)</p>
-                        
-                        <div style="margin-top: 15px; text-align: center; font-size: 11px; color: #999;">
-                            <p>Click or tap to view front of card</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div style="text-align: center; margin-top: 30px;">
-            <p>Interactive resume card - move your mouse over the card to see the holographic effect!</p>
-            <p>Click or tap to flip the card and see more details.</p>
-            <div class="resume-buttons" style="justify-content: center; margin-top: 20px;">
-                <a href="#resume-section" class="btn">Upload/Manage Resume</a>
-                <a href="mailto:akashp3128@gmail.com" class="btn btn-accent">Contact Me</a>
-            </div>
-        </div>
-        
-        <section id="resume-section" class="resume-manager">
-            <h2>Resume Manager</h2>
-            <p>View, download, or update your official resume PDF below.</p>
-            
-            <div id="resumeDisplay">
-                <iframe src="" class="resume-preview" id="resumePreview"></iframe>
-                <div class="resume-buttons">
-                    <a href="#" id="downloadBtn" class="btn" download>Download Resume</a>
-                </div>
-            </div>
-        </section>
-    </div>
-    
-    <footer>
-        <div class="container">
-            <p>Akash Patel &copy; 2025</p>
-            <p>Addison, IL, 60101 • akashp3128@gmail.com • (630)506-2942</p>
-            <div class="social-links">
-                <a href="#" target="_blank">LinkedIn</a>
-                <a href="#" target="_blank">GitHub</a>
-                <a href="#" target="_blank">Twitter</a>
-            </div>
-        </div>
-    </footer>
-    
-    <!-- Admin settings button -->
-    <button id="adminToggle" aria-label="Admin Settings">⚙️</button>
-    
-    <!-- Admin login modal -->
-    <div id="passwordModal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal">&times;</span>
-            <h2>Admin Login</h2>
-            <div class="form-group">
-                <label for="passwordInput">Password</label>
-                <input type="password" id="passwordInput" placeholder="Enter admin password">
-                <small class="password-help">Use "Rosie@007" to login (or "localdev" in development mode)</small>
-            </div>
-            <div class="btn-container">
-                <button id="submitPassword" class="btn btn-primary">Login</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Admin panel -->
-    <div class="admin-panel">
-        <div class="admin-content">
-            <button id="logoutBtn" class="btn">Logout</button>
-            
-            <!-- Upload areas -->
-            <div id="uploadArea" class="upload-area admin-only">
-                <span class="upload-icon">📄</span>
-                <p>Click to upload resume PDF</p>
-                <input type="file" id="fileInput" accept=".pdf" style="display: none;">
-            </div>
-            
-            <div id="imageUploadArea" class="upload-area admin-only">
-                <span class="upload-icon">🖼️</span>
-                <p>Click to upload profile image</p>
-                <input type="file" id="imageFileInput" accept="image/*" style="display: none;">
-            </div>
-            
-            <!-- Delete buttons -->
-            <button id="deleteResumeBtn" class="btn btn-secondary admin-only">Delete Resume</button>
-            <button id="deleteImageBtn" class="btn btn-secondary admin-only">Delete Profile Image</button>
-        </div>
-    </div>
-    
-    <!-- Scripts -->
-    <script src="js/ensure-emergency.js"></script>
-    <script src="js/init.js"></script>
-    <script src="js/api.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/pokemon-card.js"></script>
-    <script src="js/app.js"></script>
-    <script src="js/debug.js"></script>
-    <script src="js/api-client.js"></script>
-</body>
-</html> 
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Primary Meta Tags -->
+    <title>Akash Patel | Software Engineer</title>
+    <meta name="title" content="Akash Patel | Software Engineer" />
+    <meta name="description" content="Software Engineer specializing in embedded systems, full-stack development, and AI/ML. Navy veteran with 8 years of service. Based in Chicago, IL." />
+    <meta name="keywords" content="Software Engineer, Embedded Systems, Full-Stack Developer, React, Python, C++, Linux, AI, Machine Learning, Chicago" />
+    <meta name="author" content="Akash Patel" />
+    <meta name="robots" content="index, follow" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://akashp3128.dev/" />
+    <meta property="og:title" content="Akash Patel | Software Engineer" />
+    <meta property="og:description" content="Software Engineer specializing in embedded systems, full-stack development, and AI/ML. Navy veteran with 8 years of service." />
+    <meta property="og:image" content="https://akashp3128.dev/og-image.png" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://akashp3128.dev/" />
+    <meta property="twitter:title" content="Akash Patel | Software Engineer" />
+    <meta property="twitter:description" content="Software Engineer specializing in embedded systems, full-stack development, and AI/ML. Navy veteran with 8 years of service." />
+    <meta property="twitter:image" content="https://akashp3128.dev/og-image.png" />
+
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#000000" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

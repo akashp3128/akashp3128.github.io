@@ -1,0 +1,132 @@
+.footer {
+  background: var(--bg-primary);
+  padding: 80px 0 40px;
+  border-top: 4px solid #000;
+  position: relative;
+}
+
+/* Decorative corner squares */
+.footer::before,
+.footer::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  width: 20px;
+  height: 20px;
+  background: #000;
+}
+
+.footer::before {
+  left: 24px;
+}
+
+.footer::after {
+  right: 24px;
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 40px;
+}
+
+.footer-column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.footer-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #000;
+}
+
+.footer-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.footer-link {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.2s ease;
+  position: relative;
+  display: inline-block;
+}
+
+.footer-link:hover {
+  color: var(--text-primary);
+  padding-left: 10px;
+}
+
+.footer-link:hover::before {
+  content: '>';
+  position: absolute;
+  left: 0;
+  font-weight: 900;
+}
+
+.footer-address {
+  font-style: normal;
+}
+
+.footer-address p {
+  font-size: 14px;
+  line-height: 1.8;
+  font-weight: 500;
+}
+
+.footer-copyright {
+  justify-content: flex-end;
+  align-items: flex-end;
+}
+
+.footer-copyright p {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  padding: 10px 16px;
+  border: 2px solid #000;
+  background: var(--bg-primary);
+}
+
+@media (max-width: 768px) {
+  .footer-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .footer-copyright {
+    grid-column: span 2;
+    justify-content: flex-start;
+    margin-top: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .footer-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .footer-copyright {
+    grid-column: span 1;
+  }
+
+  .footer::before {
+    left: 16px;
+  }
+
+  .footer::after {
+    right: 16px;
+  }
+}

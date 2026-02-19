@@ -1,0 +1,25 @@
+.tilt-card {
+  position: relative;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+/* Disable glare effect for manga style - we use halftone instead */
+.tilt-glare {
+  display: none;
+}
+
+/* Add depth to child elements */
+.tilt-card .work-image {
+  transform: translateZ(20px);
+  transform-style: preserve-3d;
+}
+
+.tilt-card .work-info {
+  transform: translateZ(40px);
+  transform-style: preserve-3d;
+}
+
+.tilt-card .work-overlay span {
+  transform: translateZ(60px);
+}

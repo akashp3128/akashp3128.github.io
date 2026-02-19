@@ -1,0 +1,412 @@
+@import url('https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  /* Manga Theme - High Contrast B&W */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f5f5f5;
+  --bg-panel: #fafafa;
+  --text-primary: #000000;
+  --text-secondary: #333333;
+  --text-muted: #666666;
+  --border-color: #000000;
+  --border-thin: 2px;
+  --border-medium: 3px;
+  --border-thick: 4px;
+  --accent: #000000;
+  --max-width: 1440px;
+  --font-primary: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-display: 'Bangers', cursive;
+
+  /* Manga-specific */
+  --panel-shadow: 4px 4px 0 #000;
+  --panel-shadow-sm: 2px 2px 0 #000;
+  --panel-shadow-lg: 6px 6px 0 #000;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-primary);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  overflow-x: hidden;
+  /* Subtle paper texture */
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  background-blend-mode: overlay;
+  background-size: 200px;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+ul {
+  list-style: none;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* Custom Scrollbar - Manga Style */
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+  border-left: 2px solid #000;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #000;
+  border: 2px solid var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #333;
+}
+
+section {
+  padding: 100px 0;
+  position: relative;
+}
+
+/* Manga-style Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  position: relative;
+  font-family: var(--font-primary);
+}
+
+.btn-primary {
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  border: 3px solid #000;
+  box-shadow: var(--panel-shadow);
+}
+
+.btn-primary:hover {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 #000;
+}
+
+.btn-primary:active {
+  transform: translate(4px, 4px);
+  box-shadow: none;
+}
+
+.btn-outline {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 3px solid #000;
+  box-shadow: var(--panel-shadow);
+}
+
+.btn-outline:hover {
+  background: #000;
+  color: #fff;
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 #000;
+}
+
+/* Typography - Manga Style */
+h1 {
+  font-family: var(--font-display);
+  font-size: clamp(60px, 12vw, 140px);
+  font-weight: 400;
+  line-height: 0.9;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  text-shadow: 4px 4px 0 rgba(0,0,0,0.1);
+}
+
+h2 {
+  font-family: var(--font-display);
+  font-size: clamp(36px, 6vw, 72px);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+h3 {
+  font-family: var(--font-primary);
+  font-size: clamp(20px, 3vw, 28px);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+h4 {
+  font-size: 18px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+h5 {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+h6 {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+p {
+  color: var(--text-secondary);
+  font-size: 16px;
+}
+
+/* Manga Panel Styles */
+.manga-panel {
+  background: var(--bg-primary);
+  border: var(--border-thick) solid #000;
+  box-shadow: var(--panel-shadow);
+  position: relative;
+}
+
+.manga-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.03) 2px,
+      rgba(0,0,0,0.03) 4px
+    );
+  pointer-events: none;
+}
+
+/* Speed Lines Effect */
+.speed-lines {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 200%;
+  height: 200%;
+  transform: translate(-50%, -50%);
+  background: repeating-conic-gradient(
+    from 0deg,
+    transparent 0deg 2deg,
+    rgba(0,0,0,0.03) 2deg 4deg
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Halftone Pattern */
+.halftone {
+  background-image: radial-gradient(circle, #000 1px, transparent 1px);
+  background-size: 8px 8px;
+}
+
+.halftone-light {
+  background-image: radial-gradient(circle, rgba(0,0,0,0.1) 1px, transparent 1px);
+  background-size: 6px 6px;
+}
+
+/* Cross-hatch Pattern */
+.crosshatch {
+  background:
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.1) 2px,
+      rgba(0,0,0,0.1) 4px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.1) 2px,
+      rgba(0,0,0,0.1) 4px
+    );
+}
+
+/* Speech Bubble */
+.speech-bubble {
+  position: relative;
+  background: var(--bg-primary);
+  border: 3px solid #000;
+  border-radius: 20px;
+  padding: 20px 24px;
+}
+
+.speech-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -20px;
+  left: 30px;
+  width: 0;
+  height: 0;
+  border: 20px solid transparent;
+  border-top-color: #000;
+  border-bottom: 0;
+}
+
+.speech-bubble::before {
+  content: '';
+  position: absolute;
+  bottom: -14px;
+  left: 33px;
+  width: 0;
+  height: 0;
+  border: 17px solid transparent;
+  border-top-color: var(--bg-primary);
+  border-bottom: 0;
+  z-index: 1;
+}
+
+/* Impact Text */
+.impact-text {
+  font-family: var(--font-display);
+  font-size: clamp(24px, 4vw, 48px);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  position: relative;
+  display: inline-block;
+}
+
+.impact-text::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(0,0,0,0.2);
+  z-index: -1;
+}
+
+/* Starburst Effect */
+.starburst {
+  position: relative;
+}
+
+.starburst::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 120%;
+  height: 120%;
+  transform: translate(-50%, -50%);
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(0,0,0,0.05) 5deg,
+    transparent 10deg
+  );
+  background-size: 100% 100%;
+  animation: rotate-starburst 20s linear infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+@keyframes rotate-starburst {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes pulse-border {
+  0%, 100% {
+    border-width: 3px;
+  }
+  50% {
+    border-width: 5px;
+  }
+}
+
+/* Ink splatter decoration */
+.ink-splatter {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(ellipse at center, #000 0%, transparent 70%);
+  opacity: 0.1;
+  border-radius: 50%;
+  transform: scale(1, 0.6) rotate(45deg);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  section {
+    padding: 80px 0;
+  }
+}
+
+@media (max-width: 768px) {
+  section {
+    padding: 60px 0;
+  }
+
+  .container {
+    padding: 0 16px;
+  }
+
+  .btn {
+    padding: 12px 20px;
+    font-size: 13px;
+  }
+}
